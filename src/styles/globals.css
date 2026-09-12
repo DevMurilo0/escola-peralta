@@ -1607,6 +1607,24 @@ td {
   font-size: 13px;
   color: var(--muted);
 }
+.master-teacher-card > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+.master-teacher-card h3,
+.master-teacher-card p {
+  margin-bottom: 0;
+}
+.master-teacher-card small {
+  color: var(--muted);
+}
+.status-active {
+  color: #32633f;
+  font-weight: 700;
+}
+.password-toggle {
+  justify-self: start;
+}
 .associations {
   display: grid;
   gap: 8px;
@@ -2326,6 +2344,17 @@ td {
   .list-row.wrap {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .master-teacher-card {
+    margin-top: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+  .master-teacher-card .actions,
+  .master-teacher-card .actions button {
+    width: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

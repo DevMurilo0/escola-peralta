@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   installSupabaseTransport,
   signIn,
+  signInWithCredentials,
   classId,
   studentId,
 } from "./supabase-transport";
@@ -220,6 +221,71 @@ test("administrador acessa painel e solicita criação por API com bearer", asyn
   await dialog.getByRole("button", { name: "Salvar professor" }).click();
   await expect(page.getByRole("status")).toContainText("Operação concluída");
   expect(state.workerRequests).toBe(1);
+});
+
+test("Master cria professor real e o novo professor autentica pelo fluxo normal", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installSupabaseTransport(page, "admin", true, true);
+  await signIn(page, "admin");
+  await page.getByRole("button", { name: "Abrir navegação" }).click();
+  await page.getByRole("link", { name: "Administração", exact: true }).click();
+  await page.getByRole("button", { name: "Professores", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: /Gerenciar professores/ }),
+  ).toBeVisible();
+  await expect(page.getByText("Nunca acessou", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "+ Adicionar professor" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Nome completo")).toBeVisible();
+  await expect(dialog.getByLabel("E-mail")).toHaveAttribute(
+    "placeholder",
+    "nome@peralta.com",
+  );
+  await expect(dialog.getByLabel("Senha inicial")).toHaveAttribute(
+    "type",
+    "password",
+  );
+  await expect(dialog.getByLabel("Confirmar senha")).toBeVisible();
+  await dialog.getByRole("button", { name: "Mostrar senhas" }).click();
+  await expect(dialog.getByLabel("Senha inicial")).toHaveAttribute("type", "text");
+
+  await dialog.getByLabel("Nome completo").fill("Professor Criado");
+  await dialog.getByLabel("E-mail").fill("teste@peralta.com");
+  await dialog.getByLabel("Senha inicial").fill("senha-segura-123");
+  await dialog.getByLabel("Confirmar senha").fill("senha-diferente-123");
+  await dialog.getByRole("button", { name: "Criar professor" }).click();
+  await expect(dialog.getByRole("status")).toContainText(
+    "As senhas informadas não coincidem",
+  );
+  await dialog.getByLabel("Confirmar senha").fill("senha-segura-123");
+  await dialog.getByRole("button", { name: "Criar professor" }).click();
+  await expect(page.getByText(/Professor criado com sucesso/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Professor Criado" })).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
+
+  await page.getByRole("button", { name: "Abrir navegação" }).click();
+  await page.getByRole("button", { name: "Sair da conta" }).click();
+  await signInWithCredentials(
+    page,
+    "teste@peralta.com",
+    "senha-segura-123",
+  );
+  await expect(page.getByRole("heading", { name: "Olá, Professor." })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Administração", exact: true }),
+  ).toHaveCount(0);
+  const forbidden = await page.evaluate(async () => {
+    const response = await fetch("/api/master/status", {
+      headers: { Authorization: "Bearer fixture-token" },
+    });
+    return response.status;
+  });
+  expect(forbidden).toBe(403);
 });
 
 test("refresh direto, API real sem autenticação e cabeçalhos privados", async ({

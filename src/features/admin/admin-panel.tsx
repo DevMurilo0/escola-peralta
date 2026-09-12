@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { adminAction } from "./actions";
 import { Feedback, Modal } from "@/shared/components/feedback";
 import type { SchoolClass, Student } from "@/shared/academic/types";
+import { MasterTeachersPanel } from "./master-teachers-panel";
 type Teacher = {
   id: string;
   full_name: string;
@@ -23,12 +24,14 @@ export function AdminPanel({
   associations,
   students,
   settings,
+  isMaster,
 }: {
   teachers: Teacher[];
   classes: Class[];
   associations: Association[];
   students: Student[];
   settings: { school_year: number; passing_grade: number };
+  isMaster: boolean;
 }) {
   const [tab, setTab] = useState("classes");
   const [modal, setModal] = useState<"class" | "teacher" | null>(null);
@@ -41,15 +44,22 @@ export function AdminPanel({
   } | null>(null);
   const [message, setMessage] = useState("");
   const [link, setLink] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [pending, start] = useTransition();
   function run(kind: string, values: unknown) {
     start(async () => {
       setMessage("Salvando…");
       try {
         const r = await adminAction(kind, values);
-        setMessage(r.error || "Operação concluída.");
+        setMessage(
+          r.error ||
+            (kind === "master-teacher-create"
+              ? "Professor criado com sucesso. A conta já pode acessar /portal/login."
+              : "Operação concluída."),
+        );
         if (!r.error) {
           setModal(null);
+          setShowPassword(false);
           setConfirm(null);
           if (r.link) setLink(r.link);
           invalidateResources();
@@ -223,7 +233,31 @@ export function AdminPanel({
           ))}
         </section>
       )}
-      {tab === "teachers" && (
+      {tab === "teachers" && isMaster && (
+        <MasterTeachersPanel
+          pending={pending}
+          onAdd={() => {
+            setEditingTeacher(null);
+            setShowPassword(false);
+            setModal("teacher");
+          }}
+          onEdit={(teacher) => {
+            setEditingTeacher(teacher);
+            setModal("teacher");
+          }}
+          onAccessLink={(teacher) => run("teacher-link", { id: teacher.id })}
+          onToggle={(teacher) =>
+            setConfirm({
+              title: teacher.active
+                ? "Desativar professor?"
+                : "Reativar professor?",
+              kind: "teacher-edit",
+              values: { ...teacher, active: !teacher.active },
+            })
+          }
+        />
+      )}
+      {tab === "teachers" && !isMaster && (
         <section className="panel">
           <div className="page-heading">
             <h2>Professores · {teachers.length}</h2>
@@ -467,24 +501,50 @@ export function AdminPanel({
       )}
       {modal === "teacher" && (
         <Modal
-          title={editingTeacher ? "Editar professor" : "Criar professor"}
-          onClose={() => !pending && setModal(null)}
+          title={
+            editingTeacher
+              ? "Editar professor"
+              : isMaster
+                ? "Adicionar professor"
+                : "Criar professor"
+          }
+          onClose={() => {
+            if (!pending) {
+              setModal(null);
+              setShowPassword(false);
+            }
+          }}
         >
           <form
             className="stack"
             onSubmit={(e) => {
               e.preventDefault();
               const f = new FormData(e.currentTarget);
-              run(
-                editingTeacher ? "teacher-edit" : "teacher-create",
-                editingTeacher
-                  ? {
-                      id: editingTeacher.id,
-                      full_name: f.get("name"),
-                      active: editingTeacher.active,
-                    }
-                  : { full_name: f.get("name"), email: f.get("email") },
-              );
+              if (editingTeacher) {
+                run("teacher-edit", {
+                  id: editingTeacher.id,
+                  full_name: f.get("name"),
+                  active: editingTeacher.active,
+                });
+                return;
+              }
+              if (isMaster) {
+                const password = String(f.get("password") || "");
+                if (password !== String(f.get("password_confirmation") || "")) {
+                  setMessage("As senhas informadas não coincidem.");
+                  return;
+                }
+                run("master-teacher-create", {
+                  full_name: f.get("name"),
+                  email: f.get("email"),
+                  password,
+                });
+                return;
+              }
+              run("teacher-create", {
+                full_name: f.get("name"),
+                email: f.get("email"),
+              });
             }}
           >
             <label>
@@ -500,15 +560,64 @@ export function AdminPanel({
             {!editingTeacher && (
               <label>
                 E-mail
-                <input type="email" name="email" required />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder={isMaster ? "nome@peralta.com" : undefined}
+                  required
+                />
               </label>
             )}
-            <p className="small muted">
-              O professor definirá a própria senha por um link de uso único.
-            </p>
+            {!editingTeacher && isMaster && (
+              <>
+                <label>
+                  Senha inicial
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    minLength={12}
+                    maxLength={128}
+                    autoComplete="new-password"
+                    required
+                  />
+                </label>
+                <label>
+                  Confirmar senha
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password_confirmation"
+                    minLength={12}
+                    maxLength={128}
+                    autoComplete="new-password"
+                    required
+                  />
+                </label>
+                <button
+                  className="secondary password-toggle"
+                  type="button"
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((visible) => !visible)}
+                >
+                  {showPassword ? "Ocultar senhas" : "Mostrar senhas"}
+                </button>
+                <p className="small muted">
+                  A senha é usada somente para criar a conta e não será exibida
+                  novamente.
+                </p>
+              </>
+            )}
+            {!editingTeacher && !isMaster && (
+              <p className="small muted">
+                O professor definirá a própria senha por um link de uso único.
+              </p>
+            )}
             <Feedback message={message} />
             <button disabled={pending}>
-              {pending ? "Salvando…" : "Salvar professor"}
+              {pending
+                ? "Salvando…"
+                : !editingTeacher && isMaster
+                  ? "Criar professor"
+                  : "Salvar professor"}
             </button>
           </form>
         </Modal>

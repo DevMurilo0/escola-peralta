@@ -9,6 +9,10 @@ const env: Env = {
   ALLOWED_ORIGIN: "https://peralta.example.test",
   ASSETS: { fetch: async () => new Response("SPA") },
 };
+const masterEnv: Env = {
+  ...env,
+  MASTER_EMAIL: " master@peralta.com ",
+};
 function request(
   body: unknown = { full_name: "Ana Exemplo", email: "ana@example.test" },
   path = "/api/admin/teachers",
@@ -249,5 +253,304 @@ describe("Worker administrativo", () => {
         )
       ).text(),
     ).toBe("SPA");
+  });
+});
+
+function masterRequest(
+  method: "GET" | "POST",
+  path = "/api/master/teachers",
+  body: unknown = {
+    full_name: "Professor de Teste",
+    email: " TESTE@PERALTA.COM ",
+    password: "senha-segura-123",
+  },
+  token = "valid-token",
+) {
+  return new Request(`https://peralta.example.test${path}`, {
+    method,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(method === "POST" ? { "Content-Type": "application/json" } : {}),
+    },
+    ...(method === "POST" ? { body: JSON.stringify(body) } : {}),
+  });
+}
+
+function masterBackend(
+  options: {
+    role?: "admin" | "teacher";
+    active?: boolean;
+    email?: string;
+    authFail?: boolean;
+    duplicate?: boolean;
+    auditFail?: boolean;
+    lastSignIn?: string | null;
+  } = {},
+) {
+  const calls: { path: string; method: string; authorization: string | null; body: unknown }[] = [];
+  const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(String(input));
+    const headers = new Headers(init?.headers);
+    const body = typeof init?.body === "string" ? JSON.parse(init.body) : null;
+    calls.push({
+      path: url.pathname,
+      method: init?.method || "GET",
+      authorization: headers.get("authorization"),
+      body,
+    });
+    const reply = (
+      value: unknown,
+      status = 200,
+      responseHeaders: Record<string, string> = {},
+    ) =>
+      new Response(JSON.stringify(value), {
+        status,
+        headers: { "Content-Type": "application/json", ...responseHeaders },
+      });
+    if (url.pathname === "/auth/v1/user")
+      return options.authFail
+        ? reply({ message: "expired" }, 401)
+        : reply({
+            id: userId,
+            email: options.email ?? "Master@Peralta.com",
+            aud: "authenticated",
+          });
+    if (url.pathname === "/rest/v1/profiles") {
+      if (headers.get("authorization") === "Bearer private-test-key")
+        return reply([
+          {
+            id: teacherId,
+            full_name: "Ana Exemplo",
+            email: "ana@peralta.com",
+            active: true,
+            created_at: "2026-09-01T12:00:00.000Z",
+          },
+          {
+            id: "10000000-0000-4000-8000-000000000003",
+            full_name: "Bruno Exemplo",
+            email: "bruno@peralta.com",
+            active: false,
+            created_at: "2026-09-02T12:00:00.000Z",
+          },
+        ]);
+      return reply({
+        role: options.role ?? "admin",
+        active: options.active !== false,
+      });
+    }
+    if (url.pathname === "/auth/v1/admin/users" && init?.method === "POST")
+      return options.duplicate
+        ? reply({ message: "User already registered", code: "email_exists" }, 422)
+        : reply({
+            user: {
+              id: teacherId,
+              email: "teste@peralta.com",
+              created_at: "2026-09-12T20:00:00.000Z",
+              last_sign_in_at: null,
+              user_metadata: { full_name: "Professor de Teste" },
+              app_metadata: {},
+              aud: "authenticated",
+            },
+          });
+    if (url.pathname === "/auth/v1/admin/users")
+      return reply({
+        users: [
+          {
+            id: teacherId,
+            email: "ana@peralta.com",
+            last_sign_in_at: options.lastSignIn ?? null,
+          },
+          {
+            id: "10000000-0000-4000-8000-000000000003",
+            email: "bruno@peralta.com",
+            last_sign_in_at: "2026-09-12T21:30:00.000Z",
+          },
+        ],
+      });
+    if (url.pathname === "/rest/v1/rpc/log_admin_event")
+      return options.auditFail
+        ? reply({ message: "private SQL" }, 500)
+        : reply(null);
+    throw new Error(`Unexpected upstream: ${url.pathname}`);
+  });
+  return { fetcher: fetcher as typeof fetch, calls };
+}
+
+describe("Worker Master", () => {
+  it("exige bearer antes de consultar serviços", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("GET", "/api/master/status", undefined, ""),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(401);
+    expect(backend.calls).toHaveLength(0);
+  });
+
+  it.each([
+    ["professor", { role: "teacher" as const }, 403],
+    ["admin comum", { email: "admin@peralta.com" }, 403],
+    ["perfil inativo", { active: false }, 403],
+  ])("bloqueia %s", async (_name, options, status) => {
+    const backend = masterBackend(options);
+    const response = await handleRequest(
+      masterRequest("GET", "/api/master/status"),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(status);
+  });
+
+  it("reconhece Master com e-mails normalizados", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("GET", "/api/master/status"),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ isMaster: true });
+  });
+
+  it("retorna erro seguro quando MASTER_EMAIL está ausente", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("GET", "/api/master/status"),
+      { ...masterEnv, MASTER_EMAIL: "" },
+      backend.fetcher,
+    );
+    expect(response.status).toBe(503);
+    expect(await response.text()).not.toContain("Master@Peralta.com");
+  });
+
+  it("cria usuário confirmado e audita sem retornar senha", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST"),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(201);
+    expect(await response.text()).not.toContain("senha-segura-123");
+    const createCall = backend.calls.find(
+      (call) => call.path === "/auth/v1/admin/users",
+    );
+    expect(createCall?.authorization).toBe("Bearer private-test-key");
+    expect(createCall?.body).toMatchObject({
+      email: "teste@peralta.com",
+      password: "senha-segura-123",
+      email_confirm: true,
+      user_metadata: { full_name: "Professor de Teste" },
+    });
+    const audit = backend.calls.find((call) =>
+      call.path.includes("log_admin_event"),
+    );
+    expect(audit?.authorization).toBe("Bearer valid-token");
+    expect(audit?.body).toEqual({
+      p_action: "master_teacher_created",
+      p_entity: teacherId,
+    });
+    expect(JSON.stringify(audit?.body)).not.toContain("senha-segura-123");
+  });
+
+  it.each([
+    [
+      { full_name: "A", email: "a@peralta.com", password: "senha-segura-123" },
+      "nome",
+    ],
+    [
+      { full_name: "Professor", email: "a@peralta.com", password: "curta" },
+      "senha inicial",
+    ],
+    [
+      {
+        full_name: "Professor",
+        email: "a@example.com",
+        password: "senha-segura-123",
+      },
+      "@peralta.com",
+    ],
+  ])("valida payload Master: %j", async (body, message) => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST", undefined, body),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(400);
+    expect((await response.text()).toLowerCase()).toContain(message);
+    expect(
+      backend.calls.some((call) => call.path === "/auth/v1/admin/users"),
+    ).toBe(false);
+  });
+
+  it("trata e-mail duplicado sem expor erro interno", async () => {
+    const backend = masterBackend({ duplicate: true });
+    const response = await handleRequest(
+      masterRequest("POST"),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: "Já existe uma conta com este e-mail.",
+    });
+  });
+
+  it("exige service role somente após autorizar o Master", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST"),
+      { ...masterEnv, SUPABASE_SERVICE_ROLE_KEY: "" },
+      backend.fetcher,
+    );
+    expect(response.status).toBe(503);
+    expect(
+      backend.calls.some((call) => call.path === "/auth/v1/admin/users"),
+    ).toBe(false);
+  });
+
+  it("lista professores combinando acessos presentes e ausentes", async () => {
+    const backend = masterBackend({
+      lastSignIn: "2026-09-12T21:00:00.000Z",
+    });
+    const response = await handleRequest(
+      masterRequest("GET"),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      teachers: [
+        expect.objectContaining({
+          id: teacherId,
+          last_sign_in_at: "2026-09-12T21:00:00.000Z",
+        }),
+        expect.objectContaining({
+          id: "10000000-0000-4000-8000-000000000003",
+          last_sign_in_at: "2026-09-12T21:30:00.000Z",
+        }),
+      ],
+    });
+    expect(
+      backend.calls.filter((call) => call.path === "/rest/v1/profiles"),
+    ).toHaveLength(2);
+    expect(
+      backend.calls.filter((call) => call.path === "/auth/v1/admin/users"),
+    ).toHaveLength(1);
+  });
+
+  it("representa como nulo quem nunca acessou", async () => {
+    const backend = masterBackend({ lastSignIn: null });
+    const response = await handleRequest(
+      masterRequest("GET"),
+      masterEnv,
+      backend.fetcher,
+    );
+    const result = (await response.json()) as {
+      teachers: { last_sign_in_at: string | null }[];
+    };
+    expect(result.teachers[0].last_sign_in_at).toBeNull();
   });
 });

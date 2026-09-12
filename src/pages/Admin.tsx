@@ -25,7 +25,7 @@ async function loadAdmin() {
   return results;
 }
 export default function Admin() {
-  const { profile } = useAuth();
+  const { profile, isMaster } = useAuth();
   const resource = useResource(`admin:${profile!.id}`, loadAdmin);
   if (!resource.data || resource.error) return <QueryState {...resource} />;
   const results = resource.data;
@@ -36,6 +36,7 @@ export default function Admin() {
       associations={results[2].data || []}
       students={results[3].data || []}
       settings={results[4].data}
+      isMaster={isMaster}
     />
   );
 }

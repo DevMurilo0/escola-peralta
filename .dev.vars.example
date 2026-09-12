@@ -2,6 +2,8 @@
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+# E-mail do único administrador autorizado a usar as operações Master.
+MASTER_EMAIL=
 # Optional locally: omitted means same origin as the request.
 # In production set the canonical HTTPS origin, without a trailing slash.
 # ALLOWED_ORIGIN=https://YOUR_DOMAIN

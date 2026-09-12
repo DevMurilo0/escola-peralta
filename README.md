@@ -70,6 +70,7 @@ Variáveis privadas do runtime:
 | `SUPABASE_URL` | URL do projeto Supabase |
 | `SUPABASE_PUBLISHABLE_KEY` | Validação da sessão e do perfil |
 | `SUPABASE_SERVICE_ROLE_KEY` | Operações administrativas autorizadas |
+| `MASTER_EMAIL` | E-mail do administrador autorizado às operações Master |
 | `ALLOWED_ORIGIN` | Origem HTTPS permitida em produção |
 
 No desenvolvimento, mantenha esses valores em `.dev.vars`. Em produção, configure-os como variables/secrets do Cloudflare Worker.
@@ -123,6 +124,7 @@ Configure primeiro as variáveis públicas no ambiente de build. Depois adicione
 npx wrangler secret put SUPABASE_URL
 npx wrangler secret put SUPABASE_PUBLISHABLE_KEY
 npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put MASTER_EMAIL
 npx wrangler secret put ALLOWED_ORIGIN
 npm run deploy
 ```

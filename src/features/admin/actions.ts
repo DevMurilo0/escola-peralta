@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requireSession } from "@/shared/services/session";
 import { adminApi } from "@/shared/services/admin-api";
 import { invalidateResources } from "@/shared/hooks/use-resource";
+import { createMasterTeacher } from "@/shared/services/master-api";
 const classSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(2).max(100),
@@ -24,6 +25,17 @@ export async function adminAction(
         : await client.from("classes").insert(values);
     } else if (kind === "teacher-create") {
       const result = await adminApi("teachers", input);
+      if (!result.error) invalidateResources();
+      return result;
+    } else if (kind === "master-teacher-create") {
+      const values = z
+        .object({
+          full_name: z.string().trim().min(3).max(150),
+          email: z.email().max(254),
+          password: z.string().min(12).max(128),
+        })
+        .parse(input);
+      const result = await createMasterTeacher(values);
       if (!result.error) invalidateResources();
       return result;
     } else if (kind === "teacher-edit") {

@@ -9,6 +9,7 @@ export async function installSupabaseTransport(
   page: Page,
   role: "teacher" | "admin" = "teacher",
   active = true,
+  master = false,
 ) {
   const user = {
     id: teacherId,
@@ -26,6 +27,17 @@ export async function installSupabaseTransport(
     role,
     active,
   };
+  let createdCredentials: { email: string; password: string } | null = null;
+  const masterTeachers = [
+    {
+      id: "10000000-0000-4000-8000-000000000004",
+      full_name: "Maria Ferreira",
+      email: "maria@peralta.com",
+      active: true,
+      created_at: "2026-09-01T12:00:00.000Z",
+      last_sign_in_at: null,
+    },
+  ];
   const token = `${Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url")}.${Buffer.from(JSON.stringify({ sub: teacherId, exp: Math.floor(Date.now() / 1000) + 3600, aud: "authenticated", role: "authenticated" })).toString("base64url")}.c2lnbmF0dXJl`;
   const session = () => ({
     access_token: token,
@@ -62,7 +74,23 @@ export async function installSupabaseTransport(
       await route.fulfill({ status: 204 });
       return;
     }
-    if (url.pathname.endsWith("/token")) state.tokenRequests++;
+    if (url.pathname.endsWith("/token")) {
+      state.tokenRequests++;
+      const credentials = route.request().postDataJSON() as {
+        email?: string;
+        password?: string;
+      };
+      if (
+        createdCredentials &&
+        credentials.email === createdCredentials.email &&
+        credentials.password === createdCredentials.password
+      ) {
+        user.email = createdCredentials.email;
+        profile.email = createdCredentials.email;
+        profile.full_name = "Professor Criado";
+        profile.role = "teacher";
+      }
+    }
     await route.fulfill({
       json: url.pathname.endsWith("/user") ? user : session(),
     });
@@ -180,9 +208,45 @@ export async function installSupabaseTransport(
     else throw new Error(`Unexpected query ${entity}`);
     await route.fulfill({ json: data });
   });
+  await page.route("**/api/master/**", async (route) => {
+    if (profile.role !== "admin" || !master) {
+      await route.fulfill({
+        status: 403,
+        json: { error: "Acesso não autorizado." },
+      });
+      return;
+    }
+    if (!route.request().headers().authorization?.startsWith("Bearer "))
+      throw new Error("Master request missing token");
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith("/status")) {
+      await route.fulfill({ json: { isMaster: true } });
+      return;
+    }
+    if (route.request().method() === "GET") {
+      await route.fulfill({ json: { teachers: masterTeachers } });
+      return;
+    }
+    const body = route.request().postDataJSON() as {
+      full_name: string;
+      email: string;
+      password: string;
+    };
+    createdCredentials = { email: body.email, password: body.password };
+    const teacher = {
+      id: "10000000-0000-4000-8000-000000000005",
+      full_name: body.full_name,
+      email: body.email,
+      active: true,
+      created_at: new Date().toISOString(),
+      last_sign_in_at: null,
+    };
+    masterTeachers.push(teacher);
+    await route.fulfill({ status: 201, json: { success: true, teacher } });
+  });
   await page.route("**/api/admin/**", async (route) => {
     state.workerRequests++;
-    if (role !== "admin") {
+    if (profile.role !== "admin") {
       await route.fulfill({
         status: 403,
         json: { error: "Acesso não autorizado." },
@@ -202,10 +266,20 @@ export async function installSupabaseTransport(
   return state;
 }
 export async function signIn(page: Page, role = "teacher") {
+  return signInWithCredentials(
+    page,
+    `${role}@example.test`,
+    "senha-ficticia-apenas-teste",
+  );
+}
+
+export async function signInWithCredentials(
+  page: Page,
+  email: string,
+  password: string,
+) {
   await page.goto("/portal/login");
-  await page.getByLabel("E-mail", { exact: true }).fill(`${role}@example.test`);
-  await page
-    .getByLabel("Senha", { exact: true })
-    .fill("senha-ficticia-apenas-teste");
+  await page.getByLabel("E-mail", { exact: true }).fill(email);
+  await page.getByLabel("Senha", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Entrar no portal" }).click();
 }

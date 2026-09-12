@@ -34,7 +34,7 @@ function middleware(load: () => Promise<Handler>) {
       const url = new URL(req.url, `http://${req.headers.host || "localhost:5173"}`);
       const request = new Request(url, { method: req.method, headers, ...(["GET", "HEAD"].includes(req.method || "GET") ? {} : { body: new Uint8Array(Buffer.concat(chunks)) }) });
       const values = existsSync(".dev.vars") ? parseEnv(readFileSync(".dev.vars", "utf8")) : {};
-      const env: Env = { SUPABASE_URL: values.SUPABASE_URL || "", SUPABASE_PUBLISHABLE_KEY: values.SUPABASE_PUBLISHABLE_KEY || "", SUPABASE_SERVICE_ROLE_KEY: values.SUPABASE_SERVICE_ROLE_KEY || "", ALLOWED_ORIGIN: values.ALLOWED_ORIGIN, ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } };
+      const env: Env = { SUPABASE_URL: values.SUPABASE_URL || "", SUPABASE_PUBLISHABLE_KEY: values.SUPABASE_PUBLISHABLE_KEY || "", SUPABASE_SERVICE_ROLE_KEY: values.SUPABASE_SERVICE_ROLE_KEY || "", MASTER_EMAIL: values.MASTER_EMAIL, ALLOWED_ORIGIN: values.ALLOWED_ORIGIN, ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } };
       const handler = await load();
       const result = await handler(request, env);
       res.writeHead(result.status, Object.fromEntries(result.headers));

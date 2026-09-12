@@ -9,6 +9,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { configured, db } from "@/shared/supabase/client";
 import { invalidateResources } from "@/shared/hooks/use-resource";
+import { masterStatus } from "@/shared/services/master-api";
 export type Profile = {
   id: string;
   full_name: string;
@@ -19,6 +20,7 @@ export type Profile = {
 type AuthState = {
   session: Session | null;
   profile: Profile | null;
+  isMaster: boolean;
   loading: boolean;
   error?: string;
 };
@@ -29,24 +31,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
     session: null,
     profile: null,
+    isMaster: false,
     loading: configured(),
   });
   const generation = useRef(0);
   const userId = useRef<string | null>(null);
+  const masterCache = useRef<{ token: string; value: boolean } | null>(null);
   const sync = useCallback(async (session: Session | null) => {
     const request = ++generation.current;
     const id = session?.user.id ?? null;
     if (userId.current !== id) {
       invalidateResources();
       userId.current = id;
+      masterCache.current = null;
     }
     if (!session) {
-      setState({ session: null, profile: null, loading: false });
+      setState({
+        session: null,
+        profile: null,
+        isMaster: false,
+        loading: false,
+      });
       return;
     }
     setState((old) => ({
       session,
       profile: old.profile?.id === id ? old.profile : null,
+      isMaster: old.profile?.id === id ? old.isMaster : false,
       loading: !old.profile || old.profile.id !== id,
     }));
     try {
@@ -56,9 +67,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("id", id)
         .maybeSingle();
       if (request !== generation.current) return;
+      const profile = data as Profile | null;
+      let isMaster = false;
+      if (profile?.active && profile.role === "admin") {
+        if (masterCache.current?.token === session.access_token) {
+          isMaster = masterCache.current.value;
+        } else {
+          isMaster = await masterStatus(session.access_token);
+          masterCache.current = { token: session.access_token, value: isMaster };
+        }
+      }
+      if (request !== generation.current) return;
       setState({
         session,
-        profile: data as Profile | null,
+        profile,
+        isMaster,
         loading: false,
         error: error
           ? "Não foi possível verificar sua conta. Tente novamente."
@@ -69,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState({
           session,
           profile: null,
+          isMaster: false,
           loading: false,
           error: "Não foi possível conectar. Verifique sua conexão.",
         });
@@ -83,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setState({
             session: null,
             profile: null,
+            isMaster: false,
             loading: false,
             error: "Sua sessão não pôde ser recuperada. Recarregue a página.",
           });
@@ -92,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState({
           session: null,
           profile: null,
+          isMaster: false,
           loading: false,
           error: "Não foi possível recuperar sua sessão.",
         }),
