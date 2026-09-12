@@ -1,0 +1,239 @@
+import { test, expect } from "@playwright/test";
+import {
+  installSupabaseTransport,
+  signIn,
+  classId,
+  studentId,
+} from "./supabase-transport";
+import { todayRecife } from "../../src/utils/academic";
+
+for (const role of ["teacher", "admin"] as const) {
+  test(`${role}: rotas diretas e refresh preservam sessão`, async ({
+    page,
+  }) => {
+    const state = await installSupabaseTransport(page, role);
+    await signIn(page, role);
+    await expect(
+      page.getByRole("heading", { name: "Olá, Ana." }),
+    ).toBeVisible();
+    const routes = [
+      ["/portal", "Olá, Ana."],
+      ["/portal/turmas", "Olá, Ana."],
+      ["/portal/calendario", "Calendário de chamadas"],
+      ["/portal/perfil", "Perfil"],
+      ...(role === "admin" ? [["/portal/admin", "Administração"]] : []),
+    ];
+    for (const [path, heading] of routes) {
+      const response = await page.goto(path);
+      expect(response?.status()).toBe(200);
+      await expect(
+        page.getByRole("heading", { name: heading, exact: true }),
+      ).toBeVisible();
+      await page.reload();
+      await expect(page).toHaveURL(path);
+      await expect(
+        page.getByRole("heading", { name: heading, exact: true }),
+      ).toBeVisible();
+    }
+    expect(state.tokenRequests).toBe(1);
+    const document = await page.evaluate(() => performance.timeOrigin);
+    for (const label of ["Minhas turmas", "Calendário", "Perfil", "Início"]) {
+      await page
+        .getByRole("navigation", { name: "Portal", exact: true })
+        .getByRole("link", { name: label, exact: true })
+        .click();
+      await expect(page.locator("h1")).toBeVisible();
+      expect(await page.evaluate(() => performance.timeOrigin)).toBe(document);
+    }
+  });
+}
+
+test("confirmação de convite abre diretamente e aguarda clique", async ({
+  page,
+}) => {
+  let verificationRequests = 0;
+  await page.route("**/auth/v1/verify**", async (route) => {
+    verificationRequests++;
+    await route.fulfill({
+      status: 400,
+      json: { message: "Invalid test token" },
+    });
+  });
+  await page.goto("/auth/confirm?token_hash=test&type=invite");
+  await expect(
+    page.getByRole("heading", { name: "Seu acesso ao Portal Peralta" }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Confirmar meu acesso" }),
+  ).toBeVisible();
+  expect(verificationRequests).toBe(0);
+  await page.getByRole("button", { name: "Confirmar meu acesso" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Link inválido ou expirado",
+  );
+  expect(verificationRequests).toBe(1);
+});
+
+test("professor: login, sessão persistida, notas e chamada persistem após refresh", async ({
+  page,
+}) => {
+  const state = await installSupabaseTransport(page);
+  await signIn(page);
+  await expect(page.getByRole("heading", { name: "Olá, Ana." })).toBeVisible();
+  await page.getByRole("link", { name: /Acessar turma/ }).click();
+  await page.getByRole("button", { name: "Abrir I Bimestre" }).click();
+  await page.getByRole("button", { name: /Notas por atividade/ }).click();
+  await page.getByLabel("1ª Nota de Alice Exemplo").fill("8");
+  await page.getByLabel("2ª Nota de Alice Exemplo").fill("9");
+  await expect(page.locator(".grade-average")).toContainText("8,5");
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await expect(page.getByRole("status")).toContainText("Notas salvas");
+  await page.reload();
+  await expect(page.getByLabel("1ª Nota de Alice Exemplo")).toHaveValue("8");
+  await expect(page).toHaveURL(/term=1&module=grades/);
+  expect(state.tokenRequests).toBe(1);
+  await page.getByRole("button", { name: "3º Ano A", exact: true }).click();
+  await page.getByRole("button", { name: "Abrir II Bimestre" }).click();
+  await page.getByRole("button", { name: /Frequência diária/ }).click();
+  await page
+    .getByRole("button", { name: "Marcar todos como presentes" })
+    .click();
+  await page.getByLabel("Falta justificada", { exact: true }).check();
+  await page.getByRole("button", { name: "Salvar frequência" }).click();
+  await expect(page.getByRole("status")).toContainText("Frequência salva");
+  await page.reload();
+  await expect(page).toHaveURL(/term=2&module=attendance/);
+  await expect(page.getByRole("heading", { name: "Frequência diária" })).toBeVisible();
+  await expect(
+    page.getByLabel("Falta justificada", { exact: true }),
+  ).toBeChecked();
+  expect(state.sessions).toHaveLength(1);
+  expect(state.sessions[0].date).toBe(todayRecife());
+});
+
+test("professor cria turma própria pelo portal", async ({ page }) => {
+  await installSupabaseTransport(page);
+  await signIn(page);
+  await page.getByRole("button", { name: "+ Nova turma" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel(/Nome da turma/).fill("5º Ano A");
+  await dialog.getByLabel(/Série\/Ano/).fill("5º Ano");
+  await dialog.getByLabel(/Turno/).selectOption("Tarde");
+  await dialog.getByRole("button", { name: "Criar turma" }).click();
+  await expect(page).toHaveURL(new RegExp(`/portal/turmas/${classId}$`));
+  await expect(page.getByRole("heading", { name: "5º Ano A" })).toBeVisible();
+});
+
+test("I–IV bimestres, conteúdos curriculares e resultado final ficam integrados", async ({
+  page,
+}) => {
+  const state = await installSupabaseTransport(page);
+  state.grades = [1, 2, 3, 4].map((term) => ({
+    student_id: studentId,
+    term,
+    activity_score: 7,
+    exam_score: 9,
+    average: 8,
+  }));
+  await signIn(page);
+  await page.getByRole("link", { name: /Acessar turma/ }).click();
+  for (const term of ["I", "II", "III", "IV"])
+    await expect(
+      page.getByRole("button", { name: `Abrir ${term} Bimestre`, exact: true }),
+    ).toBeVisible();
+
+  await page.getByRole("button", { name: "Abrir I Bimestre" }).click();
+  await page
+    .getByRole("button", { name: /Registro dos conteúdos curriculares trabalhados/ })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Conteúdos trabalhados" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "+ Registrar conteúdo" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel(/Componente curricular/).fill("Matemática");
+  await dialog.getByLabel(/Conteúdo trabalhado/).fill("Frações equivalentes");
+  await dialog.getByRole("button", { name: "Salvar conteúdo" }).click();
+  await expect(page.getByText("Frações equivalentes")).toBeVisible();
+
+  await page.getByRole("button", { name: "3º Ano A", exact: true }).click();
+  await page.getByRole("button", { name: /Resultado final/ }).click();
+  await expect(page.getByRole("columnheader", { name: "Situação" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "8,0", exact: true })).toHaveCount(5);
+  await expect(page.getByRole("cell", { name: "Aprovado" })).toBeVisible();
+
+  state.grades = state.grades.slice(0, 3);
+  await page.reload();
+  await expect(page.getByRole("cell", { name: "Em andamento" })).toBeVisible();
+
+  state.grades = [1, 2, 3, 4].map((term) => ({
+    student_id: studentId,
+    term,
+    activity_score: 5,
+    exam_score: 6,
+    average: 5.5,
+  }));
+  await page.reload();
+  await expect(page.getByRole("cell", { name: "5,5", exact: true })).toHaveCount(5);
+  await expect(page.getByRole("cell", { name: "Abaixo da média" })).toBeVisible();
+});
+
+test("guard bloqueia professor em administração; logout encerra a sessão", async ({
+  page,
+}) => {
+  await installSupabaseTransport(page);
+  await signIn(page);
+  await expect(page.getByRole("heading", { name: "Olá, Ana." })).toBeVisible();
+  await page.goto("/portal/admin");
+  await expect(
+    page.getByRole("heading", { name: "Acesso não autorizado" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Sair", exact: true }).click();
+  await expect(page).toHaveURL(/\/portal\/login/);
+  await page.goto(`/portal/turmas/${classId}`);
+  await expect(page).toHaveURL(/\/portal\/login/);
+});
+
+test("guard bloqueia conta inativa", async ({ page }) => {
+  await installSupabaseTransport(page, "teacher", false);
+  await signIn(page);
+  await expect(
+    page.getByRole("heading", { name: "Acesso não autorizado" }),
+  ).toBeVisible();
+});
+
+test("administrador acessa painel e solicita criação por API com bearer", async ({
+  page,
+}) => {
+  const state = await installSupabaseTransport(page, "admin");
+  await signIn(page, "admin");
+  await page.getByRole("link", { name: "Administração", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Administração", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Professores", exact: true }).click();
+  await page.getByRole("button", { name: /Criar professor/ }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel(/Nome/).fill("Professor Exemplo");
+  await dialog.getByLabel(/E-mail/).fill("novo@example.test");
+  await dialog.getByRole("button", { name: "Salvar professor" }).click();
+  await expect(page.getByRole("status")).toContainText("Operação concluída");
+  expect(state.workerRequests).toBe(1);
+});
+
+test("refresh direto, API real sem autenticação e cabeçalhos privados", async ({
+  page,
+  request,
+}) => {
+  const response = await request.post("/api/admin/teachers", { data: {} });
+  expect(response.status()).toBe(401);
+  expect(response.headers()["content-type"]).toContain("application/json");
+  const privatePage = await request.get("/portal/admin");
+  expect(privatePage.status()).toBe(200);
+  expect(privatePage.headers()["x-robots-tag"]).toContain("noindex");
+  await page.goto(
+    "/portal/turmas/20000000-0000-4000-8000-000000000001?term=4&module=attendance",
+  );
+  await expect(page).toHaveURL(/\/portal\/login/);
+});

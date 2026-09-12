@@ -1,0 +1,15 @@
+# Worker runtime only. Copy to .dev.vars for local development (ignored by Git).
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+# Optional locally: omitted means same origin as the request.
+# In production set the canonical HTTPS origin, without a trailing slash.
+# ALLOWED_ORIGIN=https://YOUR_DOMAIN
+
+# Manual emergency/bootstrap only. No command runs this automatically.
+# The existing hosted administrator must continue to be used.
+BOOTSTRAP_ADMIN_EMAIL=
+BOOTSTRAP_ADMIN_PASSWORD=
+BOOTSTRAP_ADMIN_NAME=
+ALLOW_DEVELOPMENT_SEED=false
+DEMO_TEACHER_PASSWORD=

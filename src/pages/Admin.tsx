@@ -1,0 +1,41 @@
+import { useResource } from "@/hooks/use-resource";
+import { QueryState } from "@/components/query-state";
+import { db } from "@/lib/supabase/client";
+import { useAuth } from "@/features/auth/auth-context";
+import { AdminPanel } from "@/features/admin/admin-panel";
+async function loadAdmin() {
+  const client = db();
+  const results = await Promise.all([
+    client
+      .from("profiles")
+      .select("*")
+      .eq("role", "teacher")
+      .order("full_name"),
+    client
+      .from("classes")
+      .select("*,enrollments(id,status)")
+      .order("school_year", { ascending: false })
+      .order("name"),
+    client.from("teacher_classes").select("*"),
+    client.from("students").select("*").order("full_name"),
+    client.from("school_settings").select("*").single(),
+  ]);
+  if (results.some((r) => r.error))
+    throw new Error("Falha ao carregar administração.");
+  return results;
+}
+export default function Admin() {
+  const { profile } = useAuth();
+  const resource = useResource(`admin:${profile!.id}`, loadAdmin);
+  if (!resource.data || resource.error) return <QueryState {...resource} />;
+  const results = resource.data;
+  return (
+    <AdminPanel
+      teachers={results[0].data || []}
+      classes={results[1].data || []}
+      associations={results[2].data || []}
+      students={results[3].data || []}
+      settings={results[4].data}
+    />
+  );
+}

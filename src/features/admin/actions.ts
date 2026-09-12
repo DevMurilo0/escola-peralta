@@ -1,0 +1,98 @@
+import { z } from "zod";
+import { requireSession } from "@/services/session";
+import { adminApi } from "@/services/admin-api";
+import { invalidateResources } from "@/hooks/use-resource";
+const classSchema = z.object({
+  id: z.uuid().optional(),
+  name: z.string().trim().min(2).max(100),
+  grade_level: z.string().trim().min(2).max(80),
+  shift: z.enum(["Manhã", "Tarde", "Integral"]),
+  school_year: z.number().int().min(2000).max(2200),
+  active: z.boolean(),
+});
+export async function adminAction(
+  kind: string,
+  input: unknown,
+): Promise<{ error?: string; success?: boolean; link?: string }> {
+  try {
+    const { client, user } = await requireSession(true);
+    let result;
+    if (kind === "class") {
+      const { id, ...values } = classSchema.parse(input);
+      result = id
+        ? await client.from("classes").update(values).eq("id", id)
+        : await client.from("classes").insert(values);
+    } else if (kind === "teacher-create") {
+      const result = await adminApi("teachers", input);
+      if (!result.error) invalidateResources();
+      return result;
+    } else if (kind === "teacher-edit") {
+      const v = z
+        .object({
+          id: z.uuid(),
+          full_name: z.string().trim().min(3).max(150),
+          active: z.boolean(),
+        })
+        .parse(input);
+      if (v.id === user.id)
+        return {
+          error: "Sua própria conta não pode ser desativada por esta tela.",
+        };
+      result = await client
+        .from("profiles")
+        .update({
+          full_name: v.full_name,
+          active: v.active,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", v.id)
+        .eq("role", "teacher");
+    } else if (kind === "teacher-link") {
+      return await adminApi("teachers/access-link", input);
+    } else if (kind === "association") {
+      const v = z
+        .object({
+          teacher_id: z.uuid(),
+          class_id: z.uuid(),
+          can_manage_students: z.boolean(),
+        })
+        .parse(input);
+      result = await client.from("teacher_classes").insert(v);
+    } else if (kind === "unlink") {
+      const v = z.object({ id: z.uuid() }).parse(input);
+      result = await client.from("teacher_classes").delete().eq("id", v.id);
+    } else if (kind === "enroll-existing") {
+      const v = z
+        .object({ student_id: z.uuid(), class_id: z.uuid() })
+        .parse(input);
+      result = await client.rpc("enroll_existing", {
+        p_student: v.student_id,
+        p_class: v.class_id,
+      });
+    } else if (kind === "settings") {
+      const v = z
+        .object({
+          school_year: z.number().int().min(2000).max(2200),
+          passing_grade: z.number().min(0).max(10),
+        })
+        .parse(input);
+      result = await client.from("school_settings").update(v).eq("id", true);
+    } else return { error: "Operação inválida." };
+    if (result?.error)
+      return {
+        error:
+          result.error.code === "23505"
+            ? "Este vínculo já existe."
+            : result.error.code === "P0001"
+              ? result.error.message
+              : "Não foi possível salvar. Confira os campos e os vínculos existentes.",
+      };
+    invalidateResources();
+    return { success: true };
+  } catch {
+    return {
+      error:
+        "Não foi possível concluir. Verifique os dados e a configuração do servidor.",
+    };
+  }
+}
