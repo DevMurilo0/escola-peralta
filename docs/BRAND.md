@@ -1,0 +1,37 @@
+# Identidade da Escola Peralta
+
+## Estado atual
+
+A identidade usada no site é provisória. As referências públicas sustentam azul e verde como cores principais, com amarelo e coral em pequenos acentos, mas não substituem um manual de marca aprovado pela escola.
+
+| Uso | Cor |
+| --- | --- |
+| Azul principal | `#2353A0` |
+| Verde de apoio | `#397351` |
+| Amarelo de destaque | `#F2CE55` |
+| Coral de destaque | `#B64734` |
+| Fundo claro | `#FBF9F2` |
+| Texto escuro | `#20324A` |
+
+Bricolage Grotesque e DM Sans são escolhas editoriais hospedadas localmente, não fontes oficiais confirmadas.
+
+## Configuração
+
+- Logo e dados da escola: `src/config/school-config.ts`.
+- Textos, fotos e enquadramentos: `src/config/institutional-content.ts`.
+- Tokens do site institucional: `src/styles/institutional.css`.
+- Tokens do portal: `src/styles/globals.css`.
+- Arquivos oficiais de marca, quando fornecidos: `public/images/brand/`.
+
+Prefira o logo original em SVG. Como alternativa, use PNG ou WebP transparente com boa resolução e preserve sua proporção. Depois de adicionar o arquivo, configure `school.logo`.
+
+## Fotos e informações pendentes
+
+Publique somente fotografias autorizadas pela escola e, quando houver pessoas identificáveis, confirme a autorização de uso de imagem. Prefira arquivos WebP/AVIF otimizados e não exponha nomes ou dados de alunos.
+
+A escola ainda precisa confirmar o logo atual, a paleta oficial, tipografia, fotos autorizadas, missão, proposta pedagógica, contatos e descrição dos espaços.
+
+## Referências
+
+- [Instagram oficial](https://www.instagram.com/escolaperaltagravata/)
+- [Cadastro público da escola](https://www.melhorescola.com.br/escola/escola-peralta-gravata)

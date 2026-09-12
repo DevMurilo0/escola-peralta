@@ -1,6 +1,6 @@
 import { useState, useTransition } from "react";
 import { changePassword } from "./profile-actions";
-import { Feedback } from "@/components/feedback";
+import { Feedback } from "@/shared/components/feedback";
 export function ProfileForm() {
   const [message, setMessage] = useState("");
   const [pending, start] = useTransition();

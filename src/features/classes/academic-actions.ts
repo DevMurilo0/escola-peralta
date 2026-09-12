@@ -1,13 +1,13 @@
-import { db } from "@/lib/supabase/client";
+import { db } from "@/shared/supabase/client";
 import {
   studentSchema,
   termSchema,
   gradeSchema,
   attendanceSchema,
   dateSchema,
-} from "@/schemas/academic";
+} from "@/shared/academic/schemas";
 import { z } from "zod";
-import { invalidateResources } from "@/hooks/use-resource";
+import { invalidateResources } from "@/shared/hooks/use-resource";
 export async function academicAction(
   kind: "student" | "enrollment" | "grades" | "attendance",
   input: unknown,

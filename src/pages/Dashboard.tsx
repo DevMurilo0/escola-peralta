@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { ClassForm, ArchiveClass } from "@/features/classes/class-form";
-import { Feedback } from "@/components/feedback";
-import type { SchoolClass } from "@/types/academic";
+import { Feedback } from "@/shared/components/feedback";
+import type { SchoolClass } from "@/shared/academic/types";
 import { Link, useNavigate } from "react-router-dom";
-import { useResource } from "@/hooks/use-resource";
-import { QueryState } from "@/components/query-state";
-import { db } from "@/lib/supabase/client";
+import { useResource } from "@/shared/hooks/use-resource";
+import { QueryState } from "@/shared/components/query-state";
+import { db } from "@/shared/supabase/client";
 import { useAuth } from "@/features/auth/auth-context";
-import { todayRecife } from "@/utils/academic";
+import { todayRecife } from "@/shared/academic/utils";
 import { ArrowUpRight, BookOpen, CheckCircle, Clock } from "lucide-react";
 async function loadDashboard() {
   const client = db();

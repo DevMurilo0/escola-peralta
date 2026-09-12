@@ -2,13 +2,13 @@ import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { db } from "@/lib/supabase/client";
-import { useResource, invalidateResources } from "@/hooks/use-resource";
-import { QueryState } from "@/components/query-state";
-import { Feedback, Modal } from "@/components/feedback";
-import { curriculumSchema } from "@/schemas/academic";
-import { todayRecife } from "@/utils/academic";
-import type { CurriculumRecord } from "@/types/academic";
+import { db } from "@/shared/supabase/client";
+import { useResource, invalidateResources } from "@/shared/hooks/use-resource";
+import { QueryState } from "@/shared/components/query-state";
+import { Feedback, Modal } from "@/shared/components/feedback";
+import { curriculumSchema } from "@/shared/academic/schemas";
+import { todayRecife } from "@/shared/academic/utils";
+import type { CurriculumRecord } from "@/shared/academic/types";
 function CurriculumForm({ record, classId, term, year, onSaved }: {
   record: CurriculumRecord | null; classId: string; term: number; year: number; onSaved: () => void;
 }) {

@@ -1,6 +1,6 @@
-import { db } from "@/lib/supabase/client";
-import { loginSchema } from "@/schemas/academic";
-import { invalidateResources } from "@/hooks/use-resource";
+import { db } from "@/shared/supabase/client";
+import { loginSchema } from "@/shared/academic/schemas";
+import { invalidateResources } from "@/shared/hooks/use-resource";
 export async function login(values: unknown) {
   const parsed = loginSchema.safeParse(values);
   if (!parsed.success) return { error: "Confira o e-mail e a senha." };

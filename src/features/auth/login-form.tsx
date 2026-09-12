@@ -2,9 +2,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@/schemas/academic";
+import { loginSchema } from "@/shared/academic/schemas";
 import { login } from "./actions";
-import { Feedback } from "@/components/feedback";
+import { Feedback } from "@/shared/components/feedback";
 export function LoginForm({ enabled }: { enabled: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();

@@ -1,5 +1,5 @@
-import type { Enrollment, Grade } from "@/types/academic";
-import { alphabetical, callNumber, termNames } from "@/utils/academic";
+import type { Enrollment, Grade } from "@/shared/academic/types";
+import { alphabetical, callNumber, termNames } from "@/shared/academic/utils";
 const FINAL_PASSING_GRADE = 6;
 const formatAverage = (value: number) => value.toLocaleString("pt-BR", {
   minimumFractionDigits: 1,

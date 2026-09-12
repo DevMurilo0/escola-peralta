@@ -10,9 +10,9 @@ const result = await build({
   jsx: "automatic",
   define: { "process.env.NODE_ENV": '"development"' },
   alias: {
-    "@/features/classes/actions": resolve("tests/browser/fixture-actions.ts"),
+    "@/features/classes/academic-actions": resolve("tests/browser/fixture-actions.ts"),
     "@/features/auth/actions": resolve("tests/browser/fixture-actions.ts"),
-    "@/hooks/use-resource": resolve("tests/browser/fixture-navigation.ts"),
+    "@/shared/hooks/use-resource": resolve("tests/browser/fixture-navigation.ts"),
   },
   logLevel: "error",
 });

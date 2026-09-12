@@ -1,8 +1,8 @@
 import { useState, useTransition } from "react";
-import { academicAction } from "@/features/classes/actions";
-import { average, parseScore, alphabetical, callNumber } from "@/utils/academic";
-import type { Enrollment, Grade } from "@/types/academic";
-import { Feedback } from "@/components/feedback";
+import { academicAction } from "@/features/classes/academic-actions";
+import { average, parseScore, alphabetical, callNumber } from "@/shared/academic/utils";
+import type { Enrollment, Grade } from "@/shared/academic/types";
+import { Feedback } from "@/shared/components/feedback";
 export function GradesEditor({
   classId,
   term,

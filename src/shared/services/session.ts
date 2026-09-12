@@ -1,4 +1,5 @@
-import { db } from "@/lib/supabase/client";
+import { db } from "@/shared/supabase/client";
+
 // UX check; the database independently authorizes every request through RLS.
 export async function requireSession(admin = false) {
   const client = db();

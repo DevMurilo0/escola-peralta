@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { db } from "@/lib/supabase/client";
+import { db } from "@/shared/supabase/client";
 // Confirmation by an explicit click prevents email/security link scanners consuming a one-time token.
 export default function Confirm() {
   const [params] = useSearchParams();

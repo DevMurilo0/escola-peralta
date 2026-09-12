@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { average, age, gradeStatus, todayRecife } from "@/utils/academic";
+import { average, age, gradeStatus, todayRecife } from "@/shared/academic/utils";
 import {
   scoreSchema,
   termSchema,
   attendanceSchema,
   studentSchema,
-} from "@/schemas/academic";
+} from "@/shared/academic/schemas";
 describe("Regras acadêmicas", () => {
   it("calcula exatamente (atividade + prova) / 2", () => {
     expect(average(8, 9)).toBe(8.5);

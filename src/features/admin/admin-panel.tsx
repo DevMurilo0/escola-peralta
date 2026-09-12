@@ -1,9 +1,9 @@
 import { useState, useTransition } from "react";
-import { invalidateResources } from "@/hooks/use-resource";
+import { invalidateResources } from "@/shared/hooks/use-resource";
 import { Link } from "react-router-dom";
 import { adminAction } from "./actions";
-import { Feedback, Modal } from "@/components/feedback";
-import type { SchoolClass, Student } from "@/types/academic";
+import { Feedback, Modal } from "@/shared/components/feedback";
+import type { SchoolClass, Student } from "@/shared/academic/types";
 type Teacher = {
   id: string;
   full_name: string;

@@ -2,10 +2,10 @@ import { useState, useTransition } from "react";
 import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, parseISO, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Check, CalendarDays } from "lucide-react";
-import { todayRecife, alphabetical, callNumber } from "@/utils/academic";
-import { academicAction } from "@/features/classes/actions";
-import { Feedback } from "@/components/feedback";
-import type { Enrollment, AttendanceSession, AttendanceRecord } from "@/types/academic";
+import { todayRecife, alphabetical, callNumber } from "@/shared/academic/utils";
+import { academicAction } from "@/features/classes/academic-actions";
+import { Feedback } from "@/shared/components/feedback";
+import type { Enrollment, AttendanceSession, AttendanceRecord } from "@/shared/academic/types";
 const labels = { present: "Presente", absent: "Falta", justified: "Falta justificada" };
 type Records = Record<string, AttendanceRecord["status"] | "">;
 export function AttendancePanel({ classId, year, term, enrollments, sessions, disabled, onDirty, onSaved }: {

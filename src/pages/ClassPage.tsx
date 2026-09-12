@@ -2,12 +2,12 @@ import { z } from "zod";
 import { useCallback } from "react";
 import { useParams } from "react-router-dom";
 import NotFound from "./NotFound";
-import { useResource } from "@/hooks/use-resource";
-import { QueryState } from "@/components/query-state";
-import { db } from "@/lib/supabase/client";
+import { useResource } from "@/shared/hooks/use-resource";
+import { QueryState } from "@/shared/components/query-state";
+import { db } from "@/shared/supabase/client";
 import { useAuth } from "@/features/auth/auth-context";
 import { ClassWorkspace } from "@/features/classes/class-workspace";
-import type { Enrollment, Grade, AttendanceSession } from "@/types/academic";
+import type { Enrollment, Grade, AttendanceSession } from "@/shared/academic/types";
 async function loadClass(id: string) {
   const client = db();
   const results = await Promise.all([

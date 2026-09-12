@@ -1,0 +1,12 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, eslint.config.mjs, playwright.config.ts, postcss.config.mjs, tsconfig.json, tsconfig.tsbuildinfo, vite.config.ts, vitest.config.mts, wrangler.jsonc",
+    ".env.example": ".env.local, .dev.vars.example, .dev.vars",
+    ".gitignore": ".prettierignore"
+  },
+  "files.exclude": {
+    "**/*.tsbuildinfo": true
+  }
+}

@@ -10,21 +10,21 @@ import {
   Pencil,
   Users,
 } from "lucide-react";
-import { Feedback } from "@/components/feedback";
+import { Feedback } from "@/shared/components/feedback";
 import { AttendancePanel } from "@/features/attendance/attendance-panel";
 import { ClassForm } from "@/features/classes/class-form";
 import CurriculumPanel from "@/features/curriculum/curriculum-panel";
 import FinalResults from "@/features/grades/final-results";
 import { GradesEditor } from "@/features/grades/grades-editor";
 import { StudentsPanel } from "@/features/students/students-panel";
-import { invalidateResources } from "@/hooks/use-resource";
-import { useUnsaved } from "@/hooks/use-unsaved";
+import { invalidateResources } from "@/shared/hooks/use-resource";
+import { useUnsaved } from "@/shared/hooks/use-unsaved";
 import type {
   AttendanceSession,
   Enrollment,
   Grade,
   SchoolClass,
-} from "@/types/academic";
+} from "@/shared/academic/types";
 
 const termLabels = ["I Bimestre", "II Bimestre", "III Bimestre", "IV Bimestre"];
 const modules = {

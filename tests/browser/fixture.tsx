@@ -2,7 +2,7 @@ import { BrowserRouter } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 import { PortalShell } from "@/components/portal-shell";
 import { ClassWorkspace } from "@/features/classes/class-workspace";
-import { todayRecife } from "@/utils/academic";
+import { todayRecife } from "@/shared/academic/utils";
 const today = todayRecife();
 const enrollments = ["Alice Exemplo", "Bruno Exemplo", "Clara Exemplo"].map(
   (full_name, i) => ({

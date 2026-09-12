@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { LoginForm } from "@/features/auth/login-form";
-import { configured } from "@/lib/supabase/client";
+import { configured } from "@/shared/supabase/client";
 import { useSearchParams } from "react-router-dom";
 export default function Login() {
   const [params] = useSearchParams();

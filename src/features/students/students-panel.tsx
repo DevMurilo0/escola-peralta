@@ -1,12 +1,12 @@
 import { useState, useTransition } from "react";
-import { invalidateResources } from "@/hooks/use-resource";
+import { invalidateResources } from "@/shared/hooks/use-resource";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { studentSchema } from "@/schemas/academic";
-import { academicAction } from "@/features/classes/actions";
-import { age, todayRecife, alphabetical, callNumber } from "@/utils/academic";
-import { Modal, Feedback } from "@/components/feedback";
-import type { Enrollment, Student } from "@/types/academic";
+import { studentSchema } from "@/shared/academic/schemas";
+import { academicAction } from "@/features/classes/academic-actions";
+import { age, todayRecife, alphabetical, callNumber } from "@/shared/academic/utils";
+import { Modal, Feedback } from "@/shared/components/feedback";
+import type { Enrollment, Student } from "@/shared/academic/types";
 export function StudentForm({
   student,
   classId,

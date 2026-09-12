@@ -1,4 +1,4 @@
-import { requireSession } from "@/services/session";
+import { requireSession } from "@/shared/services/session";
 import { z } from "zod";
 export async function changePassword(input: unknown) {
   const { client } = await requireSession();

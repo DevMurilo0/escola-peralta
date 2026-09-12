@@ -7,8 +7,8 @@ import {
   useState,
 } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { configured, db } from "@/lib/supabase/client";
-import { invalidateResources } from "@/hooks/use-resource";
+import { configured, db } from "@/shared/supabase/client";
+import { invalidateResources } from "@/shared/hooks/use-resource";
 export type Profile = {
   id: string;
   full_name: string;

@@ -3,7 +3,7 @@
 .institutional { --font-brand-display: "Peralta Display", sans-serif; --font-brand-body: "Peralta Body", sans-serif; }
 .editorial-photo { position: absolute; inset: 0; width: 100%; height: 100%; }
 /* Historical visual references, not a confirmed brand manual.
-   Rationale and sources: docs/IDENTIDADE-E-FOTOGRAFIAS.md. */
+   Rationale and sources: docs/BRAND.md. */
 .institutional {
   --brand-primary: #2353a0;
   --brand-secondary: #397351;

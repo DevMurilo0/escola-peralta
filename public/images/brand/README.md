@@ -1,1 +1,0 @@
-Coloque aqui o logo original atual da Escola Peralta (SVG, PNG ou WebP com boa resolução). Configure `school.logo` em `src/config/school-config.ts`. A miniatura encontrada em diretório público, com globo usando máscara e 128 px, não foi adotada como marca definitiva nem redesenhada. Consulte docs/IDENTIDADE-E-FOTOGRAFIAS.md.

@@ -4,6 +4,7 @@ export type Student = {
   birth_date: string;
   active: boolean;
 };
+
 export type Enrollment = {
   id: string;
   student_id: string;

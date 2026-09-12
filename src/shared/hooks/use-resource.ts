@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
+
 // Memory only; academic records are never persisted in browser storage.
 const cache = new Map<string, unknown>();
 const listeners = new Set<() => void>();

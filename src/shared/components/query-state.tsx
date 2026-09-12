@@ -1,4 +1,5 @@
 import Loading from "./loading";
+
 export function QueryState({
   error,
   retry,

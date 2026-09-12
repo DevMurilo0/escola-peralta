@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { requireSession } from "@/services/session";
-import { adminApi } from "@/services/admin-api";
-import { invalidateResources } from "@/hooks/use-resource";
+import { requireSession } from "@/shared/services/session";
+import { adminApi } from "@/shared/services/admin-api";
+import { invalidateResources } from "@/shared/hooks/use-resource";
 const classSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(2).max(100),

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { useResource } from "@/hooks/use-resource";
-import { QueryState } from "@/components/query-state";
-import { db } from "@/lib/supabase/client";
+import { useResource } from "@/shared/hooks/use-resource";
+import { QueryState } from "@/shared/components/query-state";
+import { db } from "@/shared/supabase/client";
 import { useAuth } from "@/features/auth/auth-context";
 async function loadCalendar() {
   const client = db();

@@ -1,1 +1,0 @@
-Imagens oficiais autorizadas serão colocadas aqui. Configure os caminhos em src/config/school-config.ts. Não adicione fotos de outras escolas nem apresente imagens geradas como registros reais. Hero, segmentos e galeria já têm composições de reserva em CSS; substitua-as pelos arquivos locais quando disponibilizados.

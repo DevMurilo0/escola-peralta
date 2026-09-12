@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { classSchema } from "@/schemas/academic";
-import { todayRecife } from "@/utils/academic";
-import type { SchoolClass } from "@/types/academic";
-import { Modal, Feedback } from "@/components/feedback";
+import { classSchema } from "@/shared/academic/schemas";
+import { todayRecife } from "@/shared/academic/utils";
+import type { SchoolClass } from "@/shared/academic/types";
+import { Modal, Feedback } from "@/shared/components/feedback";
 import { saveClass } from "./class-actions";
 export function ClassForm({ schoolClass, onClose, onSaved }: {
   schoolClass?: SchoolClass; onClose: () => void; onSaved: (id: string) => void;

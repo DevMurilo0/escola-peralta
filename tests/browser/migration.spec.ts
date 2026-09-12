@@ -5,7 +5,7 @@ import {
   classId,
   studentId,
 } from "./supabase-transport";
-import { todayRecife } from "../../src/utils/academic";
+import { todayRecife } from "../../src/shared/academic/utils";
 
 for (const role of ["teacher", "admin"] as const) {
   test(`${role}: rotas diretas e refresh preservam sessão`, async ({

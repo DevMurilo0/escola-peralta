@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/features/auth/auth-context";
 import { ProtectedRoute, AdminRoute } from "./guards";
-import Loading from "@/components/loading";
+import Loading from "@/shared/components/loading";
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const ClassPage = lazy(() => import("@/pages/ClassPage"));

@@ -1,7 +1,7 @@
 // Test-only HTTP double. The production app always uses Supabase; real SQL/RLS is
 // exercised independently in database.test.ts. Never mutates the hosted school.
 import type { Page } from "@playwright/test";
-import { todayRecife } from "../../src/utils/academic";
+import { todayRecife } from "../../src/shared/academic/utils";
 export const classId = "20000000-0000-4000-8000-000000000001";
 export const studentId = "30000000-0000-4000-8000-000000000001";
 const teacherId = "10000000-0000-4000-8000-000000000001";

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { todayRecife } from "@/utils/academic";
+import { todayRecife } from "@/shared/academic/utils";
+
 export const termSchema = z.number().int().min(1).max(4);
 export const scoreSchema = z.number().min(0).max(10).nullable();
 export const dateSchema = z.iso.date();

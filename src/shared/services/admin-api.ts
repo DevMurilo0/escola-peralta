@@ -1,4 +1,5 @@
-import { db } from "@/lib/supabase/client";
+import { db } from "@/shared/supabase/client";
+
 export async function adminApi(
   path: "teachers" | "teachers/access-link",
   payload: unknown,

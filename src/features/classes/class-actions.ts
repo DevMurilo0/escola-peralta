@@ -1,6 +1,6 @@
-import { db } from "@/lib/supabase/client";
-import { classSchema } from "@/schemas/academic";
-import { invalidateResources } from "@/hooks/use-resource";
+import { db } from "@/shared/supabase/client";
+import { classSchema } from "@/shared/academic/schemas";
+import { invalidateResources } from "@/shared/hooks/use-resource";
 import { z } from "zod";
 
 export async function saveClass(input: unknown, id?: string, active = true) {

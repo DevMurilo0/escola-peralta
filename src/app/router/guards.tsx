@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/features/auth/auth-context";
-import { QueryState } from "@/components/query-state";
-import Loading from "@/components/loading";
+import { QueryState } from "@/shared/components/query-state";
+import Loading from "@/shared/components/loading";
 import { PortalShell } from "@/components/portal-shell";
 export function ProtectedRoute() {
   const { loading, session, profile, error, retry } = useAuth();

@@ -1,6 +1,6 @@
-import { useResource } from "@/hooks/use-resource";
-import { QueryState } from "@/components/query-state";
-import { db } from "@/lib/supabase/client";
+import { useResource } from "@/shared/hooks/use-resource";
+import { QueryState } from "@/shared/components/query-state";
+import { db } from "@/shared/supabase/client";
 import { useAuth } from "@/features/auth/auth-context";
 import { AdminPanel } from "@/features/admin/admin-panel";
 async function loadAdmin() {

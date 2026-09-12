@@ -1,5 +1,5 @@
 /** Public website only. Editorial copy is editable, not an official slogan.
- * Evidence and authorization status: docs/IDENTIDADE-E-FOTOGRAFIAS.md.
+ * Evidence and authorization status: docs/BRAND.md.
  * Only assign local image paths after confirming permission to publish.
  */
 export type SchoolPhoto = {
