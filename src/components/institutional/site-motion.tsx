@@ -1,4 +1,8 @@
 import { useEffect, useRef } from "react";
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
 export function SiteMotion({
   children,
   className,
@@ -7,63 +11,170 @@ export function SiteMotion({
   className: string;
 }) {
   const root = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const media = matchMedia("(prefers-reduced-motion: reduce)");
-    const animations = new Set<Animation>();
+    const container = root.current;
+    if (!container) return;
+
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    const coarsePointer = matchMedia("(pointer: coarse)");
     let observer: IntersectionObserver | undefined;
-    const clear = () => {
-      observer?.disconnect();
-      animations.forEach((a) => a.cancel());
-      animations.clear();
-      root.current
-        ?.querySelectorAll<HTMLElement>("[data-reveal]")
-        .forEach((e) => {
-          e.style.removeProperty("opacity");
+    let frame = 0;
+    const cleanups: Array<() => void> = [];
+
+    const revealEverything = () => {
+      container
+        .querySelectorAll<HTMLElement>("[data-reveal]")
+        .forEach((element) => element.classList.add("is-revealed"));
+    };
+
+    const updateScrollMotion = () => {
+      frame = 0;
+      const hero = container.querySelector<HTMLElement>(".opening-scene");
+      if (hero) {
+        const distance = Math.max(innerHeight * 0.72, 1);
+        const progress = clamp(scrollY / distance, 0, 1);
+        hero.style.setProperty("--hero-scroll", progress.toFixed(3));
+      }
+
+      const allowParallax =
+        !reducedMotion.matches && innerWidth > 800 && !coarsePointer.matches;
+      container
+        .querySelectorAll<HTMLElement>("[data-parallax]")
+        .forEach((element) => {
+          if (!allowParallax) {
+            element.style.setProperty("--photo-parallax", "0px");
+            return;
+          }
+          const rect = element.getBoundingClientRect();
+          if (rect.bottom < -100 || rect.top > innerHeight + 100) return;
+          const speed = Number(element.dataset.parallax) || 0.025;
+          const offset = clamp(
+            (innerHeight / 2 - (rect.top + rect.height / 2)) * speed,
+            -24,
+            24,
+          );
+          element.style.setProperty(
+            "--photo-parallax",
+            `${offset.toFixed(2)}px`,
+          );
         });
     };
-    const start = () => {
-      clear();
-      if (media.matches || !("IntersectionObserver" in window)) return;
+
+    const requestScrollUpdate = () => {
+      if (!frame) frame = requestAnimationFrame(updateScrollMotion);
+    };
+
+    const startRevealSystem = () => {
+      observer?.disconnect();
+      container.classList.toggle("motion-ready", !reducedMotion.matches);
+      if (reducedMotion.matches || !("IntersectionObserver" in window)) {
+        revealEverything();
+        updateScrollMotion();
+        return;
+      }
+
       observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
-            const e = entry.target as HTMLElement;
-            e.style.removeProperty("opacity");
-            const animation = e.animate(
-              [
-                { opacity: 0, transform: "translateY(22px)" },
-                { opacity: 1, transform: "translateY(0)" },
-              ],
-              {
-                duration: 600,
-                delay: Math.min(Number(e.dataset.delay) || 0, 180),
-                easing: "cubic-bezier(.2,.7,.2,1)",
-                fill: "backwards",
-              },
-            );
-            animations.add(animation);
-            animation.onfinish = () => animations.delete(animation);
-            observer?.unobserve(e);
+            const element = entry.target as HTMLElement;
+            element.classList.add("is-revealed");
+            observer?.unobserve(element);
           });
         },
-        { threshold: 0.08 },
+        { threshold: 0.08, rootMargin: "0px 0px -6%" },
       );
-      root.current
-        ?.querySelectorAll<HTMLElement>("[data-reveal]")
-        .forEach((e) => {
-          if (e.getBoundingClientRect().top > innerHeight)
-            e.style.opacity = "0";
-          observer?.observe(e);
+
+      container
+        .querySelectorAll<HTMLElement>("[data-reveal]")
+        .forEach((element) => {
+          const delay = clamp(Number(element.dataset.delay) || 0, 0, 240);
+          element.style.setProperty("--reveal-delay", `${delay}ms`);
+          observer?.observe(element);
         });
+      updateScrollMotion();
     };
-    start();
-    media.addEventListener("change", start);
+
+    const rail = container.querySelector<HTMLElement>(".life-rail");
+    if (rail) {
+      let dragging = false;
+      let startX = 0;
+      let lastX = 0;
+      let dragged = false;
+
+      const updateProgress = () => {
+        const maximum = rail.scrollWidth - rail.clientWidth;
+        const progress = maximum > 0 ? rail.scrollLeft / maximum : 0;
+        rail.parentElement?.style.setProperty(
+          "--gallery-progress",
+          clamp(progress, 0, 1).toFixed(3),
+        );
+      };
+      const onPointerDown = (event: PointerEvent) => {
+        if (event.pointerType !== "mouse" || event.button !== 0) return;
+        dragging = true;
+        dragged = false;
+        startX = event.clientX;
+        lastX = event.clientX;
+        rail.classList.add("is-dragging");
+        rail.style.scrollSnapType = "none";
+        rail.setPointerCapture(event.pointerId);
+      };
+      const onPointerMove = (event: PointerEvent) => {
+        if (!dragging) return;
+        event.preventDefault();
+        const distance = event.clientX - startX;
+        if (Math.abs(distance) > 4) dragged = true;
+        rail.scrollBy({ left: lastX - event.clientX, behavior: "instant" });
+        lastX = event.clientX;
+      };
+      const stopDragging = (event: PointerEvent) => {
+        if (!dragging) return;
+        dragging = false;
+        rail.classList.remove("is-dragging");
+        rail.style.removeProperty("scroll-snap-type");
+        if (rail.hasPointerCapture(event.pointerId))
+          rail.releasePointerCapture(event.pointerId);
+      };
+      const preventDraggedClick = (event: MouseEvent) => {
+        if (dragged) event.preventDefault();
+        dragged = false;
+      };
+
+      rail.addEventListener("scroll", updateProgress, { passive: true });
+      rail.addEventListener("pointerdown", onPointerDown);
+      rail.addEventListener("pointermove", onPointerMove);
+      rail.addEventListener("pointerup", stopDragging);
+      rail.addEventListener("pointercancel", stopDragging);
+      rail.addEventListener("click", preventDraggedClick, true);
+      updateProgress();
+      cleanups.push(() => {
+        rail.removeEventListener("scroll", updateProgress);
+        rail.removeEventListener("pointerdown", onPointerDown);
+        rail.removeEventListener("pointermove", onPointerMove);
+        rail.removeEventListener("pointerup", stopDragging);
+        rail.removeEventListener("pointercancel", stopDragging);
+        rail.removeEventListener("click", preventDraggedClick, true);
+      });
+    }
+
+    startRevealSystem();
+    addEventListener("scroll", requestScrollUpdate, { passive: true });
+    addEventListener("resize", requestScrollUpdate, { passive: true });
+    reducedMotion.addEventListener("change", startRevealSystem);
+
     return () => {
-      clear();
-      media.removeEventListener("change", start);
+      observer?.disconnect();
+      if (frame) cancelAnimationFrame(frame);
+      container.classList.remove("motion-ready");
+      removeEventListener("scroll", requestScrollUpdate);
+      removeEventListener("resize", requestScrollUpdate);
+      reducedMotion.removeEventListener("change", startRevealSystem);
+      cleanups.forEach((cleanup) => cleanup());
     };
   }, []);
+
   return (
     <div className={className} ref={root}>
       {children}

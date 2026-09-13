@@ -7,6 +7,8 @@ export function PhotoFrame({
   className = "",
   priority = false,
   sizes = "(max-width: 768px) 90vw, 50vw",
+  motion,
+  parallax,
 }: {
   photo: SchoolPhoto;
   title: string;
@@ -14,10 +16,14 @@ export function PhotoFrame({
   className?: string;
   priority?: boolean;
   sizes?: string;
+  motion?: "clip" | "clip-left" | "clip-right" | "scale";
+  parallax?: number;
 }) {
   return (
     <div
       className={`photo-frame ${className} ${photo.src ? "has-photo" : "awaiting-photo"}`}
+      data-reveal={motion}
+      data-parallax={parallax}
       style={
         {
           "--photo-position": photo.position,
@@ -35,6 +41,7 @@ export function PhotoFrame({
           sizes={sizes}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
+          draggable={false}
           className="editorial-photo"
         />
       ) : (

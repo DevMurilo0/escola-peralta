@@ -6,7 +6,7 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1440]) {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Educação que acolhe",
     );
-    if (width === 390 || width === 1440) {
+    if ([375, 390, 768, 1440].includes(width)) {
       const photos = page.locator("img.editorial-photo");
       for (let index = 0; index < (await photos.count()); index++) {
         const photo = photos.nth(index);
@@ -203,6 +203,71 @@ test("reduced motion mantém seções visíveis e sem animações", async ({
         nodes.every((n) => getComputedStyle(n).opacity === "1"),
       ),
   ).toBe(true);
+});
+
+test("movimento do hero, header compacto e progresso da galeria respondem à interação", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await expect(page.locator(".institutional")).toHaveClass(/motion-ready/);
+  await expect(page.locator(".hero-title-line")).toHaveCount(2);
+
+  await page.evaluate(() => scrollTo(0, 360));
+  await expect(page.locator(".site-nav")).toHaveClass(/is-scrolled/);
+  await expect
+    .poll(() =>
+      page
+        .locator(".opening-scene")
+        .evaluate((element) =>
+          Number(
+            (element as HTMLElement).style.getPropertyValue("--hero-scroll"),
+          ),
+        ),
+    )
+    .toBeGreaterThan(0);
+
+  const rail = page.locator(".life-rail");
+  await rail.scrollIntoViewIfNeeded();
+  await rail.evaluate((element) => {
+    element.scrollLeft = element.scrollWidth - element.clientWidth;
+    element.dispatchEvent(new Event("scroll"));
+  });
+  await expect
+    .poll(() =>
+      page
+        .locator(".school-life")
+        .evaluate((element) =>
+          Number(
+            (element as HTMLElement).style.getPropertyValue(
+              "--gallery-progress",
+            ),
+          ),
+        ),
+    )
+    .toBeGreaterThan(0.9);
+
+  await rail.evaluate((element) => {
+    element.scrollLeft = 0;
+  });
+  const box = await rail.boundingBox();
+  expect(box).not.toBeNull();
+  if (box) {
+    const startX = Math.min(1380, Math.max(420, box.x + box.width * 0.65));
+    const pointerY = Math.min(
+      860,
+      Math.max(40, box.y + Math.min(box.height / 2, 220)),
+    );
+    await page.mouse.move(startX, pointerY);
+    await page.mouse.down();
+    await expect(rail).toHaveClass(/is-dragging/);
+    await page.mouse.move(startX - 320, pointerY, { steps: 8 });
+    await expect
+      .poll(() => rail.evaluate((element) => element.scrollLeft))
+      .toBeGreaterThan(80);
+    await page.mouse.up();
+    await expect(rail).not.toHaveClass(/is-dragging/);
+  }
 });
 test("conteúdo institucional permanece acessível sem JavaScript", async ({
   browser,

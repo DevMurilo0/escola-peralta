@@ -34,20 +34,28 @@ export default function Home() {
       <PublicHeader />
       <main id="main">
         <section id="inicio" tabIndex={-1} className="opening-scene">
-          <div className="hero-location">
+          <div className="hero-location hero-intro-step">
             <span>
               <MapPin size={14} /> Gravatá, Pernambuco
             </span>
             <span>Infâncias cheias de possibilidades.</span>
           </div>
           <div className="opening-copy">
-            <p className="site-kicker">{content.hero.eyebrow}</p>
-            <h1>
-              {content.hero.title}
-              <br />
-              <span>{content.hero.emphasis}</span>
+            <p className="site-kicker hero-intro-step">
+              {content.hero.eyebrow}
+            </p>
+            <h1 aria-label={`${content.hero.title} ${content.hero.emphasis}`}>
+              <span className="hero-title-line" aria-hidden="true">
+                <span>{content.hero.title}</span>
+              </span>
+              <span
+                className="hero-title-line hero-title-emphasis"
+                aria-hidden="true"
+              >
+                <span>{content.hero.emphasis}</span>
+              </span>
             </h1>
-            <div className="hero-introduction">
+            <div className="hero-introduction hero-intro-step">
               <p>{content.hero.description}</p>
               <a className="site-button" href="#escola">
                 Conheça nossa escola <ArrowDown size={17} />
@@ -79,6 +87,7 @@ export default function Home() {
               priority
               className="hero-picture"
               sizes="(max-width: 768px) 100vw, 72vw"
+              parallax={0.022}
             />
             <div className="hero-side-label" aria-hidden="true">
               APRENDER É UMA DESCOBERTA DIÁRIA
@@ -94,7 +103,7 @@ export default function Home() {
               <ArrowDown size={20} />
             </a>
           </div>
-          <div className="opening-footnote">
+          <div className="opening-footnote hero-intro-step">
             <span>Escola Peralta — Educação Infantil e Fundamental I</span>
             <a href="#escola">
               Continue descobrindo <ArrowDown size={14} />
@@ -106,22 +115,28 @@ export default function Home() {
           tabIndex={-1}
           className="school-story site-section"
         >
-          <div className="chapter-label" data-reveal>
+          <div className="chapter-label" data-reveal="line">
             <span>01 / A ESCOLA</span>
             <span>De perto, faz sentido.</span>
           </div>
           <div className="story-layout">
-            <div className="story-photo" data-reveal>
+            <div className="story-photo">
               <PhotoFrame
                 photo={photos.about}
                 title="É sobre estar perto."
                 number="02"
+                motion="clip-left"
+                parallax={0.018}
               />
-              <span className="photo-footnote">
+              <span
+                className="photo-footnote"
+                data-reveal="up"
+                data-delay="120"
+              >
                 Pessoas, encontros e um lugar em Gravatá.
               </span>
             </div>
-            <div className="story-copy" data-reveal data-delay="100">
+            <div className="story-copy" data-reveal="right" data-delay="80">
               <p className="site-kicker">ESCOLA PERALTA</p>
               <h2>{content.about.title}</h2>
               <p className="site-lead">{content.about.description}</p>
@@ -150,11 +165,11 @@ export default function Home() {
           tabIndex={-1}
           className="learning-section site-section"
         >
-          <div className="chapter-label" data-reveal>
+          <div className="chapter-label" data-reveal="line">
             <span>02 / APRENDER & CONVIVER</span>
             <span>Uma pergunta leva a outra.</span>
           </div>
-          <div className="learning-intro" data-reveal>
+          <div className="learning-intro" data-reveal="up">
             <h2>{content.pedagogy.title}</h2>
             <div>
               <p>{content.pedagogy.description}</p>
@@ -170,7 +185,7 @@ export default function Home() {
           </div>
           <div className="learning-concepts">
             {content.pedagogy.concepts.map((c, i) => (
-              <article key={c.title} data-reveal data-delay={i * 70}>
+              <article key={c.title} data-reveal="scale" data-delay={i * 90}>
                 <span className={`concept-mark mark-${i}`} aria-hidden="true">
                   {["?", "↗", "+"][i]}
                 </span>
@@ -190,11 +205,11 @@ export default function Home() {
           tabIndex={-1}
           className="school-segments site-section"
         >
-          <div className="chapter-label" data-reveal>
+          <div className="chapter-label" data-reveal="line">
             <span>03 / SEGMENTOS</span>
             <span>Crescer tem muitas etapas.</span>
           </div>
-          <div className="segments-heading" data-reveal>
+          <div className="segments-heading" data-reveal="up">
             <h2>
               Hoje, uma descoberta.
               <br />
@@ -206,7 +221,7 @@ export default function Home() {
               um caminho para conhecer juntos.
             </p>
           </div>
-          <article className="segment-infant" data-reveal>
+          <article className="segment-infant">
             <PhotoFrame
               photo={
                 school.segments[0].image
@@ -215,8 +230,10 @@ export default function Home() {
               }
               title="Brincar também é descobrir."
               number="03"
+              motion="clip-left"
+              parallax={0.016}
             />
-            <div className="segment-text">
+            <div className="segment-text" data-reveal="right" data-delay="100">
               <span className="site-kicker">{content.segments[0].title}</span>
               <h3>{content.segments[0].lead}</h3>
               <p>{content.segments[0].description}</p>
@@ -232,8 +249,8 @@ export default function Home() {
               <small>{content.segments[0].detail}</small>
             </div>
           </article>
-          <article className="segment-fundamental" data-reveal>
-            <div className="segment-text">
+          <article className="segment-fundamental">
+            <div className="segment-text" data-reveal="left">
               <span className="site-kicker">{content.segments[1].title}</span>
               <h3>{content.segments[1].lead}</h3>
               <p>{content.segments[1].description}</p>
@@ -255,6 +272,8 @@ export default function Home() {
               }
               title="Ideias que ganham o mundo."
               number="04"
+              motion="clip-right"
+              parallax={0.016}
             />
           </article>
         </section>
@@ -263,11 +282,11 @@ export default function Home() {
           tabIndex={-1}
           className="school-spaces site-section"
         >
-          <div className="chapter-label" data-reveal>
+          <div className="chapter-label" data-reveal="line">
             <span>04 / NOSSO ESPAÇO</span>
             <span>Uma escola se conhece por dentro.</span>
           </div>
-          <div className="spaces-heading" data-reveal>
+          <div className="spaces-heading" data-reveal="up">
             <h2>
               Espaço para ser.
               <br />
@@ -280,30 +299,34 @@ export default function Home() {
             </p>
           </div>
           <div className="spaces-mosaic">
-            <figure data-reveal>
+            <figure>
               <PhotoFrame
                 photo={photos.structureMain}
                 title="Onde os encontros acontecem."
                 number="05"
+                motion="clip-left"
+                parallax={0.02}
               />
-              <figcaption>
+              <figcaption data-reveal="up" data-delay="100">
                 <span>Um olhar sobre a escola</span>
                 <span>01 — visão geral</span>
               </figcaption>
             </figure>
             <div className="spaces-detail">
-              <figure data-reveal data-delay="100">
+              <figure>
                 <PhotoFrame
                   photo={photos.structureDetail}
                   title="De perto, cada detalhe."
                   number="06"
+                  motion="scale"
+                  parallax={0.028}
                 />
-                <figcaption>
+                <figcaption data-reveal="up" data-delay="140">
                   <span>Ambientes para conhecer</span>
                   <span>02 — detalhes</span>
                 </figcaption>
               </figure>
-              <div className="visit-note" data-reveal>
+              <div className="visit-note" data-reveal="right" data-delay="180">
                 <Plus size={30} />
                 <h3>
                   Seu próximo passo
@@ -324,11 +347,11 @@ export default function Home() {
         </section>
         <section id="projetos" tabIndex={-1} className="school-life">
           <div className="life-intro site-section">
-            <div className="chapter-label" data-reveal>
+            <div className="chapter-label" data-reveal="line">
               <span>05 / VIDA NA PERALTA</span>
               <span>Acontece aqui.</span>
             </div>
-            <div className="life-heading" data-reveal>
+            <div className="life-heading" data-reveal="up">
               <h2>
                 Pequenos momentos.
                 <br />
@@ -368,7 +391,7 @@ export default function Home() {
                   },
                 ]
             ).map(({ photo, title, index }) => (
-              <figure key={title} data-reveal data-delay={index * 60}>
+              <figure key={title} data-reveal="scale" data-delay={index * 60}>
                 <PhotoFrame
                   photo={photo}
                   title={title}
@@ -381,7 +404,11 @@ export default function Home() {
               </figure>
             ))}
           </div>
-          <div className="instagram-invitation" data-reveal>
+          <div className="life-progress" aria-hidden="true">
+            <span />
+            <small>Arraste para explorar</small>
+          </div>
+          <div className="instagram-invitation" data-reveal="up">
             <div>
               <Instagram size={22} />
               <span>{school.instagramHandle}</span>
@@ -398,7 +425,7 @@ export default function Home() {
         </section>
         <section id="matriculas" tabIndex={-1} className="school-invitation">
           <div className="invitation-orbit" aria-hidden="true" />
-          <div data-reveal>
+          <div data-reveal="scale">
             <span className="site-kicker">
               UMA NOVA HISTÓRIA PODE COMEÇAR AQUI
             </span>
@@ -433,12 +460,12 @@ export default function Home() {
           tabIndex={-1}
           className="school-contact site-section"
         >
-          <div className="chapter-label" data-reveal>
+          <div className="chapter-label" data-reveal="line">
             <span>06 / VAMOS CONVERSAR</span>
             <span>Até já, na Peralta.</span>
           </div>
           <div className="contact-layout">
-            <div data-reveal>
+            <div data-reveal="left">
               <h2>
                 Nosso lugar
                 <br />é em <span>Gravatá.</span>
@@ -457,7 +484,11 @@ export default function Home() {
                 Como chegar <ArrowUpRight size={18} />
               </a>
             </div>
-            <div className="contact-directory" data-reveal data-delay="100">
+            <div
+              className="contact-directory"
+              data-reveal="right"
+              data-delay="100"
+            >
               <a href={contactLink} target="_blank" rel="noreferrer">
                 <span>
                   <small>PRIMEIRO CONTATO</small>Converse com a equipe
