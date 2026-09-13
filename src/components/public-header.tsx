@@ -73,9 +73,9 @@ export function PublicHeader() {
           <img
             decoding="async"
             src={school.logo}
-            width={160}
-            height={64}
-            alt="Escola Peralta"
+            width={100}
+            height={100}
+            alt="Logo da Escola Peralta"
           />
         ) : (
           <>

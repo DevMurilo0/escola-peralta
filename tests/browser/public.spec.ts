@@ -3,14 +3,30 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1440]) {
   test(`site e login sem overflow em ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    if (width === 1440)
-      await page.screenshot({
-        path: "test-results/site-1440.png",
-        fullPage: true,
-      });
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Educação que acolhe",
     );
+    if (width === 390 || width === 1440) {
+      const photos = page.locator("img.editorial-photo");
+      for (let index = 0; index < (await photos.count()); index++) {
+        const photo = photos.nth(index);
+        await photo.scrollIntoViewIfNeeded();
+        await expect
+          .poll(() =>
+            photo.evaluate(
+              (image: HTMLImageElement) =>
+                image.complete && image.naturalWidth > 0,
+            ),
+          )
+          .toBe(true);
+      }
+      await page.evaluate(() => scrollTo(0, 0));
+      await expect(page.locator(".hero-picture img")).toBeVisible();
+      await page.screenshot({
+        path: `test-results/site-${width}.png`,
+        fullPage: true,
+      });
+    }
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -32,6 +48,69 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1440]) {
     ).toBe(true);
   });
 }
+
+test("marca e fotografias oficiais são locais, acessíveis e carregam corretamente", async ({
+  page,
+  request,
+}) => {
+  const assets = [
+    "/images/brand/escola-peralta-logo.webp",
+    "/images/brand/favicon-32.png",
+    "/images/brand/favicon.png",
+    "/images/school/hero-escola.webp",
+    "/images/school/escola-cotidiano.webp",
+    "/images/school/educacao-infantil.webp",
+    "/images/school/fundamental.webp",
+    "/images/school/estrutura-patio.webp",
+    "/images/school/estrutura-convivencia.webp",
+    ...Array.from(
+      { length: 6 },
+      (_, index) => `/images/school/vivencia-0${index + 1}.webp`,
+    ),
+  ];
+  for (const asset of assets)
+    expect((await request.get(asset)).ok()).toBe(true);
+
+  await page.goto("/");
+  const logo = page.locator(".site-nav .brand-signature img");
+  await expect(logo).toBeVisible();
+  await expect(logo).toHaveAttribute("alt", "Logo da Escola Peralta");
+  expect(
+    await logo.evaluate((image: HTMLImageElement) => ({
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      renderedWidth: image.getBoundingClientRect().width,
+    })),
+  ).toEqual({ naturalWidth: 100, naturalHeight: 100, renderedWidth: 60 });
+
+  const photos = page.locator("img.editorial-photo");
+  await expect(photos).toHaveCount(12);
+  for (let index = 0; index < (await photos.count()); index++) {
+    const photo = photos.nth(index);
+    await photo.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        photo.evaluate(
+          (image: HTMLImageElement) =>
+            image.complete &&
+            image.naturalWidth > 0 &&
+            image.src.includes("/images/school/") &&
+            Boolean(image.alt.trim()),
+        ),
+      )
+      .toBe(true);
+  }
+  expect(await page.locator('img[src*="cdninstagram"]').count()).toBe(0);
+  await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute(
+    "href",
+    "/images/brand/favicon-32.png",
+  );
+  await expect(page.locator('link[rel="icon"][sizes="48x48"]')).toHaveAttribute(
+    "href",
+    "/images/brand/favicon.png",
+  );
+});
+
 test("páginas privadas exigem autenticação", async ({ page }) => {
   for (const route of [
     "/portal",
