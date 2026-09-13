@@ -356,6 +356,171 @@ describe.sequential(
         ]),
       ).rejects.toThrow(/administração/);
     });
+    it("restringe as novas operações globais de aluno a administradores", async () => {
+      await expect(
+        asUser(
+          teacher,
+          "select public.admin_update_student($1,'Nome Bloqueado','2018-01-01')",
+          [sid],
+        ),
+      ).rejects.toThrow(/Acesso negado/);
+      await expect(
+        asUser(teacher, "select public.admin_transfer_student($1,$2)", [
+          sid,
+          c1,
+        ]),
+      ).rejects.toThrow(/Acesso negado/);
+      await expect(
+        asUser(teacher, "select public.admin_archive_student($1)", [sid]),
+      ).rejects.toThrow(/Acesso negado/);
+    });
+    it("edita o aluno com validação e auditoria administrativa", async () => {
+      await expect(
+        asUser(
+          admin,
+          "select public.admin_update_student($1,'A','2199-01-01')",
+          [sid],
+        ),
+      ).rejects.toThrow(/Confira/);
+      await asUser(
+        admin,
+        "select public.admin_update_student($1,' Aluno Atualizado ','2018-02-03')",
+        [sid],
+      );
+      const student = await asUser<{ full_name: string; birth_date: string }>(
+        admin,
+        "select full_name,birth_date from public.students where id=$1",
+        [sid],
+      );
+      expect(student.rows[0]).toMatchObject({
+        full_name: "Aluno Atualizado",
+      });
+      expect(new Date(student.rows[0].birth_date).toISOString().slice(0, 10)).toBe(
+        "2018-02-03",
+      );
+      expect(
+        (
+          await asUser(
+            admin,
+            "select * from public.audit_logs where action='student_updated' and entity_id=$1",
+            [sid],
+          )
+        ).rows,
+      ).toHaveLength(1);
+    });
+    it("transfere atomicamente e preserva matrículas e dados acadêmicos", async () => {
+      const priorYear = Number(today.slice(0, 4)) - 1;
+      const historicalClass = "20000000-0000-4000-8000-000000000003";
+      await db.query(
+        "insert into public.classes(id,name,grade_level,shift,school_year) values($1,'Turma Histórica','2º Ano','Manhã',$2)",
+        [historicalClass, priorYear],
+      );
+      await db.query(
+        "insert into public.enrollments(student_id,class_id,school_year,status) values($1,$2,$3,'inactive')",
+        [sid, historicalClass, priorYear],
+      );
+      await asUser(admin, "select public.save_grades($1,2,$2)", [
+        c2,
+        JSON.stringify([
+          { student_id: sid, activity_score: 7, exam_score: 8 },
+        ]),
+      ]);
+      await asUser(
+        admin,
+        "select public.save_attendance($1,$2,2,$3,null)",
+        [
+          c2,
+          today,
+          JSON.stringify([{ student_id: sid, status: "present" }]),
+        ],
+      );
+      await db.query(
+        "update public.enrollments set status='active' where student_id=$1 and class_id=$2",
+        [sid, c1],
+      );
+
+      await asUser(admin, "select public.admin_transfer_student($1,$2)", [
+        sid,
+        c1,
+      ]);
+      const enrollments = await asUser<{
+        class_id: string;
+        school_year: number;
+        status: string;
+      }>(
+        admin,
+        "select class_id,school_year,status from public.enrollments where student_id=$1 order by school_year,class_id",
+        [sid],
+      );
+      expect(
+        enrollments.rows.filter(
+          (row) =>
+            row.school_year === Number(today.slice(0, 4)) &&
+            row.status === "active",
+        ),
+      ).toEqual([
+        expect.objectContaining({ class_id: c1, status: "active" }),
+      ]);
+      expect(
+        enrollments.rows.find((row) => row.class_id === historicalClass),
+      ).toMatchObject({ school_year: priorYear, status: "inactive" });
+      expect(
+        (
+          await asUser(
+            admin,
+            "select * from public.grades where student_id=$1 and class_id=$2",
+            [sid, c2],
+          )
+        ).rows,
+      ).toHaveLength(1);
+      expect(
+        (
+          await asUser(
+            admin,
+            "select r.* from public.attendance_records r join public.attendance_sessions s on s.id=r.attendance_session_id where r.student_id=$1 and s.class_id=$2",
+            [sid, c2],
+          )
+        ).rows,
+      ).toHaveLength(1);
+    });
+    it("arquiva logicamente o aluno sem apagar qualquer histórico", async () => {
+      const before = await asUser<{ grades: number; records: number }>(
+        admin,
+        "select (select count(*) from public.grades where student_id=$1)::int as grades,(select count(*) from public.attendance_records where student_id=$1)::int as records",
+        [sid],
+      );
+      await asUser(admin, "select public.admin_archive_student($1)", [sid]);
+      const student = await asUser<{ active: boolean }>(
+        admin,
+        "select active from public.students where id=$1",
+        [sid],
+      );
+      expect(student.rows[0].active).toBe(false);
+      expect(
+        (
+          await asUser(
+            admin,
+            "select * from public.enrollments where student_id=$1 and status='active'",
+            [sid],
+          )
+        ).rows,
+      ).toHaveLength(0);
+      const after = await asUser<{ grades: number; records: number }>(
+        admin,
+        "select (select count(*) from public.grades where student_id=$1)::int as grades,(select count(*) from public.attendance_records where student_id=$1)::int as records",
+        [sid],
+      );
+      expect(after.rows[0]).toEqual(before.rows[0]);
+      expect(
+        (
+          await asUser(
+            admin,
+            "select * from public.audit_logs where action='student_archived' and entity_id=$1",
+            [sid],
+          )
+        ).rows,
+      ).toHaveLength(1);
+    });
     it("protege conteúdos curriculares com RLS, autoria e ano letivo", async () => {
       const inserted = await asUser<{ id: string; created_by: string }>(
         teacher,

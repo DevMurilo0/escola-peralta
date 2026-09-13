@@ -23,10 +23,6 @@ export async function adminAction(
       result = id
         ? await client.from("classes").update(values).eq("id", id)
         : await client.from("classes").insert(values);
-    } else if (kind === "teacher-create") {
-      const result = await adminApi("teachers", input);
-      if (!result.error) invalidateResources();
-      return result;
     } else if (kind === "master-teacher-create") {
       const values = z
         .object({
@@ -73,14 +69,6 @@ export async function adminAction(
     } else if (kind === "unlink") {
       const v = z.object({ id: z.uuid() }).parse(input);
       result = await client.from("teacher_classes").delete().eq("id", v.id);
-    } else if (kind === "enroll-existing") {
-      const v = z
-        .object({ student_id: z.uuid(), class_id: z.uuid() })
-        .parse(input);
-      result = await client.rpc("enroll_existing", {
-        p_student: v.student_id,
-        p_class: v.class_id,
-      });
     } else if (kind === "settings") {
       const v = z
         .object({

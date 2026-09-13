@@ -21,6 +21,7 @@ type AuthState = {
   session: Session | null;
   profile: Profile | null;
   isMaster: boolean;
+  masterError?: string;
   loading: boolean;
   error?: string;
 };
@@ -36,7 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const generation = useRef(0);
   const userId = useRef<string | null>(null);
-  const masterCache = useRef<{ token: string; value: boolean } | null>(null);
+  const masterCache = useRef<{
+    token: string;
+    value: boolean;
+    error?: string;
+  } | null>(null);
   const sync = useCallback(async (session: Session | null) => {
     const request = ++generation.current;
     const id = session?.user.id ?? null;
@@ -58,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session,
       profile: old.profile?.id === id ? old.profile : null,
       isMaster: old.profile?.id === id ? old.isMaster : false,
+      masterError: old.profile?.id === id ? old.masterError : undefined,
       loading: !old.profile || old.profile.id !== id,
     }));
     try {
@@ -69,12 +75,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (request !== generation.current) return;
       const profile = data as Profile | null;
       let isMaster = false;
+      let masterError: string | undefined;
       if (profile?.active && profile.role === "admin") {
         if (masterCache.current?.token === session.access_token) {
           isMaster = masterCache.current.value;
+          masterError = masterCache.current.error;
         } else {
-          isMaster = await masterStatus(session.access_token);
-          masterCache.current = { token: session.access_token, value: isMaster };
+          const status = await masterStatus(session.access_token);
+          isMaster = status.isMaster;
+          masterError = status.error;
+          masterCache.current = {
+            token: session.access_token,
+            value: isMaster,
+            error: masterError,
+          };
         }
       }
       if (request !== generation.current) return;
@@ -82,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         profile,
         isMaster,
+        masterError,
         loading: false,
         error: error
           ? "Não foi possível verificar sua conta. Tente novamente."

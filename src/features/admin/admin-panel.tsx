@@ -3,8 +3,10 @@ import { invalidateResources } from "@/shared/hooks/use-resource";
 import { Link } from "react-router-dom";
 import { adminAction } from "./actions";
 import { Feedback, Modal } from "@/shared/components/feedback";
-import type { SchoolClass, Student } from "@/shared/academic/types";
+import type { SchoolClass } from "@/shared/academic/types";
 import { MasterTeachersPanel } from "./master-teachers-panel";
+import { AdminStudentsPanel } from "./students/admin-students-panel";
+import type { AdminStudent } from "./students/types";
 type Teacher = {
   id: string;
   full_name: string;
@@ -25,13 +27,15 @@ export function AdminPanel({
   students,
   settings,
   isMaster,
+  masterError,
 }: {
   teachers: Teacher[];
   classes: Class[];
   associations: Association[];
-  students: Student[];
+  students: AdminStudent[];
   settings: { school_year: number; passing_grade: number };
   isMaster: boolean;
+  masterError?: string;
 }) {
   const [tab, setTab] = useState("classes");
   const [modal, setModal] = useState<"class" | "teacher" | null>(null);
@@ -261,15 +265,11 @@ export function AdminPanel({
         <section className="panel">
           <div className="page-heading">
             <h2>Professores · {teachers.length}</h2>
-            <button
-              onClick={() => {
-                setEditingTeacher(null);
-                setModal("teacher");
-              }}
-            >
-              + Criar professor
-            </button>
           </div>
+          <p className={masterError ? "feedback error" : "muted small"} role={masterError ? "alert" : undefined}>
+            {masterError ||
+              "Somente a direção Master pode criar novas contas de professores."}
+          </p>
           {!teachers.length && (
             <div className="empty">Nenhum professor cadastrado.</div>
           )}
@@ -324,67 +324,11 @@ export function AdminPanel({
         </section>
       )}
       {tab === "students" && (
-        <section className="panel">
-          <h2>Alunos · {students.length}</h2>
-          <p className="muted">
-            Cadastre e edite alunos dentro da turma. Para matricular um aluno já
-            existente em outra turma, use o formulário abaixo.
-          </p>
-          <form
-            className="inline-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              run("enroll-existing", {
-                student_id: f.get("student"),
-                class_id: f.get("class"),
-              });
-            }}
-          >
-            <label>
-              Aluno
-              <select required name="student" defaultValue="">
-                <option value="" disabled>
-                  Selecionar
-                </option>
-                {students.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Turma de destino
-              <select required name="class" defaultValue="">
-                <option value="" disabled>
-                  Selecionar
-                </option>
-                {classes
-                  .filter((c) => c.active)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} · {c.school_year}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <button disabled={pending || !students.length}>Matricular</button>
-          </form>
-          <p className="small muted">
-            A matrícula anterior permanece preservada. Se necessário, inative-a
-            na turma de origem.
-          </p>
-          {students.map((s) => (
-            <div className="list-row" key={s.id}>
-              <strong>{s.full_name}</strong>
-              <span>{s.birth_date.split("-").reverse().join("/")}</span>
-            </div>
-          ))}
-          {!students.length && (
-            <div className="empty">Nenhum aluno cadastrado.</div>
-          )}
-        </section>
+        <AdminStudentsPanel
+          students={students}
+          classes={classes}
+          schoolYear={settings.school_year}
+        />
       )}
       {tab === "settings" && (
         <section className="panel">
@@ -541,10 +485,9 @@ export function AdminPanel({
                 });
                 return;
               }
-              run("teacher-create", {
-                full_name: f.get("name"),
-                email: f.get("email"),
-              });
+              setMessage(
+                "Somente a direção Master pode criar novas contas de professores.",
+              );
             }}
           >
             <label>
@@ -592,24 +535,19 @@ export function AdminPanel({
                     required
                   />
                 </label>
-                <button
-                  className="secondary password-toggle"
-                  type="button"
-                  aria-pressed={showPassword}
-                  onClick={() => setShowPassword((visible) => !visible)}
-                >
-                  {showPassword ? "Ocultar senhas" : "Mostrar senhas"}
-                </button>
+                <label className="inline-check password-toggle">
+                  <input
+                    type="checkbox"
+                    checked={showPassword}
+                    onChange={(event) => setShowPassword(event.target.checked)}
+                  />
+                  Mostrar senha
+                </label>
                 <p className="small muted">
                   A senha é usada somente para criar a conta e não será exibida
                   novamente.
                 </p>
               </>
-            )}
-            {!editingTeacher && !isMaster && (
-              <p className="small muted">
-                O professor definirá a própria senha por um link de uso único.
-              </p>
             )}
             <Feedback message={message} />
             <button disabled={pending}>

@@ -39,7 +39,7 @@ export function MasterTeachersPanel({
             Contas do Supabase Auth prontas para acesso ao Portal do Professor.
           </p>
         </div>
-        <button onClick={onAdd}>+ Adicionar professor</button>
+        <button onClick={onAdd}>+ Criar professor</button>
       </div>
       {!teachers.length && (
         <div className="empty">Nenhum professor cadastrado.</div>

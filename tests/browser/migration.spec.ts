@@ -204,7 +204,7 @@ test("guard bloqueia conta inativa", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("administrador acessa painel e solicita criação por API com bearer", async ({
+test("admin comum gerencia professores sem poder criar contas", async ({
   page,
 }) => {
   const state = await installSupabaseTransport(page, "admin");
@@ -214,20 +214,30 @@ test("administrador acessa painel e solicita criação por API com bearer", asyn
     page.getByRole("heading", { name: "Administração", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Professores", exact: true }).click();
-  await page.getByRole("button", { name: /Criar professor/ }).click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel(/Nome/).fill("Professor Exemplo");
-  await dialog.getByLabel(/E-mail/).fill("novo@example.test");
-  await dialog.getByRole("button", { name: "Salvar professor" }).click();
+  await expect(page.getByRole("button", { name: /Criar professor/ })).toHaveCount(0);
+  await expect(page.getByText(/Somente a direção Master/)).toBeVisible();
+  const forbidden = await page.evaluate(async () => {
+    const response = await fetch("/api/admin/teachers", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer fixture-token",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ full_name: "Tentativa", email: "x@peralta.com" }),
+    });
+    return response.status;
+  });
+  expect(forbidden).toBe(403);
+  await page.getByRole("button", { name: "Link de acesso" }).click();
   await expect(page.getByRole("status")).toContainText("Operação concluída");
-  expect(state.workerRequests).toBe(1);
+  expect(state.workerRequests).toBe(2);
 });
 
 test("Master cria professor real e o novo professor autentica pelo fluxo normal", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await installSupabaseTransport(page, "admin", true, true);
+  const state = await installSupabaseTransport(page, "admin", true, true);
   await signIn(page, "admin");
   await page.getByRole("button", { name: "Abrir navegação" }).click();
   await page.getByRole("link", { name: "Administração", exact: true }).click();
@@ -237,7 +247,7 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
   ).toBeVisible();
   await expect(page.getByText("Nunca acessou", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "+ Adicionar professor" }).click();
+  await page.getByRole("button", { name: "+ Criar professor" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("Nome completo")).toBeVisible();
   await expect(dialog.getByLabel("E-mail")).toHaveAttribute(
@@ -249,20 +259,29 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
     "password",
   );
   await expect(dialog.getByLabel("Confirmar senha")).toBeVisible();
-  await dialog.getByRole("button", { name: "Mostrar senhas" }).click();
+  await expect(
+    dialog.getByText(/definirá a própria senha por um link/),
+  ).toHaveCount(0);
+  await dialog.getByLabel("Mostrar senha").check();
   await expect(dialog.getByLabel("Senha inicial")).toHaveAttribute("type", "text");
 
   await dialog.getByLabel("Nome completo").fill("Professor Criado");
   await dialog.getByLabel("E-mail").fill("teste@peralta.com");
+  await dialog.getByLabel("Senha inicial").fill("curta");
+  await dialog.getByLabel("Confirmar senha").fill("curta");
+  await dialog.getByRole("button", { name: "Criar professor" }).click();
+  expect(state.masterCreates).toBe(0);
   await dialog.getByLabel("Senha inicial").fill("senha-segura-123");
   await dialog.getByLabel("Confirmar senha").fill("senha-diferente-123");
   await dialog.getByRole("button", { name: "Criar professor" }).click();
   await expect(dialog.getByRole("status")).toContainText(
     "As senhas informadas não coincidem",
   );
+  expect(state.masterCreates).toBe(0);
   await dialog.getByLabel("Confirmar senha").fill("senha-segura-123");
   await dialog.getByRole("button", { name: "Criar professor" }).click();
   await expect(page.getByText(/Professor criado com sucesso/)).toBeVisible();
+  expect(state.masterCreates).toBe(1);
   await expect(page.getByRole("heading", { name: "Professor Criado" })).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),

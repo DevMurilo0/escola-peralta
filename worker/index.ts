@@ -10,12 +10,6 @@ export interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
-const teacherSchema = z
-  .object({
-    full_name: z.string().trim().min(3).max(150),
-    email: z.email().max(254),
-  })
-  .strict();
 const masterTeacherSchema = z
   .object({
     full_name: z.string().trim().min(3).max(150),
@@ -164,70 +158,42 @@ async function handleAdminEndpoint(
 ) {
   const token = bearerToken(request);
   const { client } = await requireAdmin(token, env, fetcher);
+  if (path === "/api/admin/teachers")
+    throw new ApiError(
+      403,
+      "Somente a direção Master pode criar novas contas de professores.",
+    );
   const payload = await readPayload(request);
-  const creating = path === "/api/admin/teachers";
-  let email: string;
-  let fullName: string | undefined;
-  if (creating) {
-    const parsed = teacherSchema.safeParse(payload);
-    if (!parsed.success)
-      throw new ApiError(
-        400,
-        "Confira o nome, o e-mail ou o identificador informado.",
-      );
-    email = parsed.data.email;
-    fullName = parsed.data.full_name;
-  } else {
-    const parsed = idSchema.safeParse(payload);
-    if (!parsed.success)
-      throw new ApiError(
-        400,
-        "Confira o nome, o e-mail ou o identificador informado.",
-      );
-    const { data: teacher } = await client
-      .from("profiles")
-      .select("email,active")
-      .eq("id", parsed.data.id)
-      .eq("role", "teacher")
-      .single();
-    if (!teacher?.active)
-      throw new ApiError(404, "Professor inativo ou não encontrado.");
-    email = teacher.email;
-  }
+  const parsed = idSchema.safeParse(payload);
+  if (!parsed.success)
+    throw new ApiError(400, "Confira o identificador informado.");
+  const { data: teacher } = await client
+    .from("profiles")
+    .select("email,active")
+    .eq("id", parsed.data.id)
+    .eq("role", "teacher")
+    .single();
+  if (!teacher?.active)
+    throw new ApiError(404, "Professor inativo ou não encontrado.");
 
   const service = serviceClient(env, fetcher);
   const redirectTo = `${allowed}/auth/confirm`;
-  const invite = await service.auth.admin.generateLink(
-    creating
-      ? {
-          type: "invite",
-          email,
-          options: { data: { full_name: fullName }, redirectTo },
-        }
-      : { type: "recovery", email, options: { redirectTo } },
-  );
+  const invite = await service.auth.admin.generateLink({
+    type: "recovery",
+    email: teacher.email,
+    options: { redirectTo },
+  });
   if (invite.error)
     throw new ApiError(
       409,
       "Não foi possível gerar o acesso. Verifique se o e-mail já está cadastrado e tente novamente.",
     );
-  if (creating) {
-    const audit = await client.rpc("log_admin_event", {
-      p_action: "teacher_created",
-      p_entity: invite.data.user.id,
-    });
-    if (audit.error)
-      throw new ApiError(
-        502,
-        "Conta criada, mas houve falha ao registrar auditoria. Gere um link na lista de professores; não repita o cadastro.",
-      );
-  }
   const link = new URL(redirectTo);
   link.searchParams.set("token_hash", invite.data.properties.hashed_token);
-  link.searchParams.set("type", creating ? "invite" : "recovery");
+  link.searchParams.set("type", "recovery");
   return {
     body: { success: true, link: link.toString() },
-    status: creating ? 201 : 200,
+    status: 200,
   };
 }
 

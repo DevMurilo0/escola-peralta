@@ -61,13 +61,55 @@ export async function installSupabaseTransport(
     active: true,
     enrollments: [{ id: "e1", status: "active" }],
   };
+  const secondClass = {
+    id: "20000000-0000-4000-8000-000000000002",
+    name: "3º Ano B",
+    grade_level: "3º Ano",
+    shift: "Tarde",
+    school_year: schoolClass.school_year,
+    active: true,
+    enrollments: [],
+  };
+  const adminEnrollments = [
+    {
+      id: "e1",
+      student_id: studentId,
+      class_id: classId,
+      school_year: schoolClass.school_year,
+      status: "active",
+      enrolled_at: "2026-02-01T12:00:00.000Z",
+      classes: schoolClass,
+    },
+    {
+      id: "e0",
+      student_id: studentId,
+      class_id: "20000000-0000-4000-8000-000000000099",
+      school_year: schoolClass.school_year - 1,
+      status: "inactive",
+      enrolled_at: "2025-02-01T12:00:00.000Z",
+      classes: {
+        id: "20000000-0000-4000-8000-000000000099",
+        name: "2º Ano A",
+        school_year: schoolClass.school_year - 1,
+        active: false,
+      },
+    },
+  ];
   const state: {
     grades: Record<string, unknown>[];
     sessions: Record<string, unknown>[];
     curriculum: Record<string, unknown>[];
     tokenRequests: number;
     workerRequests: number;
-  } = { grades: [], sessions: [], curriculum: [], tokenRequests: 0, workerRequests: 0 };
+    masterCreates: number;
+  } = {
+    grades: [],
+    sessions: [],
+    curriculum: [],
+    tokenRequests: 0,
+    workerRequests: 0,
+    masterCreates: 0,
+  };
   await page.route("**/auth/v1/**", async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.endsWith("/logout")) {
@@ -108,6 +150,7 @@ export async function installSupabaseTransport(
             exam_score: number | null;
           }) => ({
             ...row,
+            class_id: body.p_class,
             term: body.p_term,
             average:
               row.activity_score === null || row.exam_score === null
@@ -140,6 +183,37 @@ export async function installSupabaseTransport(
         schoolClass.shift = body.p_shift;
         schoolClass.school_year = body.p_school_year;
       }
+      if (entity === "admin_update_student") {
+        student.full_name = body.p_name;
+        student.birth_date = body.p_birth;
+      }
+      if (entity === "admin_transfer_student") {
+        for (const enrollment of adminEnrollments)
+          if (
+            enrollment.school_year === schoolClass.school_year &&
+            enrollment.status === "active"
+          )
+            enrollment.status = "inactive";
+        const existing = adminEnrollments.find(
+          (enrollment) => enrollment.class_id === body.p_target_class,
+        );
+        if (existing) existing.status = "active";
+        else
+          adminEnrollments.unshift({
+            id: "e2",
+            student_id: studentId,
+            class_id: secondClass.id,
+            school_year: secondClass.school_year,
+            status: "active",
+            enrolled_at: new Date().toISOString(),
+            classes: secondClass,
+          });
+      }
+      if (entity === "admin_archive_student") {
+        student.active = false;
+        for (const enrollment of adminEnrollments)
+          if (enrollment.status === "active") enrollment.status = "inactive";
+      }
       await route.fulfill({ json: null });
       return;
     }
@@ -152,19 +226,43 @@ export async function installSupabaseTransport(
           : single
             ? profile
             : [profile];
-    else if (entity === "classes") data = single ? schoolClass : [schoolClass];
+    else if (entity === "classes")
+      data = single
+        ? schoolClass
+        : profile.role === "admin"
+          ? [schoolClass, secondClass]
+          : [schoolClass];
     else if (entity === "enrollments")
-      data = [
-        {
-          id: "e1",
-          student_id: studentId,
-          status: "active",
-          students: student,
-        },
-      ];
-    else if (entity === "students") data = [student];
+      data = url.searchParams.get("select")?.includes("classes")
+        ? adminEnrollments
+        : adminEnrollments
+            .filter((enrollment) => enrollment.class_id === classId)
+            .map((enrollment) => ({
+              id: enrollment.id,
+              student_id: enrollment.student_id,
+              status: enrollment.status,
+              students: student,
+            }));
+    else if (entity === "students")
+      data = student.active
+        ? [{ ...student, enrollments: adminEnrollments }]
+        : [];
     else if (entity === "grades") data = state.grades;
     else if (entity === "attendance_sessions") data = state.sessions;
+    else if (entity === "attendance_records")
+      data = state.sessions.flatMap((session) =>
+        ((session.attendance_records as Record<string, unknown>[]) || [])
+          .filter((record) => record.student_id === studentId)
+          .map((record) => ({
+            status: record.status,
+            attendance_sessions: {
+              id: session.id,
+              class_id: session.class_id,
+              date: session.date,
+              term: session.term,
+            },
+          })),
+      );
     else if (entity === "school_settings")
       data = {
         id: true,
@@ -232,6 +330,7 @@ export async function installSupabaseTransport(
       email: string;
       password: string;
     };
+    state.masterCreates++;
     createdCredentials = { email: body.email, password: body.password };
     const teacher = {
       id: "10000000-0000-4000-8000-000000000005",
@@ -250,6 +349,19 @@ export async function installSupabaseTransport(
       await route.fulfill({
         status: 403,
         json: { error: "Acesso não autorizado." },
+      });
+      return;
+    }
+    const url = new URL(route.request().url());
+    if (
+      url.pathname === "/api/admin/teachers" &&
+      route.request().method() === "POST"
+    ) {
+      await route.fulfill({
+        status: 403,
+        json: {
+          error: "Somente a direção Master pode criar novas contas de professores.",
+        },
       });
       return;
     }

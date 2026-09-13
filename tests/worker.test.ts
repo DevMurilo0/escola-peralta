@@ -138,37 +138,20 @@ describe("Worker administrativo", () => {
   it.each([
     { full_name: "A", email: "invalid" },
     { full_name: "Ana Exemplo", email: "ana@example.test", role: "admin" },
-  ])("rejeita payload inválido e papel injetado", async (body) => {
+  ])("não permite contornar o Master pelo endpoint legado: %j", async (body) => {
     const b = backend();
     const r = await handleRequest(request(body), env, b.fetcher);
-    expect(r.status).toBe(400);
+    expect(r.status).toBe(403);
     expect(b.calls.some((c) => c.path.includes("/admin/"))).toBe(false);
   });
-  it("cria professor depois de validar admin e audita com JWT do autor", async () => {
+  it("bloqueia criação por convite até para admin autenticado", async () => {
     const b = backend();
     const r = await handleRequest(request(), env, b.fetcher);
-    expect(r.status).toBe(201);
-    expect(await r.json()).toEqual({
-      success: true,
-      link: "https://peralta.example.test/auth/confirm?token_hash=one-time-token&type=invite",
-    });
+    expect(r.status).toBe(403);
     expect(b.calls.map((c) => c.path)).toEqual([
       "/auth/v1/user",
       "/rest/v1/profiles",
-      "/auth/v1/admin/generate_link",
-      "/rest/v1/rpc/log_admin_event",
     ]);
-    expect(b.calls[2].authorization).toBe("Bearer private-test-key");
-    expect(b.calls[2].body).toMatchObject({
-      type: "invite",
-      email: "ana@example.test",
-      data: { full_name: "Ana Exemplo" },
-    });
-    expect(b.calls[3].authorization).toBe("Bearer valid-token");
-    expect(b.calls[3].body).toEqual({
-      p_action: "teacher_created",
-      p_entity: teacherId,
-    });
     expect(r.headers.get("Cache-Control")).toBe("no-store");
   });
   it("gera recuperação somente para professor ativo", async () => {
@@ -199,13 +182,17 @@ describe("Worker administrativo", () => {
   });
   it("sanitiza erro do serviço", async () => {
     const b = backend({ inviteFail: true });
-    const r = await handleRequest(request(), env, b.fetcher);
+    const r = await handleRequest(
+      request({ id: teacherId }, "/api/admin/teachers/access-link"),
+      env,
+      b.fetcher,
+    );
     expect(r.status).toBe(409);
     expect(await r.text()).not.toContain("internal-secret-detail");
   });
-  it("explica criação parcial quando auditoria falha", async () => {
-    const b = backend({ auditFail: true });
-    const r = await handleRequest(request(), env, b.fetcher);
+  it("explica criação Master parcial quando auditoria falha", async () => {
+    const b = masterBackend({ auditFail: true });
+    const r = await handleRequest(masterRequest("POST"), masterEnv, b.fetcher);
     expect(r.status).toBe(502);
     expect(await r.text()).toContain("Conta criada");
   });
@@ -217,10 +204,14 @@ describe("Worker administrativo", () => {
     expect(await r.text()).not.toContain("private-test-key");
   });
   it("limita corpo mesmo sem content-length", async () => {
-    const b = backend();
+    const b = masterBackend();
     const r = await handleRequest(
-      request({ text: "x".repeat(17000) }),
-      env,
+      masterRequest("POST", undefined, {
+        full_name: "x".repeat(17000),
+        email: "teste@peralta.com",
+        password: "senha-segura-123",
+      }),
+      masterEnv,
       b.fetcher,
     );
     expect(r.status).toBe(400);

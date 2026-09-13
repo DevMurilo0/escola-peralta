@@ -9,7 +9,7 @@ export type MasterTeacher = {
   last_sign_in_at: string | null;
 };
 
-type ApiResult<T> = T & { error?: string };
+type ApiResult<T> = T & { error?: string; httpStatus?: number };
 
 async function request<T>(
   path: "status" | "teachers",
@@ -41,9 +41,10 @@ async function request<T>(
     } as ApiResult<T>;
   const result = (await response.json()) as ApiResult<T>;
   return response.ok
-    ? result
+    ? { ...result, httpStatus: response.status }
     : ({
         error: result.error || "Não foi possível concluir a operação.",
+        httpStatus: response.status,
       } as ApiResult<T>);
 }
 
@@ -54,7 +55,11 @@ export async function masterStatus(accessToken: string) {
     undefined,
     accessToken,
   );
-  return result.error ? false : result.isMaster === true;
+  return {
+    isMaster: !result.error && result.isMaster === true,
+    error:
+      result.error && result.httpStatus !== 403 ? result.error : undefined,
+  };
 }
 
 export async function loadMasterTeachers() {

@@ -3,6 +3,7 @@ import { QueryState } from "@/shared/components/query-state";
 import { db } from "@/shared/supabase/client";
 import { useAuth } from "@/features/auth/auth-context";
 import { AdminPanel } from "@/features/admin/admin-panel";
+import type { AdminStudent } from "@/features/admin/students/types";
 async function loadAdmin() {
   const client = db();
   const results = await Promise.all([
@@ -17,7 +18,13 @@ async function loadAdmin() {
       .order("school_year", { ascending: false })
       .order("name"),
     client.from("teacher_classes").select("*"),
-    client.from("students").select("*").order("full_name"),
+    client
+      .from("students")
+      .select(
+        "id,full_name,birth_date,active,enrollments(id,student_id,class_id,school_year,status,enrolled_at,classes(id,name,school_year,active))",
+      )
+      .eq("active", true)
+      .order("full_name"),
     client.from("school_settings").select("*").single(),
   ]);
   if (results.some((r) => r.error))
@@ -25,7 +32,7 @@ async function loadAdmin() {
   return results;
 }
 export default function Admin() {
-  const { profile, isMaster } = useAuth();
+  const { profile, isMaster, masterError } = useAuth();
   const resource = useResource(`admin:${profile!.id}`, loadAdmin);
   if (!resource.data || resource.error) return <QueryState {...resource} />;
   const results = resource.data;
@@ -34,9 +41,10 @@ export default function Admin() {
       teachers={results[0].data || []}
       classes={results[1].data || []}
       associations={results[2].data || []}
-      students={results[3].data || []}
+      students={(results[3].data || []) as unknown as AdminStudent[]}
       settings={results[4].data}
       isMaster={isMaster}
+      masterError={masterError}
     />
   );
 }
