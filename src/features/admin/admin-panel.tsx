@@ -114,7 +114,7 @@ export function AdminPanel({
       {tab === "classes" && (
         <section className="panel">
           <div className="page-heading">
-            <h2>Turmas · {classes.length}</h2>
+            <h2>Turmas</h2>
             <button
               onClick={() => {
                 setEditingClass(null);
@@ -127,114 +127,137 @@ export function AdminPanel({
           {!classes.length && (
             <div className="empty">Crie sua primeira turma para começar.</div>
           )}
-          {classes.map((c) => (
-            <div className="admin-class" key={c.id}>
-              <div className="row">
-                <div>
-                  <Link to={`/portal/turmas/${c.id}`}>
-                    <h3>{c.name} ↗</h3>
-                  </Link>
-                  <p>
-                    {c.school_year} · {c.shift} ·{" "}
-                    {c.enrollments.filter((e) => e.status === "active").length}{" "}
-                    alunos · {c.active ? "Ativa" : "Arquivada"}
-                  </p>
-                </div>
-                <div className="actions">
-                  <button
-                    className="secondary"
-                    onClick={() => {
-                      setEditingClass(c);
-                      setModal("class");
-                    }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="secondary"
-                    onClick={() =>
-                      setConfirm({
-                        title: c.active ? "Arquivar turma?" : "Reativar turma?",
-                        kind: "class",
-                        values: { ...c, active: !c.active },
-                      })
-                    }
-                  >
-                    {c.active ? "Arquivar" : "Reativar"}
-                  </button>
-                </div>
-              </div>
-              <div className="associations">
-                {associations
-                  .filter((a) => a.class_id === c.id)
-                  .map((a) => (
-                    <div className="row" key={a.id}>
-                      <span>
-                        {teachers.find((t) => t.id === a.teacher_id)?.full_name}{" "}
-                        ·{" "}
-                        {a.can_manage_students
-                          ? "Gerencia alunos"
-                          : "Notas e frequência"}
-                      </span>
+          <div className="admin-class-list">
+            {classes.map((c) => {
+              const classAssociations = associations.filter(
+                (association) => association.class_id === c.id,
+              );
+              return (
+                <article className="admin-class" key={c.id}>
+                  <div className="row admin-class-heading">
+                    <div>
+                      <Link to={`/portal/turmas/${c.id}`}>
+                        <h3>{c.name} ↗</h3>
+                      </Link>
+                      <p>
+                        {c.school_year} · {c.shift} ·{" "}
+                        {
+                          c.enrollments.filter((e) => e.status === "active")
+                            .length
+                        }{" "}
+                        alunos · {c.active ? "Ativa" : "Arquivada"}
+                      </p>
+                    </div>
+                    <div className="actions">
+                      <button
+                        className="secondary"
+                        onClick={() => {
+                          setEditingClass(c);
+                          setModal("class");
+                        }}
+                      >
+                        Editar
+                      </button>
                       <button
                         className="secondary"
                         onClick={() =>
                           setConfirm({
-                            title: "Remover associação do professor?",
-                            kind: "unlink",
-                            values: { id: a.id },
+                            title: c.active
+                              ? "Arquivar turma?"
+                              : "Reativar turma?",
+                            kind: "class",
+                            values: { ...c, active: !c.active },
                           })
                         }
                       >
-                        Remover vínculo
+                        {c.active ? "Arquivar" : "Reativar"}
                       </button>
                     </div>
-                  ))}
-              </div>
-              {c.active && (
-                <form
-                  className="inline-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const f = new FormData(e.currentTarget);
-                    run("association", {
-                      class_id: c.id,
-                      teacher_id: f.get("teacher_id"),
-                      can_manage_students: f.get("manage") === "on",
-                    });
-                  }}
-                >
-                  <label>
-                    Professor
-                    <select name="teacher_id" required defaultValue="">
-                      <option value="" disabled>
-                        Selecionar professor
-                      </option>
-                      {teachers
-                        .filter(
-                          (t) =>
-                            t.active &&
-                            !associations.some(
-                              (a) =>
-                                a.class_id === c.id && a.teacher_id === t.id,
-                            ),
-                        )
-                        .map((t) => (
-                          <option value={t.id} key={t.id}>
-                            {t.full_name}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
-                  <label className="checkbox">
-                    <input type="checkbox" name="manage" defaultChecked />
-                    Pode gerenciar alunos
-                  </label>
-                  <button disabled={pending}>Associar</button>
-                </form>
-              )}
-            </div>
-          ))}
+                  </div>
+                  <section className="admin-class-teachers">
+                    <h4>Professores vinculados</h4>
+                    {!classAssociations.length && (
+                      <p className="muted small">Nenhum professor vinculado.</p>
+                    )}
+                    <div className="associations">
+                      {classAssociations.map((a) => (
+                        <div className="row" key={a.id}>
+                          <span>
+                            {
+                              teachers.find((t) => t.id === a.teacher_id)
+                                ?.full_name
+                            }{" "}
+                            ·{" "}
+                            {a.can_manage_students
+                              ? "Gerencia alunos"
+                              : "Notas e frequência"}
+                          </span>
+                          <button
+                            className="secondary"
+                            onClick={() =>
+                              setConfirm({
+                                title: "Remover associação do professor?",
+                                kind: "unlink",
+                                values: { id: a.id },
+                              })
+                            }
+                          >
+                            Remover vínculo
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                  {c.active && (
+                    <section className="admin-class-associate">
+                      <h4>Adicionar professor</h4>
+                      <form
+                        className="inline-form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const f = new FormData(e.currentTarget);
+                          run("association", {
+                            class_id: c.id,
+                            teacher_id: f.get("teacher_id"),
+                            can_manage_students: f.get("manage") === "on",
+                          });
+                        }}
+                      >
+                        <label>
+                          Professor
+                          <select name="teacher_id" required defaultValue="">
+                            <option value="" disabled>
+                              Selecionar professor
+                            </option>
+                            {teachers
+                              .filter(
+                                (t) =>
+                                  t.active &&
+                                  !associations.some(
+                                    (a) =>
+                                      a.class_id === c.id &&
+                                      a.teacher_id === t.id,
+                                  ),
+                              )
+                              .map((t) => (
+                                <option value={t.id} key={t.id}>
+                                  {t.full_name}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
+                        <label className="checkbox">
+                          <input type="checkbox" name="manage" defaultChecked />
+                          Pode gerenciar alunos
+                        </label>
+                        <button disabled={pending}>Associar</button>
+                      </form>
+                    </section>
+                  )}
+                </article>
+              );
+            })}
+          </div>
         </section>
       )}
       {tab === "teachers" && isMaster && (
@@ -264,9 +287,12 @@ export function AdminPanel({
       {tab === "teachers" && !isMaster && (
         <section className="panel">
           <div className="page-heading">
-            <h2>Professores · {teachers.length}</h2>
+            <h2>Professores</h2>
           </div>
-          <p className={masterError ? "feedback error" : "muted small"} role={masterError ? "alert" : undefined}>
+          <p
+            className={masterError ? "feedback error" : "muted small"}
+            role={masterError ? "alert" : undefined}
+          >
             {masterError ||
               "Somente a direção Master pode criar novas contas de professores."}
           </p>

@@ -30,10 +30,12 @@ const maxBody = 16384;
 
 class ApiError extends Error {
   readonly status: number;
+  readonly code?: string;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
     this.name = "ApiError";
   }
 }
@@ -130,17 +132,20 @@ export async function requireMaster(
   const context = await requireAdmin(token, env, fetcher);
   const masterEmail = env.MASTER_EMAIL?.trim().toLowerCase();
   if (!masterEmail)
-    throw new ApiError(503, "Serviço Master não configurado.");
+    throw new ApiError(
+      503,
+      "Serviço Master não configurado.",
+      "MASTER_CONFIG_MISSING",
+    );
   if (context.user.email?.trim().toLowerCase() !== masterEmail)
-    throw new ApiError(403, "Acesso não autorizado.");
+    throw new ApiError(403, "Acesso não autorizado.", "MASTER_FORBIDDEN");
   return context;
 }
 
 function masterValidationMessage(error: z.ZodError) {
   const issue = error.issues[0];
   const field = issue?.path[0];
-  if (field === "full_name")
-    return "Informe um nome entre 3 e 150 caracteres.";
+  if (field === "full_name") return "Informe um nome entre 3 e 150 caracteres.";
   if (field === "password")
     return "A senha inicial deve ter entre 12 e 128 caracteres.";
   if (field === "email" && issue?.message === "domain")
@@ -230,7 +235,10 @@ async function createMasterTeacher(
     );
   }
   if (!created.data.user)
-    throw new ApiError(502, "Não foi possível criar o professor. Tente novamente.");
+    throw new ApiError(
+      502,
+      "Não foi possível criar o professor. Tente novamente.",
+    );
 
   const audit = await client.rpc("log_admin_event", {
     p_action: "master_teacher_created",
@@ -345,8 +353,7 @@ export async function handleRequest(
 
     const token = bearerToken(request);
     const master = await requireMaster(token, env, fetcher);
-    if (url.pathname === "/api/master/status")
-      return json({ isMaster: true });
+    if (url.pathname === "/api/master/status") return json({ isMaster: true });
     if (request.method === "POST")
       return json(
         await createMasterTeacher(request, env, fetcher, master.client),
@@ -362,7 +369,12 @@ export async function handleRequest(
         typeof error.status === "number")
     )
       return json(
-        { error: error.message },
+        {
+          error: error.message,
+          ...((error as ApiError).code
+            ? { code: (error as ApiError).code }
+            : {}),
+        },
         (error as ApiError).status,
       );
     return json(

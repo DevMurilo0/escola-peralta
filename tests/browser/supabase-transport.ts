@@ -9,7 +9,7 @@ export async function installSupabaseTransport(
   page: Page,
   role: "teacher" | "admin" = "teacher",
   active = true,
-  master = false,
+  master: boolean | "config-missing" = false,
 ) {
   const user = {
     id: teacherId,
@@ -302,15 +302,27 @@ export async function installSupabaseTransport(
         state.curriculum = [];
         data = deleted;
       } else data = state.curriculum;
-    }
-    else throw new Error(`Unexpected query ${entity}`);
+    } else throw new Error(`Unexpected query ${entity}`);
     await route.fulfill({ json: data });
   });
   await page.route("**/api/master/**", async (route) => {
+    if (profile.role === "admin" && master === "config-missing") {
+      await route.fulfill({
+        status: 503,
+        json: {
+          error: "Serviço Master não configurado.",
+          code: "MASTER_CONFIG_MISSING",
+        },
+      });
+      return;
+    }
     if (profile.role !== "admin" || !master) {
       await route.fulfill({
         status: 403,
-        json: { error: "Acesso não autorizado." },
+        json: {
+          error: "Acesso não autorizado.",
+          code: "MASTER_FORBIDDEN",
+        },
       });
       return;
     }
@@ -360,7 +372,8 @@ export async function installSupabaseTransport(
       await route.fulfill({
         status: 403,
         json: {
-          error: "Somente a direção Master pode criar novas contas de professores.",
+          error:
+            "Somente a direção Master pode criar novas contas de professores.",
         },
       });
       return;

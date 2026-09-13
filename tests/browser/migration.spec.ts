@@ -105,7 +105,9 @@ test("professor: login, sessão persistida, notas e chamada persistem após refr
   await expect(page.getByRole("status")).toContainText("Frequência salva");
   await page.reload();
   await expect(page).toHaveURL(/term=2&module=attendance/);
-  await expect(page.getByRole("heading", { name: "Frequência diária" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Frequência diária" }),
+  ).toBeVisible();
   await expect(
     page.getByLabel("Falta justificada", { exact: true }),
   ).toBeChecked();
@@ -146,7 +148,9 @@ test("I–IV bimestres, conteúdos curriculares e resultado final ficam integrad
 
   await page.getByRole("button", { name: "Abrir I Bimestre" }).click();
   await page
-    .getByRole("button", { name: /Registro dos conteúdos curriculares trabalhados/ })
+    .getByRole("button", {
+      name: /Registro dos conteúdos curriculares trabalhados/,
+    })
     .click();
   await expect(
     page.getByRole("heading", { name: "Conteúdos trabalhados" }),
@@ -160,8 +164,12 @@ test("I–IV bimestres, conteúdos curriculares e resultado final ficam integrad
 
   await page.getByRole("button", { name: "3º Ano A", exact: true }).click();
   await page.getByRole("button", { name: /Resultado final/ }).click();
-  await expect(page.getByRole("columnheader", { name: "Situação" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "8,0", exact: true })).toHaveCount(5);
+  await expect(
+    page.getByRole("columnheader", { name: "Situação" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: "8,0", exact: true }),
+  ).toHaveCount(5);
   await expect(page.getByRole("cell", { name: "Aprovado" })).toBeVisible();
 
   state.grades = state.grades.slice(0, 3);
@@ -176,8 +184,12 @@ test("I–IV bimestres, conteúdos curriculares e resultado final ficam integrad
     average: 5.5,
   }));
   await page.reload();
-  await expect(page.getByRole("cell", { name: "5,5", exact: true })).toHaveCount(5);
-  await expect(page.getByRole("cell", { name: "Abaixo da média" })).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: "5,5", exact: true }),
+  ).toHaveCount(5);
+  await expect(
+    page.getByRole("cell", { name: "Abaixo da média" }),
+  ).toBeVisible();
 });
 
 test("guard bloqueia professor em administração; logout encerra a sessão", async ({
@@ -214,7 +226,9 @@ test("admin comum gerencia professores sem poder criar contas", async ({
     page.getByRole("heading", { name: "Administração", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Professores", exact: true }).click();
-  await expect(page.getByRole("button", { name: /Criar professor/ })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /Criar professor/ }),
+  ).toHaveCount(0);
   await expect(page.getByText(/Somente a direção Master/)).toBeVisible();
   const forbidden = await page.evaluate(async () => {
     const response = await fetch("/api/admin/teachers", {
@@ -233,6 +247,73 @@ test("admin comum gerencia professores sem poder criar contas", async ({
   expect(state.workerRequests).toBe(2);
 });
 
+test("administração separa turmas em cards responsivos e sem contadores", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installSupabaseTransport(page, "admin");
+  await signIn(page, "admin");
+  await page.getByRole("button", { name: "Abrir navegação" }).click();
+  await page.getByRole("link", { name: "Administração", exact: true }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Turmas", exact: true }),
+  ).toBeVisible();
+  const cards = page.locator(".admin-class");
+  await expect(cards).toHaveCount(2);
+  await expect(
+    cards.getByRole("heading", { name: "Professores vinculados" }),
+  ).toHaveCount(2);
+  await expect(
+    cards.getByRole("heading", { name: "Adicionar professor" }),
+  ).toHaveCount(2);
+  const presentation = await cards.evaluateAll((elements) =>
+    elements.map((element) => {
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      return {
+        borderStyle: style.borderStyle,
+        borderRadius: Number.parseFloat(style.borderRadius),
+        background: style.backgroundColor,
+        top: box.top,
+        bottom: box.bottom,
+      };
+    }),
+  );
+  expect(presentation.every((card) => card.borderStyle === "solid")).toBe(true);
+  expect(presentation.every((card) => card.borderRadius >= 10)).toBe(true);
+  expect(
+    presentation.every((card) => card.background !== "rgba(0, 0, 0, 0)"),
+  ).toBe(true);
+  expect(presentation[1].top - presentation[0].bottom).toBeGreaterThanOrEqual(
+    19,
+  );
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("falha de configuração Master tem diagnóstico próprio e não libera criação", async ({
+  page,
+}) => {
+  await installSupabaseTransport(page, "admin", true, "config-missing");
+  await signIn(page, "admin");
+  await page.getByRole("link", { name: "Administração", exact: true }).click();
+  await page.getByRole("button", { name: "Professores", exact: true }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Professores", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Configuração Master indisponível no servidor.",
+  );
+  await expect(
+    page.getByRole("button", { name: /Criar professor/ }),
+  ).toHaveCount(0);
+});
+
 test("Master cria professor real e o novo professor autentica pelo fluxo normal", async ({
   page,
 }) => {
@@ -243,7 +324,7 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
   await page.getByRole("link", { name: "Administração", exact: true }).click();
   await page.getByRole("button", { name: "Professores", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: /Gerenciar professores/ }),
+    page.getByRole("heading", { name: "Professores", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Nunca acessou", { exact: true })).toBeVisible();
 
@@ -263,7 +344,10 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
     dialog.getByText(/definirá a própria senha por um link/),
   ).toHaveCount(0);
   await dialog.getByLabel("Mostrar senha").check();
-  await expect(dialog.getByLabel("Senha inicial")).toHaveAttribute("type", "text");
+  await expect(dialog.getByLabel("Senha inicial")).toHaveAttribute(
+    "type",
+    "text",
+  );
 
   await dialog.getByLabel("Nome completo").fill("Professor Criado");
   await dialog.getByLabel("E-mail").fill("teste@peralta.com");
@@ -282,19 +366,21 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
   await dialog.getByRole("button", { name: "Criar professor" }).click();
   await expect(page.getByText(/Professor criado com sucesso/)).toBeVisible();
   expect(state.masterCreates).toBe(1);
-  await expect(page.getByRole("heading", { name: "Professor Criado" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Professor Criado" }),
+  ).toBeVisible();
   expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
   ).toBe(true);
 
   await page.getByRole("button", { name: "Abrir navegação" }).click();
   await page.getByRole("button", { name: "Sair da conta" }).click();
-  await signInWithCredentials(
-    page,
-    "teste@peralta.com",
-    "senha-segura-123",
-  );
-  await expect(page.getByRole("heading", { name: "Olá, Professor." })).toBeVisible();
+  await signInWithCredentials(page, "teste@peralta.com", "senha-segura-123");
+  await expect(
+    page.getByRole("heading", { name: "Olá, Professor." }),
+  ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Administração", exact: true }),
   ).toHaveCount(0);

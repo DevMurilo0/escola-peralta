@@ -3,12 +3,16 @@ import { join } from "node:path";
 const root = "dist/client";
 if (!existsSync(join(root, "index.html")))
   throw new Error("Build frontend ausente em dist/client.");
-const secrets = [process.env.SUPABASE_SERVICE_ROLE_KEY];
+const secrets = [
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  process.env.MASTER_EMAIL,
+];
 if (existsSync(".dev.vars")) {
-  const match = readFileSync(".dev.vars", "utf8").match(
-    /^SUPABASE_SERVICE_ROLE_KEY\s*=\s*(.+)$/m,
-  );
-  if (match) secrets.push(match[1].trim().replace(/^["']|["']$/g, ""));
+  const localRuntime = readFileSync(".dev.vars", "utf8");
+  for (const name of ["SUPABASE_SERVICE_ROLE_KEY", "MASTER_EMAIL"]) {
+    const match = localRuntime.match(new RegExp(`^${name}\\s*=\\s*(.+)$`, "m"));
+    if (match) secrets.push(match[1].trim().replace(/^["']|["']$/g, ""));
+  }
 }
 const walk = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
@@ -19,6 +23,7 @@ for (const file of walk(root)) {
   const text = readFileSync(file, "utf8");
   if (
     text.includes("SUPABASE_SERVICE_ROLE_KEY") ||
+    text.includes("VITE_MASTER_EMAIL") ||
     secrets
       .filter((s) => s && s.length > 20)
       .some((secret) => text.includes(secret))

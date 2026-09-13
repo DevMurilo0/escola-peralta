@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, it, expect, vi } from "vitest";
 import { handleRequest, type Env } from "../worker";
 const userId = "10000000-0000-4000-8000-000000000001";
@@ -138,12 +139,15 @@ describe("Worker administrativo", () => {
   it.each([
     { full_name: "A", email: "invalid" },
     { full_name: "Ana Exemplo", email: "ana@example.test", role: "admin" },
-  ])("não permite contornar o Master pelo endpoint legado: %j", async (body) => {
-    const b = backend();
-    const r = await handleRequest(request(body), env, b.fetcher);
-    expect(r.status).toBe(403);
-    expect(b.calls.some((c) => c.path.includes("/admin/"))).toBe(false);
-  });
+  ])(
+    "não permite contornar o Master pelo endpoint legado: %j",
+    async (body) => {
+      const b = backend();
+      const r = await handleRequest(request(body), env, b.fetcher);
+      expect(r.status).toBe(403);
+      expect(b.calls.some((c) => c.path.includes("/admin/"))).toBe(false);
+    },
+  );
   it("bloqueia criação por convite até para admin autenticado", async () => {
     const b = backend();
     const r = await handleRequest(request(), env, b.fetcher);
@@ -278,92 +282,103 @@ function masterBackend(
     lastSignIn?: string | null;
   } = {},
 ) {
-  const calls: { path: string; method: string; authorization: string | null; body: unknown }[] = [];
-  const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(String(input));
-    const headers = new Headers(init?.headers);
-    const body = typeof init?.body === "string" ? JSON.parse(init.body) : null;
-    calls.push({
-      path: url.pathname,
-      method: init?.method || "GET",
-      authorization: headers.get("authorization"),
-      body,
-    });
-    const reply = (
-      value: unknown,
-      status = 200,
-      responseHeaders: Record<string, string> = {},
-    ) =>
-      new Response(JSON.stringify(value), {
-        status,
-        headers: { "Content-Type": "application/json", ...responseHeaders },
+  const calls: {
+    path: string;
+    method: string;
+    authorization: string | null;
+    body: unknown;
+  }[] = [];
+  const fetcher = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      const headers = new Headers(init?.headers);
+      const body =
+        typeof init?.body === "string" ? JSON.parse(init.body) : null;
+      calls.push({
+        path: url.pathname,
+        method: init?.method || "GET",
+        authorization: headers.get("authorization"),
+        body,
       });
-    if (url.pathname === "/auth/v1/user")
-      return options.authFail
-        ? reply({ message: "expired" }, 401)
-        : reply({
-            id: userId,
-            email: options.email ?? "Master@Peralta.com",
-            aud: "authenticated",
-          });
-    if (url.pathname === "/rest/v1/profiles") {
-      if (headers.get("authorization") === "Bearer private-test-key")
-        return reply([
-          {
-            id: teacherId,
-            full_name: "Ana Exemplo",
-            email: "ana@peralta.com",
-            active: true,
-            created_at: "2026-09-01T12:00:00.000Z",
-          },
-          {
-            id: "10000000-0000-4000-8000-000000000003",
-            full_name: "Bruno Exemplo",
-            email: "bruno@peralta.com",
-            active: false,
-            created_at: "2026-09-02T12:00:00.000Z",
-          },
-        ]);
-      return reply({
-        role: options.role ?? "admin",
-        active: options.active !== false,
-      });
-    }
-    if (url.pathname === "/auth/v1/admin/users" && init?.method === "POST")
-      return options.duplicate
-        ? reply({ message: "User already registered", code: "email_exists" }, 422)
-        : reply({
-            user: {
-              id: teacherId,
-              email: "teste@peralta.com",
-              created_at: "2026-09-12T20:00:00.000Z",
-              last_sign_in_at: null,
-              user_metadata: { full_name: "Professor de Teste" },
-              app_metadata: {},
+      const reply = (
+        value: unknown,
+        status = 200,
+        responseHeaders: Record<string, string> = {},
+      ) =>
+        new Response(JSON.stringify(value), {
+          status,
+          headers: { "Content-Type": "application/json", ...responseHeaders },
+        });
+      if (url.pathname === "/auth/v1/user")
+        return options.authFail
+          ? reply({ message: "expired" }, 401)
+          : reply({
+              id: userId,
+              email: options.email ?? "Master@Peralta.com",
               aud: "authenticated",
+            });
+      if (url.pathname === "/rest/v1/profiles") {
+        if (headers.get("authorization") === "Bearer private-test-key")
+          return reply([
+            {
+              id: teacherId,
+              full_name: "Ana Exemplo",
+              email: "ana@peralta.com",
+              active: true,
+              created_at: "2026-09-01T12:00:00.000Z",
             },
-          });
-    if (url.pathname === "/auth/v1/admin/users")
-      return reply({
-        users: [
-          {
-            id: teacherId,
-            email: "ana@peralta.com",
-            last_sign_in_at: options.lastSignIn ?? null,
-          },
-          {
-            id: "10000000-0000-4000-8000-000000000003",
-            email: "bruno@peralta.com",
-            last_sign_in_at: "2026-09-12T21:30:00.000Z",
-          },
-        ],
-      });
-    if (url.pathname === "/rest/v1/rpc/log_admin_event")
-      return options.auditFail
-        ? reply({ message: "private SQL" }, 500)
-        : reply(null);
-    throw new Error(`Unexpected upstream: ${url.pathname}`);
-  });
+            {
+              id: "10000000-0000-4000-8000-000000000003",
+              full_name: "Bruno Exemplo",
+              email: "bruno@peralta.com",
+              active: false,
+              created_at: "2026-09-02T12:00:00.000Z",
+            },
+          ]);
+        return reply({
+          role: options.role ?? "admin",
+          active: options.active !== false,
+        });
+      }
+      if (url.pathname === "/auth/v1/admin/users" && init?.method === "POST")
+        return options.duplicate
+          ? reply(
+              { message: "User already registered", code: "email_exists" },
+              422,
+            )
+          : reply({
+              user: {
+                id: teacherId,
+                email: "teste@peralta.com",
+                created_at: "2026-09-12T20:00:00.000Z",
+                last_sign_in_at: null,
+                user_metadata: { full_name: "Professor de Teste" },
+                app_metadata: {},
+                aud: "authenticated",
+              },
+            });
+      if (url.pathname === "/auth/v1/admin/users")
+        return reply({
+          users: [
+            {
+              id: teacherId,
+              email: "ana@peralta.com",
+              last_sign_in_at: options.lastSignIn ?? null,
+            },
+            {
+              id: "10000000-0000-4000-8000-000000000003",
+              email: "bruno@peralta.com",
+              last_sign_in_at: "2026-09-12T21:30:00.000Z",
+            },
+          ],
+        });
+      if (url.pathname === "/rest/v1/rpc/log_admin_event")
+        return options.auditFail
+          ? reply({ message: "private SQL" }, 500)
+          : reply(null);
+      throw new Error(`Unexpected upstream: ${url.pathname}`);
+    },
+  );
   return { fetcher: fetcher as typeof fetch, calls };
 }
 
@@ -412,7 +427,22 @@ describe("Worker Master", () => {
       backend.fetcher,
     );
     expect(response.status).toBe(503);
-    expect(await response.text()).not.toContain("Master@Peralta.com");
+    expect(await response.json()).toEqual({
+      error: "Serviço Master não configurado.",
+      code: "MASTER_CONFIG_MISSING",
+    });
+  });
+
+  it("mantém MASTER_EMAIL apenas no runtime preservado do Worker", () => {
+    const wrangler = readFileSync("wrangler.jsonc", "utf8");
+    const vite = readFileSync("vite.config.ts", "utf8");
+    const publicExample = readFileSync(".env.example", "utf8");
+    const workerExample = readFileSync(".dev.vars.example", "utf8");
+    expect(wrangler).toMatch(/"keep_vars"\s*:\s*true/);
+    expect(wrangler).not.toContain("MASTER_EMAIL");
+    expect(vite).not.toContain("VITE_MASTER_EMAIL");
+    expect(publicExample).not.toContain("MASTER_EMAIL");
+    expect(workerExample).toMatch(/^MASTER_EMAIL=$/m);
   });
 
   it("cria usuário confirmado e audita sem retornar senha", async () => {

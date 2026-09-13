@@ -53,11 +53,11 @@ O desenvolvimento usa Vite com HMR. Um adaptador local carrega o mesmo handler d
 
 Variáveis `VITE_*` são incorporadas ao bundle e são sempre públicas:
 
-| Variável | Uso |
-| --- | --- |
-| `VITE_SUPABASE_URL` | URL pública do projeto Supabase |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Chave pública/publishable |
-| `VITE_SITE_URL` | Origem canônica do site |
+| Variável                        | Uso                             |
+| ------------------------------- | ------------------------------- |
+| `VITE_SUPABASE_URL`             | URL pública do projeto Supabase |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Chave pública/publishable       |
+| `VITE_SITE_URL`                 | Origem canônica do site         |
 
 Use `.env.local` no desenvolvimento. Nunca coloque senhas, service role ou outros segredos em variáveis `VITE_*`.
 
@@ -65,29 +65,31 @@ Use `.env.local` no desenvolvimento. Nunca coloque senhas, service role ou outro
 
 Variáveis privadas do runtime:
 
-| Variável | Uso |
-| --- | --- |
-| `SUPABASE_URL` | URL do projeto Supabase |
-| `SUPABASE_PUBLISHABLE_KEY` | Validação da sessão e do perfil |
-| `SUPABASE_SERVICE_ROLE_KEY` | Operações administrativas autorizadas |
-| `MASTER_EMAIL` | E-mail do administrador autorizado às operações Master |
-| `ALLOWED_ORIGIN` | Origem HTTPS permitida em produção |
+| Variável                    | Uso                                                    |
+| --------------------------- | ------------------------------------------------------ |
+| `SUPABASE_URL`              | URL do projeto Supabase                                |
+| `SUPABASE_PUBLISHABLE_KEY`  | Validação da sessão e do perfil                        |
+| `SUPABASE_SERVICE_ROLE_KEY` | Operações administrativas autorizadas                  |
+| `MASTER_EMAIL`              | E-mail do administrador autorizado às operações Master |
+| `ALLOWED_ORIGIN`            | Origem HTTPS permitida em produção                     |
 
 No desenvolvimento, mantenha esses valores em `.dev.vars`. Em produção, configure-os como variables/secrets do Cloudflare Worker.
+
+`MASTER_EMAIL` é uma configuração privada de runtime do Worker: não use `VITE_MASTER_EMAIL` nem a cadastre somente como variável de build. O `keep_vars` do Wrangler preserva variáveis já configuradas no Worker durante novos deploys, mas elas precisam existir no mesmo Worker e ambiente de produção publicados.
 
 As variáveis `BOOTSTRAP_*`, `ALLOW_DEVELOPMENT_SEED` e `DEMO_TEACHER_PASSWORD` são exclusivas dos scripts manuais de bootstrap e seed. Nenhum build ou deploy as executa automaticamente.
 
 ## Scripts
 
-| Comando | Função |
-| --- | --- |
-| `npm run dev` | Inicia o Vite com HMR e API local |
-| `npm run build` | Executa TypeScript, builds do cliente/Worker e verifica o bundle |
-| `npm run lint` | Executa ESLint |
-| `npm run typecheck` | Verifica os tipos sem emitir arquivos |
-| `npm test` | Executa Vitest e testes PostgreSQL isolados |
-| `npm run test:browser` | Executa Playwright sobre o build local |
-| `npm run deploy` | Faz build e publica com Wrangler |
+| Comando                | Função                                                           |
+| ---------------------- | ---------------------------------------------------------------- |
+| `npm run dev`          | Inicia o Vite com HMR e API local                                |
+| `npm run build`        | Executa TypeScript, builds do cliente/Worker e verifica o bundle |
+| `npm run lint`         | Executa ESLint                                                   |
+| `npm run typecheck`    | Verifica os tipos sem emitir arquivos                            |
+| `npm test`             | Executa Vitest e testes PostgreSQL isolados                      |
+| `npm run test:browser` | Executa Playwright sobre o build local                           |
+| `npm run deploy`       | Faz build e publica com Wrangler                                 |
 
 Faça o build antes dos testes de navegador:
 

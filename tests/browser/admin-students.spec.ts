@@ -34,17 +34,21 @@ test("admin pesquisa e consulta o histórico acadêmico do aluno", async ({
 
   const search = page.getByPlaceholder("Pesquisar aluno por nome...");
   await search.fill("  aLiCe   eXeMpLo  ");
-  await expect(page.getByRole("button", { name: /Alice Exemplo/ })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Alice Exemplo/ }),
+  ).toBeVisible();
   await expect(page.getByText("15/03/2018")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Alice Exemplo/ })).toContainText(
-    "3º Ano A",
-  );
+  await expect(
+    page.getByRole("button", { name: /Alice Exemplo/ }),
+  ).toContainText("3º Ano A");
   await search.fill("nome inexistente");
   await expect(page.getByText("Nenhum aluno encontrado.")).toBeVisible();
   await search.fill("");
 
   await page.getByRole("button", { name: /Alice Exemplo/ }).click();
-  await expect(page.getByRole("heading", { name: "Alice Exemplo" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Alice Exemplo" }),
+  ).toBeVisible();
   await expect(page.locator(".student-detail-heading")).toContainText(
     "Turma atual: 3º Ano A",
   );
@@ -60,11 +64,15 @@ test("admin pesquisa e consulta o histórico acadêmico do aluno", async ({
   }
   await page.getByRole("button", { name: "1º Bimestre" }).click();
   expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
   ).toBe(true);
 });
 
-test("admin edita, transfere e arquiva sem perder histórico", async ({ page }) => {
+test("admin edita, transfere e arquiva sem perder histórico", async ({
+  page,
+}) => {
   const state = await installSupabaseTransport(page, "admin");
   state.grades.push({
     student_id: studentId,
@@ -92,8 +100,12 @@ test("admin edita, transfere e arquiva sem perder histórico", async ({ page }) 
   await edit.getByLabel("Nome completo").fill("Alice Atualizada");
   await edit.getByLabel("Data de nascimento").fill("2018-04-20");
   await edit.getByRole("button", { name: "Salvar alterações" }).click();
-  await expect(page.getByText("Informações do aluno atualizadas.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Alice Atualizada" })).toBeVisible();
+  await expect(
+    page.getByText("Informações do aluno atualizadas."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Alice Atualizada" }),
+  ).toBeVisible();
 
   await page
     .getByLabel("Nova turma")
@@ -120,10 +132,14 @@ test("admin edita, transfere e arquiva sem perder histórico", async ({ page }) 
   const archive = page.getByRole("dialog", {
     name: /Remover cadastro de Alice Atualizada/,
   });
-  await expect(archive).toContainText("histórico acadêmico existente será preservado");
+  await expect(archive).toContainText(
+    "histórico acadêmico existente será preservado",
+  );
   await archive.getByRole("button", { name: "Remover aluno" }).click();
   await expect(page.getByText("Cadastro do aluno removido.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Alunos · 0" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Alunos", exact: true }),
+  ).toBeVisible();
   expect(state.grades).toHaveLength(1);
   expect(state.sessions).toHaveLength(1);
 });

@@ -34,7 +34,7 @@ export function MasterTeachersPanel({
     <section className="panel">
       <div className="page-heading">
         <div>
-          <h2>Gerenciar professores · {teachers.length}</h2>
+          <h2>Professores</h2>
           <p className="muted small">
             Contas do Supabase Auth prontas para acesso ao Portal do Professor.
           </p>
@@ -46,7 +46,10 @@ export function MasterTeachersPanel({
       )}
       <div className="master-teacher-list">
         {teachers.map((teacher) => (
-          <article className="list-row wrap master-teacher-card" key={teacher.id}>
+          <article
+            className="list-row wrap master-teacher-card"
+            key={teacher.id}
+          >
             <div>
               <h3>{teacher.full_name}</h3>
               <p>{teacher.email}</p>

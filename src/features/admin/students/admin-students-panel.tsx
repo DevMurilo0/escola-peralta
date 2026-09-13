@@ -57,7 +57,7 @@ export function AdminStudentsPanel({
     <section className="panel admin-students-panel">
       <div className="page-heading">
         <div>
-          <h2>Alunos · {students.length}</h2>
+          <h2>Alunos</h2>
           <p className="muted small">
             Consulte dados atuais e históricos dos alunos ativos.
           </p>
@@ -100,9 +100,7 @@ export function AdminStudentsPanel({
           );
         })}
       </div>
-      {!visible.length && (
-        <div className="empty">Nenhum aluno encontrado.</div>
-      )}
+      {!visible.length && <div className="empty">Nenhum aluno encontrado.</div>}
     </section>
   );
 }

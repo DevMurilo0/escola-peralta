@@ -9,7 +9,11 @@ export type MasterTeacher = {
   last_sign_in_at: string | null;
 };
 
-type ApiResult<T> = T & { error?: string; httpStatus?: number };
+type ApiResult<T> = T & {
+  error?: string;
+  code?: string;
+  httpStatus?: number;
+};
 
 async function request<T>(
   path: "status" | "teachers",
@@ -25,25 +29,40 @@ async function request<T>(
     token = session?.access_token;
   }
   if (!token)
-    return { error: "Sua sessão expirou. Entre novamente." } as ApiResult<T>;
+    return {
+      error: "Sua sessão expirou. Entre novamente.",
+      code: "SESSION_INVALID",
+      httpStatus: 401,
+    } as ApiResult<T>;
 
-  const response = await fetch(`/api/master/${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(payload ? { "Content-Type": "application/json" } : {}),
-    },
-    ...(payload ? { body: JSON.stringify(payload) } : {}),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`/api/master/${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(payload ? { "Content-Type": "application/json" } : {}),
+      },
+      ...(payload ? { body: JSON.stringify(payload) } : {}),
+    });
+  } catch {
+    return {
+      error: "Não foi possível conectar ao serviço administrativo.",
+      code: "NETWORK_ERROR",
+    } as ApiResult<T>;
+  }
   if (!response.headers.get("content-type")?.includes("application/json"))
     return {
       error: "Serviço administrativo indisponível. Tente novamente.",
+      code: "INVALID_RESPONSE",
+      httpStatus: response.status,
     } as ApiResult<T>;
   const result = (await response.json()) as ApiResult<T>;
   return response.ok
     ? { ...result, httpStatus: response.status }
     : ({
         error: result.error || "Não foi possível concluir a operação.",
+        code: result.code,
         httpStatus: response.status,
       } as ApiResult<T>);
 }
@@ -57,8 +76,16 @@ export async function masterStatus(accessToken: string) {
   );
   return {
     isMaster: !result.error && result.isMaster === true,
-    error:
-      result.error && result.httpStatus !== 403 ? result.error : undefined,
+    error: (() => {
+      if (!result.error || result.httpStatus === 403) return undefined;
+      if (result.code === "MASTER_CONFIG_MISSING")
+        return "Configuração Master indisponível no servidor.";
+      if (result.httpStatus === 401)
+        return "Sua sessão não pôde ser validada. Entre novamente.";
+      if (result.code === "NETWORK_ERROR")
+        return "Não foi possível verificar a configuração Master. Verifique sua conexão.";
+      return "Não foi possível verificar a configuração Master. Tente novamente.";
+    })(),
   };
 }
 
