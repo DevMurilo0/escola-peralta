@@ -32,6 +32,14 @@ test("admin pesquisa e consulta o histórico acadêmico do aluno", async ({
   await page.getByRole("link", { name: "Administração", exact: true }).click();
   await page.getByRole("button", { name: "Alunos", exact: true }).click();
 
+  const classCard = page.getByRole("button", { name: /Abrir 3º Ano A/ });
+  await expect(classCard).toBeVisible();
+  await expect(classCard).toContainText("1 aluno");
+  await expect(classCard).toContainText("Professor(es)");
+  await expect(
+    page.getByRole("button", { name: /Alice Exemplo/ }),
+  ).toHaveCount(0);
+
   const search = page.getByPlaceholder("Pesquisar aluno por nome...");
   await search.fill("  aLiCe   eXeMpLo  ");
   await expect(
@@ -41,9 +49,24 @@ test("admin pesquisa e consulta o histórico acadêmico do aluno", async ({
   await expect(
     page.getByRole("button", { name: /Alice Exemplo/ }),
   ).toContainText("3º Ano A");
+  await expect(
+    page.getByRole("button", { name: /Alice Exemplo/ }),
+  ).toContainText("Professor(es)");
   await search.fill("nome inexistente");
   await expect(page.getByText("Nenhum aluno encontrado.")).toBeVisible();
   await search.fill("");
+
+  await page.getByRole("button", { name: /Abrir 3º Ano A/ }).click();
+  const classSearch = page.getByPlaceholder("Pesquisar aluno nesta turma...");
+  await expect(classSearch).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Alice Exemplo/ }),
+  ).toBeVisible();
+  await classSearch.fill("nome inexistente");
+  await expect(
+    page.getByText("Nenhum aluno encontrado nesta turma."),
+  ).toBeVisible();
+  await classSearch.fill("");
 
   await page.getByRole("button", { name: /Alice Exemplo/ }).click();
   await expect(
@@ -56,6 +79,9 @@ test("admin pesquisa e consulta o histórico acadêmico do aluno", async ({
   await expect(page.getByText("7,75", { exact: true })).toBeVisible();
   await expect(page.getByText("Presente", { exact: true })).toBeVisible();
   await expect(page.getByText("100%", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("progressbar", { name: "Frequência no 1º bimestre" }),
+  ).toHaveAttribute("aria-valuenow", "100");
 
   for (const term of [2, 3, 4]) {
     await page.getByRole("button", { name: `${term}º Bimestre` }).click();
@@ -93,6 +119,7 @@ test("admin edita, transfere e arquiva sem perder histórico", async ({
   await signIn(page, "admin");
   await page.getByRole("link", { name: "Administração", exact: true }).click();
   await page.getByRole("button", { name: "Alunos", exact: true }).click();
+  await page.getByRole("button", { name: /Abrir 3º Ano A/ }).click();
   await page.getByRole("button", { name: /Alice Exemplo/ }).click();
 
   await page.getByRole("button", { name: "Editar informações" }).click();

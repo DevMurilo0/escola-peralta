@@ -45,6 +45,10 @@ export function StudentAcademic({
     (item) => item.status === "justified",
   ).length;
   const frequency = records.length ? (present / records.length) * 100 : null;
+  const frequencyLabel =
+    frequency === null
+      ? "—"
+      : frequency.toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "%";
 
   return (
     <section className="student-academic">
@@ -60,9 +64,13 @@ export function StudentAcademic({
           </button>
         ))}
       </div>
+
       <div className="student-academic-grid">
         <section className="panel inset-panel">
-          <h3>Notas</h3>
+          <div className="academic-panel-heading">
+            <span className="eyebrow">{term}º BIMESTRE</span>
+            <h3>Notas</h3>
+          </div>
           {!grade ? (
             <p className="empty">Sem notas registradas neste bimestre.</p>
           ) : (
@@ -75,19 +83,42 @@ export function StudentAcademic({
                 <dt>2ª Nota</dt>
                 <dd>{score(grade.exam_score)}</dd>
               </div>
-              <div>
+              <div className="student-summary-highlight">
                 <dt>Média</dt>
                 <dd>{score(grade.average)}</dd>
               </div>
             </dl>
           )}
         </section>
+
         <section className="panel inset-panel">
-          <h3>Frequência</h3>
+          <div className="academic-panel-heading">
+            <span className="eyebrow">{term}º BIMESTRE</span>
+            <h3>Frequência</h3>
+          </div>
           {!records.length ? (
             <p className="empty">Nenhuma chamada registrada neste bimestre.</p>
           ) : (
             <>
+              <div className="attendance-frequency-summary">
+                <div>
+                  <span>Frequência registrada</span>
+                  <strong>{frequencyLabel}</strong>
+                </div>
+                {frequency !== null && (
+                  <div
+                    className="attendance-frequency-bar"
+                    role="progressbar"
+                    aria-label={"Frequência no " + term + "º bimestre"}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Number(frequency.toFixed(1))}
+                  >
+                    <span style={{ width: Math.min(frequency, 100) + "%" }} />
+                  </div>
+                )}
+              </div>
+
               <dl className="student-summary-list">
                 <div>
                   <dt>Aulas registradas</dt>
@@ -105,15 +136,21 @@ export function StudentAcademic({
                   <dt>Faltas justificadas</dt>
                   <dd>{justified}</dd>
                 </div>
-                <div>
-                  <dt>Frequência</dt>
-                  <dd>{frequency?.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</dd>
-                </div>
               </dl>
+
               <div className="attendance-history">
+                <div className="attendance-history-heading">
+                  <strong>Histórico de chamadas</strong>
+                  <small>{records.length} registros</small>
+                </div>
                 {records.map((item) => (
                   <div key={item.attendance_sessions.id}>
-                    <time>{item.attendance_sessions.date.split("-").reverse().join("/")}</time>
+                    <time>
+                      {item.attendance_sessions.date
+                        .split("-")
+                        .reverse()
+                        .join("/")}
+                    </time>
                     <span>{statusLabel[item.status]}</span>
                   </div>
                 ))}

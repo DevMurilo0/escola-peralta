@@ -353,6 +353,8 @@ export function AdminPanel({
         <AdminStudentsPanel
           students={students}
           classes={classes}
+          teachers={teachers}
+          associations={associations}
           schoolYear={settings.school_year}
         />
       )}
