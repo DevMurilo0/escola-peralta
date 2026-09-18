@@ -112,12 +112,12 @@ export function AdminStudentsPanel({
 
   const selectedClass = currentClasses.find((item) => item.id === selectedClassId);
   const groupStudents = groups.get(selectedClassId || "") ?? [];
-  const classResults = useMemo(() => {
-    const term = normalize(deferredClassQuery);
-    return term
-      ? groupStudents.filter((student) => normalize(student.full_name).includes(term))
-      : groupStudents;
-  }, [deferredClassQuery, groupStudents]);
+  const classTerm = normalize(deferredClassQuery);
+  const classResults = classTerm
+    ? groupStudents.filter((student) =>
+        normalize(student.full_name).includes(classTerm),
+      )
+    : groupStudents;
 
   const openGroup = (id: string) => {
     setQuery("");
