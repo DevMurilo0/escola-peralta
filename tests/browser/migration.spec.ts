@@ -261,6 +261,23 @@ test("administração separa turmas em cards responsivos e sem contadores", asyn
   ).toBeVisible();
   const cards = page.locator(".admin-class");
   await expect(cards).toHaveCount(2);
+
+  const classSearch = page.getByPlaceholder("Pesquisar turma ou professor...");
+  await classSearch.fill("3º Ano B");
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toContainText("3º Ano B");
+
+  await classSearch.fill("Ana Exemplo");
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toContainText("3º Ano A");
+
+  await classSearch.fill("professor inexistente");
+  await expect(
+    page.getByText("Nenhuma turma ou professor encontrado."),
+  ).toBeVisible();
+
+  await classSearch.fill("");
+  await expect(cards).toHaveCount(2);
   await expect(
     cards.getByRole("heading", { name: "Professores vinculados" }),
   ).toHaveCount(2);
