@@ -2858,6 +2858,84 @@ td {
   }
 }
 
+
+/* Administração: pesquisa de turmas e interações sem troca de cor. */
+.class-search {
+  margin-top: 18px;
+  margin-bottom: 24px;
+}
+
+.admin-classes-panel button,
+.admin-students-panel button {
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.admin-classes-panel button:hover,
+.admin-students-panel button:hover {
+  transform: scale(1.025);
+}
+
+.admin-classes-panel button:active,
+.admin-students-panel button:active {
+  transform: scale(1.04);
+}
+
+.admin-classes-panel > .page-heading button:hover,
+.admin-classes-panel > .page-heading button:active,
+.admin-classes-panel .admin-class-associate button:hover,
+.admin-classes-panel .admin-class-associate button:active {
+  background: var(--primary);
+}
+
+.admin-classes-panel .secondary:hover,
+.admin-classes-panel .secondary:active,
+.admin-students-panel .secondary:hover,
+.admin-students-panel .secondary:active {
+  background: #f3f5f0;
+}
+
+.admin-students-panel .term-tabs button[aria-pressed="true"]:hover,
+.admin-students-panel .term-tabs button[aria-pressed="true"]:active {
+  background: var(--primary);
+}
+
+.admin-student-class-card:hover,
+.admin-student-class-card:active {
+  transform: scale(1.02);
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(31 52 36 / 5%);
+}
+
+.admin-student-row:hover,
+.admin-student-row:active {
+  transform: scale(1.012);
+  background: transparent;
+}
+
+.admin-students-panel .back-button:hover,
+.admin-students-panel .back-button:active {
+  background: transparent;
+}
+
+.admin-students-panel
+  button:not(.secondary):not(.back-button):not(.admin-student-class-card):not(
+    .admin-student-row
+  ):not(.danger-button):hover,
+.admin-students-panel
+  button:not(.secondary):not(.back-button):not(.admin-student-class-card):not(
+    .admin-student-row
+  ):not(.danger-button):active {
+  background: var(--primary);
+}
+
+.admin-students-panel .danger-button:hover,
+.admin-students-panel .danger-button:active {
+  background: #9f3f30;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -2867,6 +2945,12 @@ td {
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+  .admin-classes-panel button:hover,
+  .admin-classes-panel button:active,
+  .admin-students-panel button:hover,
+  .admin-students-panel button:active {
+    transform: none !important;
   }
 }
 

@@ -1,6 +1,7 @@
-import { useState, useTransition } from "react";
+import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { invalidateResources } from "@/shared/hooks/use-resource";
 import { Link } from "react-router-dom";
+import { Search } from "lucide-react";
 import { adminAction } from "./actions";
 import { Feedback, Modal } from "@/shared/components/feedback";
 import type { SchoolClass } from "@/shared/academic/types";
@@ -49,7 +50,30 @@ export function AdminPanel({
   const [message, setMessage] = useState("");
   const [link, setLink] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [classQuery, setClassQuery] = useState("");
+  const deferredClassQuery = useDeferredValue(classQuery);
   const [pending, start] = useTransition();
+  const visibleClasses = useMemo(() => {
+    const term = deferredClassQuery
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLocaleLowerCase("pt-BR");
+    if (!term) return classes;
+    return classes.filter((schoolClass) => {
+      const classMatches = schoolClass.name
+        .toLocaleLowerCase("pt-BR")
+        .includes(term);
+      if (classMatches) return true;
+      return associations
+        .filter((association) => association.class_id === schoolClass.id)
+        .some((association) =>
+          (teachers.find((teacher) => teacher.id === association.teacher_id)
+            ?.full_name || "")
+            .toLocaleLowerCase("pt-BR")
+            .includes(term),
+        );
+    });
+  }, [associations, classes, deferredClassQuery, teachers]);
   function run(kind: string, values: unknown) {
     start(async () => {
       setMessage("Salvando…");
@@ -112,7 +136,7 @@ export function AdminPanel({
         </div>
       )}
       {tab === "classes" && (
-        <section className="panel">
+        <section className="panel admin-classes-panel">
           <div className="page-heading">
             <h2>Turmas</h2>
             <button
@@ -124,11 +148,24 @@ export function AdminPanel({
               + Criar turma
             </button>
           </div>
+          <label className="student-search class-search">
+            <span className="sr-only">Pesquisar turma ou professor</span>
+            <Search size={19} aria-hidden="true" />
+            <input
+              type="search"
+              value={classQuery}
+              onChange={(event) => setClassQuery(event.target.value)}
+              placeholder="Pesquisar turma ou professor..."
+            />
+          </label>
           {!classes.length && (
             <div className="empty">Crie sua primeira turma para começar.</div>
           )}
+          {!!classes.length && !visibleClasses.length && (
+            <div className="empty">Nenhuma turma ou professor encontrado.</div>
+          )}
           <div className="admin-class-list">
-            {classes.map((c) => {
+            {visibleClasses.map((c) => {
               const classAssociations = associations.filter(
                 (association) => association.class_id === c.id,
               );
