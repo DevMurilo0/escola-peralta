@@ -2920,6 +2920,22 @@ td {
   background: transparent;
 }
 
+.admin-students-panel
+  button:not(.secondary):not(.back-button):not(.admin-student-class-card):not(
+    .admin-student-row
+  ):not(.danger-button):hover,
+.admin-students-panel
+  button:not(.secondary):not(.back-button):not(.admin-student-class-card):not(
+    .admin-student-row
+  ):not(.danger-button):active {
+  background: var(--primary);
+}
+
+.admin-students-panel .danger-button:hover,
+.admin-students-panel .danger-button:active {
+  background: #9f3f30;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -2929,6 +2945,12 @@ td {
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+  .admin-classes-panel button:hover,
+  .admin-classes-panel button:active,
+  .admin-students-panel button:hover,
+  .admin-students-panel button:active {
+    transform: none !important;
   }
 }
 
