@@ -136,7 +136,7 @@ export function AdminPanel({
         </div>
       )}
       {tab === "classes" && (
-        <section className="panel">
+        <section className="panel admin-classes-panel">
           <div className="page-heading">
             <h2>Turmas</h2>
             <button
@@ -148,7 +148,7 @@ export function AdminPanel({
               + Criar turma
             </button>
           </div>
-          <label className="class-search">
+          <label className="student-search class-search">
             <span className="sr-only">Pesquisar turma ou professor</span>
             <Search size={19} aria-hidden="true" />
             <input
