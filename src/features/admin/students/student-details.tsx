@@ -49,12 +49,16 @@ export function StudentDetails({
   student,
   classes,
   schoolYear,
+  teachersByClass,
+  backLabel,
   onBack,
   onArchived,
 }: {
   student: AdminStudent;
   classes: SchoolClass[];
   schoolYear: number;
+  teachersByClass: Record<string, string[]>;
+  backLabel: string;
   onBack: () => void;
   onArchived: (name: string) => void;
 }) {
@@ -82,6 +86,15 @@ export function StudentDetails({
     activeThisYear.length > 1
       ? "Matrículas ativas inconsistentes"
       : current?.classes?.name || "Sem turma atual";
+  const currentTeacherNames = Array.from(
+    new Set(
+      activeThisYear.flatMap(
+        (item) => teachersByClass[item.class_id] ?? [],
+      ),
+    ),
+  );
+  const currentTeachersLabel =
+    currentTeacherNames.join(", ") || "Nenhum professor vinculado";
   const academicEnrollment = enrollments.find(
     (item) => item.id === selectedEnrollment,
   );
@@ -127,7 +140,9 @@ export function StudentDetails({
 
   return (
     <section className="admin-student-details page-enter">
-      <button className="back-button" onClick={onBack}>← Voltar para alunos</button>
+      <button className="back-button" onClick={onBack}>
+        ← {backLabel}
+      </button>
       <div className="page-heading student-detail-heading">
         <div>
           <span className="eyebrow">ALUNO</span>
@@ -135,6 +150,9 @@ export function StudentDetails({
           <p>
             Nascimento: {date(student.birth_date)} · Turma atual: {currentLabel}
             {current && ` · Ano letivo: ${current.school_year}`}
+          </p>
+          <p className="student-detail-teachers">
+            Professor(es): {currentTeachersLabel}
           </p>
         </div>
         <button className="secondary" onClick={() => setEditing(true)}>
