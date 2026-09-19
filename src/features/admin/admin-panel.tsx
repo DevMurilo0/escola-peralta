@@ -105,7 +105,9 @@ export function AdminPanel({
           r.error ||
             (kind === "master-teacher-create"
               ? "Professor criado com sucesso. A conta já pode acessar /portal/login."
-              : "Operação concluída."),
+              : kind === "master-teacher-update"
+                ? "Professor atualizado com sucesso."
+                : "Operação concluída."),
         );
         if (!r.error) {
           setModal(null);
@@ -326,6 +328,8 @@ export function AdminPanel({
           }}
           onEdit={(teacher) => {
             setEditingTeacher(teacher);
+            setShowPassword(false);
+            setMessage("");
             setModal("teacher");
           }}
           onAccessLink={(teacher) => run("teacher-link", { id: teacher.id })}
@@ -595,6 +599,7 @@ export function AdminPanel({
             if (!pending) {
               setModal(null);
               setShowPassword(false);
+              setMessage("");
             }
           }}
         >
@@ -603,6 +608,25 @@ export function AdminPanel({
             onSubmit={(e) => {
               e.preventDefault();
               const f = new FormData(e.currentTarget);
+
+              if (editingTeacher && isMaster) {
+                const password = String(f.get("password") || "");
+                const confirmation = String(
+                  f.get("password_confirmation") || "",
+                );
+                if (password !== confirmation) {
+                  setMessage("As senhas informadas não coincidem.");
+                  return;
+                }
+                run("master-teacher-update", {
+                  id: editingTeacher.id,
+                  full_name: f.get("name"),
+                  email: f.get("email"),
+                  ...(password ? { password } : {}),
+                });
+                return;
+              }
+
               if (editingTeacher) {
                 run("teacher-edit", {
                   id: editingTeacher.id,
@@ -611,6 +635,7 @@ export function AdminPanel({
                 });
                 return;
               }
+
               if (isMaster) {
                 const password = String(f.get("password") || "");
                 if (password !== String(f.get("password_confirmation") || "")) {
@@ -624,6 +649,7 @@ export function AdminPanel({
                 });
                 return;
               }
+
               setMessage(
                 "Somente a direção Master pode criar novas contas de professores.",
               );
@@ -639,39 +665,51 @@ export function AdminPanel({
                 defaultValue={editingTeacher?.full_name}
               />
             </label>
-            {!editingTeacher && (
+
+            {(!editingTeacher || isMaster) && (
               <label>
                 E-mail
                 <input
                   type="email"
                   name="email"
-                  placeholder={isMaster ? "nome@peralta.com" : undefined}
+                  placeholder={
+                    editingTeacher ? undefined : "nome@peralta.com"
+                  }
+                  defaultValue={editingTeacher?.email}
                   required
                 />
               </label>
             )}
-            {!editingTeacher && isMaster && (
+
+            {isMaster && (
               <>
                 <label>
-                  Senha inicial
+                  {editingTeacher ? "Nova senha" : "Senha inicial"}
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     minLength={12}
                     maxLength={128}
                     autoComplete="new-password"
-                    required
+                    placeholder={
+                      editingTeacher
+                        ? "Deixe em branco para manter a senha atual"
+                        : undefined
+                    }
+                    required={!editingTeacher}
                   />
                 </label>
                 <label>
-                  Confirmar senha
+                  {editingTeacher
+                    ? "Confirmar nova senha"
+                    : "Confirmar senha"}
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password_confirmation"
                     minLength={12}
                     maxLength={128}
                     autoComplete="new-password"
-                    required
+                    required={!editingTeacher}
                   />
                 </label>
                 <label className="inline-check password-toggle">
@@ -683,11 +721,13 @@ export function AdminPanel({
                   Mostrar senha
                 </label>
                 <p className="small muted">
-                  A senha é usada somente para criar a conta e não será exibida
-                  novamente.
+                  {editingTeacher
+                    ? "Para manter a senha atual, deixe os dois campos de senha vazios. A senha existente nunca é exibida."
+                    : "A senha é usada somente para criar a conta e não será exibida novamente."}
                 </p>
               </>
             )}
+
             <Feedback message={message} />
             <button disabled={pending}>
               {pending
