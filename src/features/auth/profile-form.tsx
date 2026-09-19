@@ -5,7 +5,6 @@ import {
   updateProfileName,
   uploadProfileAvatar,
 } from "./profile-actions";
-import { ProfileAvatar } from "./profile-avatar";
 import { useAuth } from "./auth-context";
 import { Feedback } from "@/shared/components/feedback";
 import { Camera, Trash2 } from "lucide-react";
@@ -55,11 +54,6 @@ export function ProfileForm() {
     <div className="profile-settings">
       <section className="profile-identity-section">
         <div className="profile-photo-editor">
-          <ProfileAvatar
-            name={profile.full_name}
-            path={profile.avatar_path}
-            size="large"
-          />
           <div className="profile-photo-copy">
             <strong>Foto de perfil</strong>
             <p className="small muted">
