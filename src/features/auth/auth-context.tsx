@@ -16,6 +16,7 @@ export type Profile = {
   email: string;
   role: "admin" | "teacher";
   active: boolean;
+  avatar_path: string | null;
 };
 type AuthState = {
   session: Session | null;
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await db()
         .from("profiles")
-        .select("id,full_name,email,role,active")
+        .select("id,full_name,email,role,active,avatar_path")
         .eq("id", id)
         .maybeSingle();
       if (request !== generation.current) return;
