@@ -19,13 +19,14 @@ export function ProfileForm() {
   const [passwordPending, startPassword] = useTransition();
 
   if (!profile) return null;
+  const currentAvatarPath = profile.avatar_path;
 
   async function selectAvatar(file?: File) {
     if (!file) return;
     setUploading(true);
     setIdentityMessage("Enviando foto…");
     try {
-      const result = await uploadProfileAvatar(file, profile.avatar_path);
+      const result = await uploadProfileAvatar(file, currentAvatarPath);
       setIdentityMessage(result.error || "Foto de perfil atualizada.");
       if (!result.error) retry();
     } catch {
@@ -40,7 +41,7 @@ export function ProfileForm() {
     setUploading(true);
     setIdentityMessage("Removendo foto…");
     try {
-      const result = await removeProfileAvatar(profile.avatar_path);
+      const result = await removeProfileAvatar(currentAvatarPath);
       setIdentityMessage(result.error || "Foto de perfil removida.");
       if (!result.error) retry();
     } catch {
