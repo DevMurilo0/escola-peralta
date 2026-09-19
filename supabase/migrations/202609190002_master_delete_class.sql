@@ -71,7 +71,14 @@ $$;
 
 revoke all on function public.master_delete_class(uuid, uuid)
   from public, anon, authenticated;
-grant execute on function public.master_delete_class(uuid, uuid)
-  to service_role;
+
+do $
+begin
+  if exists(select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on function public.master_delete_class(uuid, uuid)
+      to service_role;
+  end if;
+end
+$;
 
 commit;
