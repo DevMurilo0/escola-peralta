@@ -574,6 +574,22 @@ describe.sequential(
         ),
       ).rejects.toThrow(/permission denied/i);
     });
+    it("impede usuários autenticados de chamar a exclusão Master diretamente", async () => {
+      await expect(
+        asUser(
+          teacher,
+          "select public.master_delete_class($1,$2)",
+          [c1, teacher],
+        ),
+      ).rejects.toThrow(/permission denied/i);
+      await expect(
+        asUser(
+          admin,
+          "select public.master_delete_class($1,$2)",
+          [c1, admin],
+        ),
+      ).rejects.toThrow(/permission denied/i);
+    });
     it("desativação bloqueia imediatamente consulta e gravação", async () => {
       await db.query("update public.profiles set active=false where id=$1", [
         teacher,
