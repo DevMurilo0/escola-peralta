@@ -377,7 +377,6 @@ async function deleteMasterClass(
   request: Request,
   env: Env,
   fetcher: typeof fetch,
-  client: Awaited<ReturnType<typeof requireMaster>>["client"],
   actorId: string,
 ) {
   const payload = await readPayload(request);
@@ -403,11 +402,6 @@ async function deleteMasterClass(
       502,
       "Não foi possível apagar a turma. Verifique se a migration de exclusão foi aplicada.",
     );
-
-  await client.rpc("log_admin_event", {
-    p_action: "master_class_deleted",
-    p_entity: parsed.data.id,
-  });
 
   return { success: true };
 }
@@ -576,7 +570,6 @@ export async function handleRequest(
           request,
           env,
           fetcher,
-          master.client,
           master.user.id,
         ),
       );
