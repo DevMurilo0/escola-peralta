@@ -318,7 +318,13 @@ function masterBackend(
               aud: "authenticated",
             });
       if (url.pathname === "/rest/v1/profiles") {
-        if (headers.get("authorization") === "Bearer private-test-key")
+        if (headers.get("authorization") === "Bearer private-test-key") {
+          if (url.searchParams.has("id"))
+            return reply({
+              id: teacherId,
+              role: "teacher",
+              active: true,
+            });
           return reply([
             {
               id: teacherId,
@@ -335,11 +341,26 @@ function masterBackend(
               created_at: "2026-09-02T12:00:00.000Z",
             },
           ]);
+        }
         return reply({
           role: options.role ?? "admin",
           active: options.active !== false,
         });
       }
+      if (url.pathname === "/rest/v1/classes") {
+        if ((init?.method || "GET") === "GET") return reply(null);
+        if (init?.method === "POST")
+          return reply({
+            id: "20000000-0000-4000-8000-000000000010",
+            ...(body as Record<string, unknown>),
+          }, 201);
+        if (init?.method === "DELETE") return reply(null, 204);
+      }
+      if (
+        url.pathname === "/rest/v1/teacher_classes" &&
+        init?.method === "POST"
+      )
+        return reply(null, 201);
       if (url.pathname === "/auth/v1/admin/users" && init?.method === "POST")
         return options.duplicate
           ? reply(
@@ -443,6 +464,74 @@ describe("Worker Master", () => {
     expect(vite).not.toContain("VITE_MASTER_EMAIL");
     expect(publicExample).not.toContain("MASTER_EMAIL");
     expect(workerExample).toMatch(/^MASTER_EMAIL=$/m);
+  });
+
+  it("Master cria turma padronizada e vincula o professor selecionado", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/classes", {
+        grade_level: "3º Ano",
+        group: "B",
+        shift: "Manhã",
+        school_year: 2026,
+        teacher_id: teacherId,
+      }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      success: true,
+      schoolClass: {
+        name: "3º Ano B",
+        grade_level: "3º Ano",
+        shift: "Manhã",
+        school_year: 2026,
+      },
+    });
+    const classCreate = backend.calls.find(
+      (call) =>
+        call.path === "/rest/v1/classes" && call.method === "POST",
+    );
+    expect(classCreate?.authorization).toBe("Bearer private-test-key");
+    expect(classCreate?.body).toMatchObject({
+      name: "3º Ano B",
+      grade_level: "3º Ano",
+      shift: "Manhã",
+      school_year: 2026,
+      active: true,
+    });
+    const association = backend.calls.find(
+      (call) =>
+        call.path === "/rest/v1/teacher_classes" && call.method === "POST",
+    );
+    expect(association?.body).toEqual({
+      class_id: "20000000-0000-4000-8000-000000000010",
+      teacher_id: teacherId,
+      can_manage_students: true,
+    });
+  });
+
+  it("admin comum não cria turma pela API Master", async () => {
+    const backend = masterBackend({ email: "admin@peralta.com" });
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/classes", {
+        grade_level: "3º Ano",
+        group: "A",
+        shift: "Manhã",
+        school_year: 2026,
+        teacher_id: teacherId,
+      }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(403);
+    expect(
+      backend.calls.some(
+        (call) =>
+          call.path === "/rest/v1/classes" && call.method === "POST",
+      ),
+    ).toBe(false);
   });
 
   it("cria usuário confirmado e audita sem retornar senha", async () => {

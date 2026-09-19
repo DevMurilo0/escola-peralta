@@ -2,7 +2,7 @@ import { z } from "zod";
 import { requireSession } from "@/shared/services/session";
 import { adminApi } from "@/shared/services/admin-api";
 import { invalidateResources } from "@/shared/hooks/use-resource";
-import { createMasterTeacher } from "@/shared/services/master-api";
+import { createMasterClass, createMasterTeacher } from "@/shared/services/master-api";
 const classSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(2).max(100),
@@ -10,6 +10,8 @@ const classSchema = z.object({
   shift: z.enum(["Manhã", "Tarde", "Integral"]),
   school_year: z.number().int().min(2000).max(2200),
   active: z.boolean(),
+  teacher_id: z.uuid().optional(),
+  group: z.enum(["A", "B", "C"]).optional(),
 });
 export async function adminAction(
   kind: string,
@@ -19,10 +21,30 @@ export async function adminAction(
     const { client, user } = await requireSession(true);
     let result;
     if (kind === "class") {
-      const { id, ...values } = classSchema.parse(input);
-      result = id
-        ? await client.from("classes").update(values).eq("id", id)
-        : await client.from("classes").insert(values);
+      const { id, teacher_id, group, ...values } = classSchema.parse(input);
+      if (id) {
+        result = await client.from("classes").update(values).eq("id", id);
+      } else {
+        if (!teacher_id || !group)
+          return { error: "Selecione a turma e o professor responsável." };
+        const created = await createMasterClass({
+          grade_level: values.grade_level as
+            | "Infantil"
+            | "Jardim"
+            | "1º Ano"
+            | "2º Ano"
+            | "3º Ano"
+            | "4º Ano"
+            | "5º Ano",
+          group,
+          shift: values.shift,
+          school_year: values.school_year,
+          teacher_id,
+        });
+        if (created.error) return { error: created.error };
+        invalidateResources();
+        return { success: true };
+      }
     } else if (kind === "master-teacher-create") {
       const values = z
         .object({
