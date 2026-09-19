@@ -21,6 +21,28 @@ type Association = {
   can_manage_students: boolean;
 };
 type Class = SchoolClass & { enrollments: { id: string; status: string }[] };
+
+const CLASS_LEVELS = [
+  "Infantil",
+  "Jardim",
+  "1º Ano",
+  "2º Ano",
+  "3º Ano",
+  "4º Ano",
+  "5º Ano",
+] as const;
+const CLASS_GROUPS = ["A", "B", "C"] as const;
+
+function classGroup(schoolClass: Class | null) {
+  if (!schoolClass) return "A";
+  const suffix = schoolClass.name
+    .slice(schoolClass.grade_level.length)
+    .trim()
+    .toUpperCase();
+  return CLASS_GROUPS.includes(suffix as (typeof CLASS_GROUPS)[number])
+    ? suffix
+    : "A";
+}
 export function AdminPanel({
   teachers,
   classes,
@@ -138,15 +160,22 @@ export function AdminPanel({
       {tab === "classes" && (
         <section className="panel admin-classes-panel">
           <div className="page-heading">
-            <h2>Turmas</h2>
-            <button
-              onClick={() => {
-                setEditingClass(null);
-                setModal("class");
-              }}
-            >
-              + Criar turma
-            </button>
+            <div>
+              <h2>Turmas</h2>
+              <p className="muted small">
+                A direção cria as turmas e define o professor responsável.
+              </p>
+            </div>
+            {isMaster && (
+              <button
+                onClick={() => {
+                  setEditingClass(null);
+                  setModal("class");
+                }}
+              >
+                + Criar turma
+              </button>
+            )}
           </div>
           <label className="student-search class-search">
             <span className="sr-only">Pesquisar turma ou professor</span>
@@ -185,31 +214,33 @@ export function AdminPanel({
                         alunos · {c.active ? "Ativa" : "Arquivada"}
                       </p>
                     </div>
-                    <div className="actions">
-                      <button
-                        className="secondary"
-                        onClick={() => {
-                          setEditingClass(c);
-                          setModal("class");
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="secondary"
-                        onClick={() =>
-                          setConfirm({
-                            title: c.active
-                              ? "Arquivar turma?"
-                              : "Reativar turma?",
-                            kind: "class",
-                            values: { ...c, active: !c.active },
-                          })
-                        }
-                      >
-                        {c.active ? "Arquivar" : "Reativar"}
-                      </button>
-                    </div>
+                    {isMaster && (
+                      <div className="actions">
+                        <button
+                          className="secondary"
+                          onClick={() => {
+                            setEditingClass(c);
+                            setModal("class");
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="secondary"
+                          onClick={() =>
+                            setConfirm({
+                              title: c.active
+                                ? "Arquivar turma?"
+                                : "Reativar turma?",
+                              kind: "class",
+                              values: { ...c, active: !c.active },
+                            })
+                          }
+                        >
+                          {c.active ? "Arquivar" : "Reativar"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <section className="admin-class-teachers">
                     <h4>Professores vinculados</h4>
@@ -229,23 +260,25 @@ export function AdminPanel({
                               ? "Gerencia alunos"
                               : "Notas e frequência"}
                           </span>
-                          <button
-                            className="secondary"
-                            onClick={() =>
-                              setConfirm({
-                                title: "Remover associação do professor?",
-                                kind: "unlink",
-                                values: { id: a.id },
-                              })
-                            }
-                          >
-                            Remover vínculo
-                          </button>
+                          {isMaster && (
+                            <button
+                              className="secondary"
+                              onClick={() =>
+                                setConfirm({
+                                  title: "Remover associação do professor?",
+                                  kind: "unlink",
+                                  values: { id: a.id },
+                                })
+                              }
+                            >
+                              Remover vínculo
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
                   </section>
-                  {c.active && (
+                  {c.active && isMaster && (
                     <section className="admin-class-associate">
                       <h4>Adicionar professor</h4>
                       <form
@@ -441,7 +474,7 @@ export function AdminPanel({
           </form>
         </section>
       )}
-      {modal === "class" && (
+      {modal === "class" && isMaster && (
         <Modal
           title={editingClass ? "Editar turma" : "Criar turma"}
           onClose={() => !pending && setModal(null)}
@@ -451,36 +484,49 @@ export function AdminPanel({
             onSubmit={(e) => {
               e.preventDefault();
               const f = new FormData(e.currentTarget);
+              const gradeLevel = String(f.get("grade"));
+              const group = String(f.get("group"));
               run("class", {
                 id: editingClass?.id,
-                name: f.get("name"),
-                grade_level: f.get("grade"),
+                name: `${gradeLevel} ${group}`,
+                grade_level: gradeLevel,
                 shift: f.get("shift"),
                 school_year: Number(f.get("year")),
                 active: editingClass?.active ?? true,
+                teacher_id: editingClass ? undefined : f.get("teacher_id"),
               });
             }}
           >
-            <label>
-              Nome / identificador
-              <input
-                name="name"
-                required
-                minLength={2}
-                maxLength={100}
-                defaultValue={editingClass?.name}
-              />
-            </label>
-            <label>
-              Ano / série
-              <input
-                name="grade"
-                required
-                minLength={2}
-                maxLength={80}
-                defaultValue={editingClass?.grade_level}
-              />
-            </label>
+            <div className="class-identity-grid">
+              <label>
+                Série/Ano
+                <select
+                  name="grade"
+                  defaultValue={editingClass?.grade_level || "Infantil"}
+                  required
+                >
+                  {CLASS_LEVELS.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Turma
+                <select
+                  name="group"
+                  defaultValue={classGroup(editingClass)}
+                  required
+                >
+                  {CLASS_GROUPS.map((group) => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <label>
               Turno
               <select
@@ -503,8 +549,41 @@ export function AdminPanel({
                 defaultValue={editingClass?.school_year || settings.school_year}
               />
             </label>
+            {!editingClass && (
+              <label>
+                Professor responsável
+                <select name="teacher_id" required defaultValue="">
+                  <option value="" disabled>
+                    Selecionar professor
+                  </option>
+                  {teachers
+                    .filter((teacher) => teacher.active)
+                    .map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.full_name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            )}
+            {!editingClass && !teachers.some((teacher) => teacher.active) && (
+              <p className="feedback error" role="alert">
+                Cadastre ou reative um professor antes de criar a turma.
+              </p>
+            )}
             <Feedback message={message} />
-            <button disabled={pending}>Salvar turma</button>
+            <button
+              disabled={
+                pending ||
+                (!editingClass && !teachers.some((teacher) => teacher.active))
+              }
+            >
+              {pending
+                ? "Salvando…"
+                : editingClass
+                  ? "Salvar turma"
+                  : "Criar turma"}
+            </button>
           </form>
         </Modal>
       )}
