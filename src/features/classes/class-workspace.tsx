@@ -7,12 +7,9 @@ import {
   ChevronRight,
   ClipboardCheck,
   LibraryBig,
-  Pencil,
   Users,
 } from "lucide-react";
-import { Feedback } from "@/shared/components/feedback";
 import { AttendancePanel } from "@/features/attendance/attendance-panel";
-import { ClassForm } from "@/features/classes/class-form";
 import CurriculumPanel from "@/features/curriculum/curriculum-panel";
 import FinalResults from "@/features/grades/final-results";
 import { GradesEditor } from "@/features/grades/grades-editor";
@@ -80,8 +77,6 @@ export function ClassWorkspace({
     : null;
   const activeEnrollments = enrollments.filter((e) => e.status === "active");
   const [dirty, setDirty] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState("");
   useUnsaved(dirty);
 
   function navigate(next: Record<string, string>) {
@@ -152,18 +147,12 @@ export function ClassWorkspace({
               </span>
             </section>
 
-            <Feedback message={message} />
             <div className="class-quick-actions" aria-label="Ações da turma">
               <button className="secondary" onClick={() => navigate({ section: "students" })}>
                 <Users size={18} />
                 <span>Alunos <small>{activeEnrollments.length}</small></span>
                 <ChevronRight size={17} />
               </button>
-              {canManage && c.active && (
-                <button className="secondary" onClick={() => setEditing(true)}>
-                  <Pencil size={17} /> Editar turma
-                </button>
-              )}
             </div>
 
             <section className="class-navigation-section" aria-labelledby="terms-title">
@@ -302,16 +291,6 @@ export function ClassWorkspace({
         )}
       </div>
 
-      {editing && (
-        <ClassForm
-          schoolClass={c}
-          onClose={() => setEditing(false)}
-          onSaved={() => {
-            setEditing(false);
-            setMessage("Turma atualizada com sucesso.");
-          }}
-        />
-      )}
     </div>
   );
 }
