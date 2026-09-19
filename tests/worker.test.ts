@@ -318,13 +318,13 @@ function masterBackend(
               aud: "authenticated",
             });
       if (url.pathname === "/rest/v1/profiles") {
+        if (url.searchParams.get("id")?.includes(teacherId))
+          return reply({
+            id: teacherId,
+            role: "teacher",
+            active: true,
+          });
         if (headers.get("authorization") === "Bearer private-test-key") {
-          if (url.searchParams.has("id"))
-            return reply({
-              id: teacherId,
-              role: "teacher",
-              active: true,
-            });
           return reply([
             {
               id: teacherId,
@@ -348,7 +348,7 @@ function masterBackend(
         });
       }
       if (url.pathname === "/rest/v1/classes") {
-        if ((init?.method || "GET") === "GET") return reply(null);
+        if ((init?.method || "GET") === "GET") return reply([]);
         if (init?.method === "POST")
           return reply({
             id: "20000000-0000-4000-8000-000000000010",
@@ -493,7 +493,7 @@ describe("Worker Master", () => {
       (call) =>
         call.path === "/rest/v1/classes" && call.method === "POST",
     );
-    expect(classCreate?.authorization).toBe("Bearer private-test-key");
+    expect(classCreate?.authorization).toBe("Bearer valid-token");
     expect(classCreate?.body).toMatchObject({
       name: "Jardim 2",
       grade_level: "Jardim",
