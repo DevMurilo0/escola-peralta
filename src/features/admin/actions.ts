@@ -10,6 +10,7 @@ const classSchema = z.object({
   shift: z.enum(["Manhã", "Tarde", "Integral"]),
   school_year: z.number().int().min(2000).max(2200),
   active: z.boolean(),
+  teacher_id: z.uuid().optional(),
 });
 export async function adminAction(
   kind: string,
@@ -19,10 +20,39 @@ export async function adminAction(
     const { client, user } = await requireSession(true);
     let result;
     if (kind === "class") {
-      const { id, ...values } = classSchema.parse(input);
-      result = id
-        ? await client.from("classes").update(values).eq("id", id)
-        : await client.from("classes").insert(values);
+      const { id, teacher_id, ...values } = classSchema.parse(input);
+      if (id) {
+        result = await client.from("classes").update(values).eq("id", id);
+      } else {
+        if (!teacher_id)
+          return { error: "Selecione o professor responsável pela turma." };
+        const created = await client
+          .from("classes")
+          .insert(values)
+          .select("id")
+          .single();
+        if (created.error || !created.data?.id)
+          return {
+            error:
+              created.error?.code === "23505"
+                ? "Esta turma já existe neste ano letivo."
+                : "Não foi possível criar a turma.",
+          };
+        const linked = await client.from("teacher_classes").insert({
+          class_id: created.data.id,
+          teacher_id,
+          can_manage_students: true,
+        });
+        if (linked.error) {
+          await client.from("classes").delete().eq("id", created.data.id);
+          return {
+            error:
+              "A turma não foi criada porque não foi possível vincular o professor.",
+          };
+        }
+        invalidateResources();
+        return { success: true };
+      }
     } else if (kind === "master-teacher-create") {
       const values = z
         .object({
