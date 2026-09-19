@@ -78,24 +78,26 @@ grant execute on function public.update_own_profile_avatar(text)
 do $do$
 begin
   if exists(select 1 from pg_namespace where nspname = 'storage') then
-    insert into storage.buckets(
-      id,
-      name,
-      public,
-      file_size_limit,
-      allowed_mime_types
-    )
-    values(
-      'profile-avatars',
-      'profile-avatars',
-      true,
-      3145728,
-      array['image/jpeg','image/png','image/webp']
-    )
-    on conflict (id) do update
-      set public = excluded.public,
-          file_size_limit = excluded.file_size_limit,
-          allowed_mime_types = excluded.allowed_mime_types;
+    execute $bucket$
+      insert into storage.buckets(
+        id,
+        name,
+        public,
+        file_size_limit,
+        allowed_mime_types
+      )
+      values(
+        'profile-avatars',
+        'profile-avatars',
+        true,
+        3145728,
+        array['image/jpeg','image/png','image/webp']
+      )
+      on conflict (id) do update
+        set public = excluded.public,
+            file_size_limit = excluded.file_size_limit,
+            allowed_mime_types = excluded.allowed_mime_types
+    $bucket$;
 
     execute 'drop policy if exists profile_avatars_insert on storage.objects';
     execute 'drop policy if exists profile_avatars_update on storage.objects';
