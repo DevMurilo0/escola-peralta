@@ -282,7 +282,10 @@ test("administração separa turmas em cards responsivos e sem contadores", asyn
   ).toHaveCount(2);
   await expect(
     cards.getByRole("heading", { name: "Adicionar professor" }),
-  ).toHaveCount(2);
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "+ Criar turma" }),
+  ).toHaveCount(0);
   const presentation = await cards.evaluateAll((elements) =>
     elements.map((element) => {
       const style = getComputedStyle(element);
@@ -347,7 +350,7 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
   await expect(classDialog.getByLabel("Professor responsável")).toBeVisible();
   await expect(classDialog.getByLabel("Série/Ano").locator("option")).toHaveCount(7);
   await expect(classDialog.getByLabel("Turma").locator("option")).toHaveCount(3);
-  await classDialog.getByRole("button", { name: "Fechar" }).click();
+  await classDialog.getByRole("button", { name: "Fechar janela" }).click();
 
   await page.getByRole("button", { name: "Professores", exact: true }).click();
   await expect(
