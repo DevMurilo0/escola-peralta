@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { profileAvatarUrl } from "./profile-actions";
 
 export function ProfileAvatar({
@@ -11,6 +11,7 @@ export function ProfileAvatar({
   size?: "small" | "large";
 }) {
   const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [path]);
   const url = path && !broken ? profileAvatarUrl(path) : "";
 
   return (
