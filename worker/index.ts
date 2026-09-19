@@ -309,10 +309,10 @@ async function createMasterClass(
     .select("id")
     .eq("name", name)
     .eq("school_year", school_year)
-    .maybeSingle();
+    .limit(1);
   if (existing.error)
     throw new ApiError(502, "Não foi possível verificar as turmas existentes.");
-  if (existing.data)
+  if ((existing.data ?? []).length > 0)
     throw new ApiError(409, "Esta turma já existe neste ano letivo.");
 
   const created = await service
