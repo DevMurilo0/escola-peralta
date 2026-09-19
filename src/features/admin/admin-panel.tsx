@@ -490,6 +490,7 @@ export function AdminPanel({
                 id: editingClass?.id,
                 name: `${gradeLevel} ${group}`,
                 grade_level: gradeLevel,
+                group,
                 shift: f.get("shift"),
                 school_year: Number(f.get("year")),
                 active: editingClass?.active ?? true,
