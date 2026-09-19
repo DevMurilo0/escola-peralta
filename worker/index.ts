@@ -25,6 +25,15 @@ const masterTeacherSchema = z
     password: z.string().min(12).max(128),
   })
   .strict();
+const masterTeacherUpdateSchema = z
+  .object({
+    id: z.uuid(),
+    full_name: z.string().trim().min(3).max(150),
+    email: z.string().trim().toLowerCase().max(254).email(),
+    password: z.string().min(12).max(128).optional(),
+  })
+  .strict();
+
 const masterClassSchema = z
   .object({
     grade_level: z.enum([
@@ -281,6 +290,89 @@ async function createMasterTeacher(
   };
 }
 
+async function updateMasterTeacher(
+  request: Request,
+  env: Env,
+  fetcher: typeof fetch,
+  client: Awaited<ReturnType<typeof requireMaster>>["client"],
+) {
+  const payload = await readPayload(request);
+  const parsed = masterTeacherUpdateSchema.safeParse(payload);
+  if (!parsed.success) {
+    const field = parsed.error.issues[0]?.path[0];
+    if (field === "full_name")
+      throw new ApiError(400, "Informe um nome entre 3 e 150 caracteres.");
+    if (field === "email")
+      throw new ApiError(400, "Informe um e-mail válido.");
+    if (field === "password")
+      throw new ApiError(400, "A nova senha deve ter entre 12 e 128 caracteres.");
+    throw new ApiError(400, "Confira os dados informados.");
+  }
+
+  const { id, full_name, email, password } = parsed.data;
+  const service = serviceClient(env, fetcher);
+
+  const profileResult = await service
+    .from("profiles")
+    .select("id,full_name,email,active")
+    .eq("id", id)
+    .eq("role", "teacher")
+    .single();
+  if (profileResult.error || !profileResult.data)
+    throw new ApiError(404, "Professor não encontrado.");
+
+  const previous = profileResult.data;
+  const profileUpdate = await service
+    .from("profiles")
+    .update({
+      full_name,
+      email,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("role", "teacher");
+  if (profileUpdate.error)
+    throw new ApiError(502, "Não foi possível atualizar os dados do professor.");
+
+  const authUpdate = await service.auth.admin.updateUserById(id, {
+    email,
+    email_confirm: true,
+    user_metadata: { full_name },
+    ...(password ? { password } : {}),
+  });
+
+  if (authUpdate.error) {
+    await service
+      .from("profiles")
+      .update({
+        full_name: previous.full_name,
+        email: previous.email,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .eq("role", "teacher");
+
+    const code = authUpdate.error.code?.toLowerCase();
+    const duplicate =
+      code === "email_exists" ||
+      code === "user_already_exists" ||
+      authUpdate.error.message.toLowerCase().includes("already");
+    throw new ApiError(
+      duplicate ? 409 : 502,
+      duplicate
+        ? "Já existe uma conta com este e-mail."
+        : "Não foi possível atualizar o acesso do professor.",
+    );
+  }
+
+  await client.rpc("log_admin_event", {
+    p_action: "master_teacher_updated",
+    p_entity: id,
+  });
+
+  return { success: true };
+}
+
 async function createMasterClass(
   request: Request,
   client: Awaited<ReturnType<typeof requireMaster>>["client"],
@@ -409,6 +501,7 @@ export async function handleRequest(
     ["/api/admin/teachers/access-link", ["POST"]],
     ["/api/master/status", ["GET"]],
     ["/api/master/teachers", ["GET", "POST"]],
+    ["/api/master/teachers/update", ["POST"]],
     ["/api/master/classes", ["POST"]],
   ]);
   const accepted = methods.get(url.pathname);
@@ -437,6 +530,10 @@ export async function handleRequest(
     if (url.pathname === "/api/master/status") return json({ isMaster: true });
     if (url.pathname === "/api/master/classes")
       return json(await createMasterClass(request, master.client), 201);
+    if (url.pathname === "/api/master/teachers/update")
+      return json(
+        await updateMasterTeacher(request, env, fetcher, master.client),
+      );
     if (
       url.pathname === "/api/master/teachers" &&
       request.method === "POST"

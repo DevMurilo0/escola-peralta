@@ -427,6 +427,51 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
   expect(forbidden).toBe(403);
 });
 
+test("Master edita nome, e-mail e senha do professor", async ({ page }) => {
+  const state = await installSupabaseTransport(page, "admin", true, true);
+  await signIn(page, "admin");
+  await page.getByRole("link", { name: "Administração", exact: true }).click();
+  await page.getByRole("button", { name: "Professores", exact: true }).click();
+
+  const teacherCard = page
+    .locator(".master-teacher-card")
+    .filter({ hasText: "Maria Ferreira" });
+  await teacherCard.getByRole("button", { name: "Editar" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Editar professor" });
+  await expect(dialog.getByLabel("Nome completo")).toHaveValue("Maria Ferreira");
+  await expect(dialog.getByLabel("E-mail")).toHaveValue("maria@peralta.com");
+  await expect(dialog.getByLabel("Nova senha")).toHaveAttribute(
+    "placeholder",
+    "Deixe em branco para manter a senha atual",
+  );
+  await expect(dialog.getByLabel("Confirmar nova senha")).toBeVisible();
+
+  await dialog.getByLabel("Nome completo").fill("Maria Atualizada");
+  await dialog.getByLabel("E-mail").fill("maria.nova@gmail.com");
+  await dialog.getByLabel("Nova senha").fill("nova-senha-segura-123");
+  await dialog
+    .getByLabel("Confirmar nova senha")
+    .fill("senha-diferente-123");
+  await dialog.getByRole("button", { name: "Salvar professor" }).click();
+  await expect(dialog.getByRole("status")).toContainText(
+    "As senhas informadas não coincidem",
+  );
+  expect(state.masterUpdates).toBe(0);
+
+  await dialog
+    .getByLabel("Confirmar nova senha")
+    .fill("nova-senha-segura-123");
+  await dialog.getByRole("button", { name: "Salvar professor" }).click();
+
+  await expect(page.getByText("Professor atualizado com sucesso.")).toBeVisible();
+  expect(state.masterUpdates).toBe(1);
+  await expect(
+    page.getByRole("heading", { name: "Maria Atualizada" }),
+  ).toBeVisible();
+  await expect(page.getByText("maria.nova@gmail.com")).toBeVisible();
+});
+
 test("refresh direto, API real sem autenticação e cabeçalhos privados", async ({
   page,
   request,
