@@ -28,7 +28,7 @@ export async function uploadProfileAvatar(
   file: File,
   currentPath?: string | null,
 ) {
-  const { client, session } = await requireSession();
+  const { client, user } = await requireSession();
   if (!avatarTypes.includes(file.type as (typeof avatarTypes)[number]))
     return { error: "Use uma imagem JPG, PNG ou WebP." };
   if (!file.size || file.size > avatarMaxBytes)
@@ -40,7 +40,7 @@ export async function uploadProfileAvatar(
       : file.type === "image/webp"
         ? "webp"
         : "jpg";
-  const path = `${session.user.id}/${Date.now()}.${extension}`;
+  const path = `${user.id}/${Date.now()}.${extension}`;
 
   const uploaded = await client.storage
     .from("profile-avatars")
