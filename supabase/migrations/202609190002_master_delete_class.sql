@@ -80,4 +80,6 @@ begin
 end
 $do$;
 
+notify pgrst, 'reload schema';
+
 commit;
