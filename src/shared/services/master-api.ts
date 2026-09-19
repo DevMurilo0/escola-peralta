@@ -16,7 +16,7 @@ type ApiResult<T> = T & {
 };
 
 async function request<T>(
-  path: "status" | "teachers",
+  path: "status" | "teachers" | "classes",
   method: "GET" | "POST",
   payload?: unknown,
   accessToken?: string,
@@ -108,4 +108,32 @@ export function createMasterTeacher(payload: {
     "POST",
     payload,
   );
+}
+
+
+export function createMasterClass(payload: {
+  grade_level:
+    | "Infantil"
+    | "Jardim"
+    | "1º Ano"
+    | "2º Ano"
+    | "3º Ano"
+    | "4º Ano"
+    | "5º Ano";
+  group: "A" | "B" | "C";
+  shift: "Manhã" | "Tarde" | "Integral";
+  school_year: number;
+  teacher_id: string;
+}) {
+  return request<{
+    success: boolean;
+    schoolClass: {
+      id: string;
+      name: string;
+      grade_level: string;
+      shift: string;
+      school_year: number;
+      active: boolean;
+    };
+  }>("classes", "POST", payload);
 }
