@@ -92,6 +92,36 @@ describe.sequential(
         (await asUser(outsider, "select * from public.students")).rows,
       ).toHaveLength(0);
     });
+    it("permite ao usuário editar apenas os próprios dados de perfil", async () => {
+      await asUser(
+        teacher,
+        "select public.update_own_profile_name('Professor Atualizado')",
+      );
+      const own = await db.query<{ full_name: string }>(
+        "select full_name from public.profiles where id=$1",
+        [teacher],
+      );
+      expect(own.rows[0].full_name).toBe("Professor Atualizado");
+
+      await asUser(
+        teacher,
+        "select public.update_own_profile_avatar($1)",
+        [`${teacher}/avatar.webp`],
+      );
+      const avatar = await db.query<{ avatar_path: string | null }>(
+        "select avatar_path from public.profiles where id=$1",
+        [teacher],
+      );
+      expect(avatar.rows[0].avatar_path).toBe(`${teacher}/avatar.webp`);
+
+      await expect(
+        asUser(
+          teacher,
+          "select public.update_own_profile_avatar($1)",
+          [`${outsider}/avatar.webp`],
+        ),
+      ).rejects.toThrow(/Caminho de avatar inválido/);
+    });
     it("impede autoelevação de role", async () => {
       await asUser(
         teacher,

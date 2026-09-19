@@ -26,6 +26,7 @@ export async function installSupabaseTransport(
     email: user.email,
     role,
     active,
+    avatar_path: null as string | null,
   };
   let createdCredentials: { email: string; password: string } | null = null;
   const masterTeachers = [
@@ -218,6 +219,12 @@ export async function installSupabaseTransport(
         for (const enrollment of adminEnrollments)
           if (enrollment.status === "active") enrollment.status = "inactive";
       }
+      if (entity === "update_own_profile_name")
+        profile.full_name = String(body.p_full_name);
+      if (entity === "update_own_profile_avatar")
+        profile.avatar_path = body.p_avatar_path
+          ? String(body.p_avatar_path)
+          : null;
       await route.fulfill({ json: null });
       return;
     }

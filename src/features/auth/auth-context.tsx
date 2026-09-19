@@ -16,6 +16,7 @@ export type Profile = {
   email: string;
   role: "admin" | "teacher";
   active: boolean;
+  avatar_path: string | null;
 };
 type AuthState = {
   session: Session | null;
@@ -73,7 +74,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("id", id)
         .maybeSingle();
       if (request !== generation.current) return;
-      const profile = data as Profile | null;
+
+      let profile = data
+        ? ({ ...data, avatar_path: null } as Profile)
+        : null;
+      if (!error && profile) {
+        const avatar = await db()
+          .from("profiles")
+          .select("avatar_path")
+          .eq("id", id)
+          .maybeSingle();
+        if (request !== generation.current) return;
+        if (!avatar.error)
+          profile = {
+            ...profile,
+            avatar_path: avatar.data?.avatar_path ?? null,
+          };
+      }
       let isMaster = false;
       let masterError: string | undefined;
       if (profile?.active && profile.role === "admin") {
