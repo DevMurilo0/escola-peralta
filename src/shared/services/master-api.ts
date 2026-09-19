@@ -16,7 +16,7 @@ type ApiResult<T> = T & {
 };
 
 async function request<T>(
-  path: "status" | "teachers" | "classes",
+  path: "status" | "teachers" | "teachers/update" | "classes",
   method: "GET" | "POST",
   payload?: unknown,
   accessToken?: string,
@@ -105,6 +105,19 @@ export function createMasterTeacher(payload: {
 }) {
   return request<{ success: boolean; teacher: MasterTeacher }>(
     "teachers",
+    "POST",
+    payload,
+  );
+}
+
+export function updateMasterTeacher(payload: {
+  id: string;
+  full_name: string;
+  email: string;
+  password?: string;
+}) {
+  return request<{ success: boolean }>(
+    "teachers/update",
     "POST",
     payload,
   );
