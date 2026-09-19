@@ -11,13 +11,16 @@ import {
   Menu,
 } from "lucide-react";
 import { logout } from "@/features/auth/actions";
+import { ProfileAvatar } from "@/features/auth/profile-avatar";
 export function PortalShell({
   name,
   admin,
+  avatarPath,
   children,
 }: {
   name: string;
   admin: boolean;
+  avatarPath?: string | null;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -72,7 +75,7 @@ export function PortalShell({
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="avatar">{name.slice(0, 1)}</div>
+          <ProfileAvatar name={name} path={avatarPath} />
           <strong>{name}</strong>
           <small>{admin ? "Administração" : "Professor(a)"}</small>
           <form
