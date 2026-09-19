@@ -558,37 +558,21 @@ describe.sequential(
         ),
       ).rejects.toThrow(/ano letivo/);
     });
-    it("permite ao professor criar e administrar somente a própria turma", async () => {
-      const created = await asUser<{ id: string }>(
-        teacher,
-        "select public.create_teacher_class(' 5º Ano A ','5º Ano','Tarde',$1) as id",
-        [Number(today.slice(0, 4))],
-      );
-      const createdId = created.rows[0].id;
-      const association = await asUser<{ can_manage_students: boolean }>(
-        teacher,
-        "select can_manage_students from public.teacher_classes where class_id=$1",
-        [createdId],
-      );
-      expect(association.rows[0].can_manage_students).toBe(true);
-      await asUser(
-        teacher,
-        "select public.update_teacher_class($1,'5º Ano B','5º Ano','Integral',$2,true)",
-        [createdId, Number(today.slice(0, 4))],
-      );
+    it("impede professor de criar ou editar a estrutura das turmas", async () => {
       await expect(
         asUser(
-          outsider,
-          "select public.update_teacher_class($1,'Turma invadida','5º Ano','Integral',$2,true)",
-          [createdId, Number(today.slice(0, 4))],
+          teacher,
+          "select public.create_teacher_class('5º Ano A','5º Ano','Tarde',$1)",
+          [Number(today.slice(0, 4))],
         ),
-      ).rejects.toThrow(/Acesso negado/);
-      const row = await asUser<{ name: string; shift: string }>(
-        teacher,
-        "select name,shift from public.classes where id=$1",
-        [createdId],
-      );
-      expect(row.rows[0]).toMatchObject({ name: "5º Ano B", shift: "Integral" });
+      ).rejects.toThrow(/permission denied/i);
+      await expect(
+        asUser(
+          teacher,
+          "select public.update_teacher_class($1,'3º Ano B','3º Ano','Integral',$2,true)",
+          [c1, Number(today.slice(0, 4))],
+        ),
+      ).rejects.toThrow(/permission denied/i);
     });
     it("desativação bloqueia imediatamente consulta e gravação", async () => {
       await db.query("update public.profiles set active=false where id=$1", [
