@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { adminAction } from "./actions";
 import { Feedback, Modal } from "@/shared/components/feedback";
 import type { SchoolClass } from "@/shared/academic/types";
-import { MasterTeachersPanel } from "./master-teachers-panel";
+import { MasterTeachersPanel, TeacherAccessLink } from "./master-teachers-panel";
 import { AdminStudentsPanel } from "./students/admin-students-panel";
 import type { AdminStudent } from "./students/types";
 type Teacher = {
@@ -70,7 +70,7 @@ export function AdminPanel({
     values: unknown;
   } | null>(null);
   const [message, setMessage] = useState("");
-  const [link, setLink] = useState("");
+  const [accessLink, setAccessLink] = useState<{ teacherId: string; value: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [classQuery, setClassQuery] = useState("");
   const deferredClassQuery = useDeferredValue(classQuery);
@@ -111,7 +111,11 @@ export function AdminPanel({
           setModal(null);
           setShowPassword(false);
           setConfirm(null);
-          if (r.link) setLink(r.link);
+          if (r.link && kind === "teacher-link") {
+            const teacherId = (values as { id?: string }).id;
+            if (teacherId)
+              setAccessLink({ teacherId, value: r.link });
+          }
           invalidateResources();
         }
       } catch {
@@ -139,24 +143,6 @@ export function AdminPanel({
         ))}
       </div>
       <Feedback message={message} />
-      {link && (
-        <div className="panel">
-          <h3>Link de acesso de uso único</h3>
-          <p>
-            Entregue este link ao professor por um canal privado. Ele permite
-            definir a senha. Nenhuma mensagem foi enviada automaticamente.
-          </p>
-          <input
-            aria-label="Link de acesso"
-            readOnly
-            value={link}
-            onFocus={(e) => e.target.select()}
-          />
-          <button className="secondary" onClick={() => setLink("")}>
-            Ocultar link
-          </button>
-        </div>
-      )}
       {tab === "classes" && (
         <section className="panel admin-classes-panel">
           <div className="page-heading">
@@ -343,6 +329,8 @@ export function AdminPanel({
             setModal("teacher");
           }}
           onAccessLink={(teacher) => run("teacher-link", { id: teacher.id })}
+          accessLink={accessLink}
+          onHideAccessLink={() => setAccessLink(null)}
           onToggle={(teacher) =>
             setConfirm({
               title: teacher.active
@@ -415,6 +403,12 @@ export function AdminPanel({
                   {t.active ? "Desativar" : "Reativar"}
                 </button>
               </div>
+              {accessLink?.teacherId === t.id && (
+                <TeacherAccessLink
+                  link={accessLink.value}
+                  onHide={() => setAccessLink(null)}
+                />
+              )}
             </div>
           ))}
         </section>
