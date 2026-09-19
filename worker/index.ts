@@ -25,6 +25,24 @@ const masterTeacherSchema = z
     password: z.string().min(12).max(128),
   })
   .strict();
+const masterClassSchema = z
+  .object({
+    grade_level: z.enum([
+      "Infantil",
+      "Jardim",
+      "1º Ano",
+      "2º Ano",
+      "3º Ano",
+      "4º Ano",
+      "5º Ano",
+    ]),
+    group: z.enum(["A", "B", "C"]),
+    shift: z.enum(["Manhã", "Tarde", "Integral"]),
+    school_year: z.number().int().min(2000).max(2200),
+    teacher_id: z.uuid(),
+  })
+  .strict();
+
 const idSchema = z.object({ id: z.uuid() }).strict();
 const maxBody = 16384;
 
@@ -263,6 +281,70 @@ async function createMasterTeacher(
   };
 }
 
+async function createMasterClass(
+  request: Request,
+  env: Env,
+  fetcher: typeof fetch,
+) {
+  const payload = await readPayload(request);
+  const parsed = masterClassSchema.safeParse(payload);
+  if (!parsed.success)
+    throw new ApiError(400, "Confira a série/ano, turma, turno e professor.");
+
+  const service = serviceClient(env, fetcher);
+  const { grade_level, group, shift, school_year, teacher_id } = parsed.data;
+  const name = `${grade_level} ${group}`;
+
+  const teacher = await service
+    .from("profiles")
+    .select("id,active,role")
+    .eq("id", teacher_id)
+    .eq("role", "teacher")
+    .maybeSingle();
+  if (teacher.error || !teacher.data?.active)
+    throw new ApiError(400, "Selecione um professor ativo.");
+
+  const existing = await service
+    .from("classes")
+    .select("id")
+    .eq("name", name)
+    .eq("school_year", school_year)
+    .maybeSingle();
+  if (existing.error)
+    throw new ApiError(502, "Não foi possível verificar as turmas existentes.");
+  if (existing.data)
+    throw new ApiError(409, "Esta turma já existe neste ano letivo.");
+
+  const created = await service
+    .from("classes")
+    .insert({
+      name,
+      grade_level,
+      shift,
+      school_year,
+      active: true,
+    })
+    .select("id,name,grade_level,shift,school_year,active")
+    .single();
+  if (created.error || !created.data)
+    throw new ApiError(502, "Não foi possível criar a turma.");
+
+  const linked = await service.from("teacher_classes").insert({
+    class_id: created.data.id,
+    teacher_id,
+    can_manage_students: true,
+  });
+  if (linked.error) {
+    await service.from("classes").delete().eq("id", created.data.id);
+    throw new ApiError(
+      502,
+      "Não foi possível vincular o professor. A turma não foi mantida.",
+    );
+  }
+
+  return { success: true, schoolClass: created.data };
+}
+
 async function listMasterTeachers(env: Env, fetcher: typeof fetch) {
   const service = serviceClient(env, fetcher);
   const profilesResult = await service
@@ -329,6 +411,7 @@ export async function handleRequest(
     ["/api/admin/teachers/access-link", ["POST"]],
     ["/api/master/status", ["GET"]],
     ["/api/master/teachers", ["GET", "POST"]],
+    ["/api/master/classes", ["POST"]],
   ]);
   const accepted = methods.get(url.pathname);
   if (!accepted) return json({ error: "Endpoint não encontrado." }, 404);
@@ -354,7 +437,12 @@ export async function handleRequest(
     const token = bearerToken(request);
     const master = await requireMaster(token, env, fetcher);
     if (url.pathname === "/api/master/status") return json({ isMaster: true });
-    if (request.method === "POST")
+    if (url.pathname === "/api/master/classes")
+      return json(await createMasterClass(request, env, fetcher), 201);
+    if (
+      url.pathname === "/api/master/teachers" &&
+      request.method === "POST"
+    )
       return json(
         await createMasterTeacher(request, env, fetcher, master.client),
         201,
