@@ -318,6 +318,41 @@ test("administração separa turmas em cards responsivos e sem contadores", asyn
   ).toBe(true);
 });
 
+test("Master apaga turma com confirmação explícita", async ({ page }) => {
+  const state = await installSupabaseTransport(page, "admin", true, true);
+  await signIn(page, "admin");
+  await page.getByRole("link", { name: "Administração", exact: true }).click();
+
+  const target = page.locator(".admin-class").filter({ hasText: "3º Ano A" });
+  await expect(target).toBeVisible();
+  await target.getByRole("button", { name: "Apagar" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Apagar 3º Ano A?" });
+  await expect(
+    dialog.getByText("Quer realmente apagar esta turma?"),
+  ).toBeVisible();
+  await expect(dialog.getByText("3º Ano", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("A", { exact: true })).toBeVisible();
+  await expect(
+    dialog.getByText(/Os cadastros dos alunos continuam existentes/),
+  ).toBeVisible();
+
+  await dialog.getByRole("button", { name: "Cancelar" }).click();
+  await expect(target).toBeVisible();
+
+  await target.getByRole("button", { name: "Apagar" }).click();
+  await page
+    .getByRole("dialog", { name: "Apagar 3º Ano A?" })
+    .getByRole("button", { name: "Sim, apagar turma" })
+    .click();
+
+  await expect(page.getByText("Turma apagada com sucesso.")).toBeVisible();
+  await expect(
+    page.locator(".admin-class").filter({ hasText: "3º Ano A" }),
+  ).toHaveCount(0);
+  expect(state.deletedClassIds).toContain(classId);
+});
+
 test("falha de configuração Master tem diagnóstico próprio e não libera criação", async ({
   page,
 }) => {

@@ -373,6 +373,39 @@ async function updateMasterTeacher(
   return { success: true };
 }
 
+async function deleteMasterClass(
+  request: Request,
+  env: Env,
+  fetcher: typeof fetch,
+  actorId: string,
+) {
+  const payload = await readPayload(request);
+  const parsed = idSchema.safeParse(payload);
+  if (!parsed.success)
+    throw new ApiError(400, "Confira a turma selecionada.");
+
+  const service = serviceClient(env, fetcher);
+  const existing = await service
+    .from("classes")
+    .select("id,name,grade_level")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+  if (existing.error || !existing.data)
+    throw new ApiError(404, "Turma não encontrada.");
+
+  const deleted = await service.rpc("master_delete_class", {
+    p_class: parsed.data.id,
+    p_actor: actorId,
+  });
+  if (deleted.error)
+    throw new ApiError(
+      502,
+      "Não foi possível apagar a turma. Verifique se a migration de exclusão foi aplicada.",
+    );
+
+  return { success: true };
+}
+
 async function createMasterClass(
   request: Request,
   client: Awaited<ReturnType<typeof requireMaster>>["client"],
@@ -503,6 +536,7 @@ export async function handleRequest(
     ["/api/master/teachers", ["GET", "POST"]],
     ["/api/master/teachers/update", ["POST"]],
     ["/api/master/classes", ["POST"]],
+    ["/api/master/classes/delete", ["POST"]],
   ]);
   const accepted = methods.get(url.pathname);
   if (!accepted) return json({ error: "Endpoint não encontrado." }, 404);
@@ -530,6 +564,15 @@ export async function handleRequest(
     if (url.pathname === "/api/master/status") return json({ isMaster: true });
     if (url.pathname === "/api/master/classes")
       return json(await createMasterClass(request, master.client), 201);
+    if (url.pathname === "/api/master/classes/delete")
+      return json(
+        await deleteMasterClass(
+          request,
+          env,
+          fetcher,
+          master.user.id,
+        ),
+      );
     if (url.pathname === "/api/master/teachers/update")
       return json(
         await updateMasterTeacher(request, env, fetcher, master.client),

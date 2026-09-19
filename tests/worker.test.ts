@@ -350,7 +350,14 @@ function masterBackend(
         });
       }
       if (url.pathname === "/rest/v1/classes") {
-        if ((init?.method || "GET") === "GET") return reply([]);
+        if ((init?.method || "GET") === "GET")
+          return url.searchParams.has("id")
+            ? reply({
+                id: "20000000-0000-4000-8000-000000000010",
+                name: "Jardim 2",
+                grade_level: "Jardim",
+              })
+            : reply([]);
         if (init?.method === "POST")
           return reply({
             id: "20000000-0000-4000-8000-000000000010",
@@ -421,6 +428,8 @@ function masterBackend(
             },
           ],
         });
+      if (url.pathname === "/rest/v1/rpc/master_delete_class")
+        return reply(null);
       if (url.pathname === "/rest/v1/rpc/log_admin_event")
         return options.auditFail
           ? reply({ message: "private SQL" }, 500)
@@ -538,6 +547,44 @@ describe("Worker Master", () => {
       teacher_id: teacherId,
       can_manage_students: true,
     });
+  });
+
+  it("Master apaga turma pelo RPC restrito", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/classes/delete", {
+        id: "20000000-0000-4000-8000-000000000010",
+      }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true });
+    const deletion = backend.calls.find(
+      (call) => call.path === "/rest/v1/rpc/master_delete_class",
+    );
+    expect(deletion?.authorization).toBe("Bearer private-test-key");
+    expect(deletion?.body).toEqual({
+      p_class: "20000000-0000-4000-8000-000000000010",
+      p_actor: userId,
+    });
+  });
+
+  it("admin comum não apaga turma pela API Master", async () => {
+    const backend = masterBackend({ email: "admin@peralta.com" });
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/classes/delete", {
+        id: "20000000-0000-4000-8000-000000000010",
+      }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(403);
+    expect(
+      backend.calls.some(
+        (call) => call.path === "/rest/v1/rpc/master_delete_class",
+      ),
+    ).toBe(false);
   });
 
   it("admin comum não cria turma pela API Master", async () => {

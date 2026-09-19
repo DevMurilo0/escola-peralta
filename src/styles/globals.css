@@ -2924,6 +2924,108 @@ td {
   min-width: 0;
 }
 
+.class-delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.class-delete-confirmation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.class-delete-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #fff1ed;
+  color: #9f3f30;
+}
+
+.class-delete-question {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.class-delete-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 16px;
+}
+
+.class-delete-summary > div {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f8f9f6;
+}
+
+.class-delete-summary span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.class-delete-summary strong {
+  font-size: 13px;
+}
+
+.class-delete-warning {
+  margin-bottom: 0;
+  line-height: 1.6;
+}
+
+.class-delete-actions {
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.class-delete-actions button {
+  min-width: 140px;
+}
+
+.class-delete-actions .danger-button:hover,
+.class-delete-actions .danger-button:active {
+  background: #9f3f30;
+  transform: scale(1.02);
+}
+
+@media (max-width: 540px) {
+  .class-delete-confirmation {
+    grid-template-columns: 1fr;
+  }
+
+  .class-delete-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .class-delete-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .class-delete-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .class-delete-actions button {
+    width: 100%;
+  }
+}
+
 /* Administração: pesquisa de turmas e interações sem troca de cor. */
 .class-search {
   margin-top: 18px;

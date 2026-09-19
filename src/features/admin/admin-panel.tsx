@@ -1,7 +1,7 @@
 import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { invalidateResources } from "@/shared/hooks/use-resource";
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { adminAction } from "./actions";
 import { Feedback, Modal } from "@/shared/components/feedback";
 import type { SchoolClass } from "@/shared/academic/types";
@@ -63,6 +63,7 @@ export function AdminPanel({
   const [tab, setTab] = useState("classes");
   const [modal, setModal] = useState<"class" | "teacher" | null>(null);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
+  const [deletingClass, setDeletingClass] = useState<Class | null>(null);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [confirm, setConfirm] = useState<{
     title: string;
@@ -107,12 +108,15 @@ export function AdminPanel({
               ? "Professor criado com sucesso. A conta já pode acessar /portal/login."
               : kind === "master-teacher-update"
                 ? "Professor atualizado com sucesso."
-                : "Operação concluída."),
+                : kind === "class-delete"
+                  ? "Turma apagada com sucesso."
+                  : "Operação concluída."),
         );
         if (!r.error) {
           setModal(null);
           setShowPassword(false);
           setConfirm(null);
+          if (kind === "class-delete") setDeletingClass(null);
           if (r.link && kind === "teacher-link") {
             const teacherId = (values as { id?: string }).id;
             if (teacherId)
@@ -214,18 +218,14 @@ export function AdminPanel({
                           Editar
                         </button>
                         <button
-                          className="secondary"
-                          onClick={() =>
-                            setConfirm({
-                              title: c.active
-                                ? "Arquivar turma?"
-                                : "Reativar turma?",
-                              kind: "class",
-                              values: { ...c, active: !c.active },
-                            })
-                          }
+                          className="secondary class-delete-button"
+                          onClick={() => {
+                            setMessage("");
+                            setDeletingClass(c);
+                          }}
                         >
-                          {c.active ? "Arquivar" : "Reativar"}
+                          <Trash2 size={16} aria-hidden="true" />
+                          Apagar
                         </button>
                       </div>
                     )}
@@ -737,6 +737,62 @@ export function AdminPanel({
                   : "Salvar professor"}
             </button>
           </form>
+        </Modal>
+      )}
+      {deletingClass && (
+        <Modal
+          title={`Apagar ${deletingClass.name}?`}
+          onClose={() => !pending && setDeletingClass(null)}
+        >
+          <div className="class-delete-confirmation">
+            <div className="class-delete-icon" aria-hidden="true">
+              <Trash2 size={24} />
+            </div>
+            <div>
+              <p className="class-delete-question">
+                Quer realmente apagar esta turma?
+              </p>
+              <div className="class-delete-summary">
+                <div>
+                  <span>Série/Ano</span>
+                  <strong>{deletingClass.grade_level}</strong>
+                </div>
+                <div>
+                  <span>Turma</span>
+                  <strong>{classGroup(deletingClass)}</strong>
+                </div>
+                <div>
+                  <span>Ano letivo</span>
+                  <strong>{deletingClass.school_year}</strong>
+                </div>
+              </div>
+              <p className="muted small class-delete-warning">
+                Esta ação é permanente. Serão apagados os vínculos com
+                professores, matrículas desta turma, notas, frequência e
+                registros de conteúdos. Os cadastros dos alunos continuam
+                existentes.
+              </p>
+            </div>
+          </div>
+          <Feedback message={message} />
+          <div className="actions class-delete-actions">
+            <button
+              className="secondary"
+              type="button"
+              disabled={pending}
+              onClick={() => setDeletingClass(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              disabled={pending}
+              onClick={() => run("class-delete", { id: deletingClass.id })}
+            >
+              {pending ? "Apagando…" : "Sim, apagar turma"}
+            </button>
+          </div>
         </Modal>
       )}
       {confirm && (
