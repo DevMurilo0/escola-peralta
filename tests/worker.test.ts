@@ -560,6 +560,14 @@ describe("Worker Master", () => {
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
+    expect(
+      backend.calls.some(
+        (call) =>
+          call.path === "/rest/v1/classes" &&
+          call.method === "GET" &&
+          call.authorization === "Bearer private-test-key",
+      ),
+    ).toBe(false);
     const deletion = backend.calls.find(
       (call) => call.path === "/rest/v1/rpc/master_delete_class",
     );
