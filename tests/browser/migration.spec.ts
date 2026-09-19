@@ -241,8 +241,12 @@ test("admin comum gerencia professores sem poder criar contas", async ({
     return response.status;
   });
   expect(forbidden).toBe(403);
-  await page.getByRole("button", { name: "Link de acesso" }).click();
+  const teacherRow = page.locator(".list-row").filter({ hasText: "Ana Exemplo" });
+  await teacherRow.getByRole("button", { name: "Link de acesso" }).click();
   await expect(page.getByRole("status")).toContainText("Operação concluída");
+  await expect(teacherRow.getByLabel("Link de acesso")).toBeVisible();
+  await expect(teacherRow.getByRole("button", { name: "Copiar" })).toBeVisible();
+  await expect(teacherRow.getByRole("button", { name: "Ocultar" })).toBeVisible();
   expect(state.workerRequests).toBe(2);
 });
 

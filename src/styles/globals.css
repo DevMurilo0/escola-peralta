@@ -1648,6 +1648,49 @@ td {
 .admin-class-associate .inline-form {
   margin: 0;
 }
+.teacher-access-link {
+  flex: 1 0 100%;
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f6f8f4;
+}
+
+.teacher-access-link > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.teacher-access-link strong {
+  font-size: 13px;
+}
+
+.teacher-access-link small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.teacher-access-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 9px;
+  align-items: center;
+}
+
+.teacher-access-link-row input {
+  min-width: 0;
+  width: 100%;
+  font-size: 12px;
+}
+
+.teacher-access-link-row button {
+  white-space: nowrap;
+}
+
 .master-teacher-card > div:first-child {
   display: grid;
   gap: 3px;
@@ -2552,6 +2595,18 @@ td {
   }
   .master-teacher-card .actions,
   .master-teacher-card .actions button {
+    width: 100%;
+  }
+  .teacher-access-link {
+    padding: 12px;
+  }
+  .teacher-access-link-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .teacher-access-link-row input {
+    grid-column: 1 / -1;
+  }
+  .teacher-access-link-row button {
     width: 100%;
   }
   .admin-student-list {

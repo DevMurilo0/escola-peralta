@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useResource } from "@/shared/hooks/use-resource";
 import {
   loadMasterTeachers,
@@ -14,18 +15,68 @@ function lastAccess(value: string | null) {
   }).format(new Date(value))}`;
 }
 
+export function TeacherAccessLink({
+  link,
+  onHide,
+}: {
+  link: string;
+  onHide: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [link]);
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div className="teacher-access-link">
+      <div>
+        <strong>Link de acesso de uso único</strong>
+        <small>Envie este link somente para este professor.</small>
+      </div>
+      <div className="teacher-access-link-row">
+        <input
+          aria-label="Link de acesso"
+          readOnly
+          value={link}
+          onFocus={(event) => event.target.select()}
+        />
+        <button className="secondary" type="button" onClick={copyLink}>
+          {copied ? "Copiado!" : "Copiar"}
+        </button>
+        <button className="secondary" type="button" onClick={onHide}>
+          Ocultar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function MasterTeachersPanel({
   pending,
   onAdd,
   onEdit,
   onAccessLink,
   onToggle,
+  accessLink,
+  onHideAccessLink,
 }: {
   pending: boolean;
   onAdd: () => void;
   onEdit: (teacher: MasterTeacher) => void;
   onAccessLink: (teacher: MasterTeacher) => void;
   onToggle: (teacher: MasterTeacher) => void;
+  accessLink: { teacherId: string; value: string } | null;
+  onHideAccessLink: () => void;
 }) {
   const resource = useResource("master:teachers", loadMasterTeachers);
   if (!resource.data || resource.error) return <QueryState {...resource} />;
@@ -73,6 +124,12 @@ export function MasterTeachersPanel({
                 {teacher.active ? "Desativar" : "Reativar"}
               </button>
             </div>
+            {accessLink?.teacherId === teacher.id && (
+              <TeacherAccessLink
+                link={accessLink.value}
+                onHide={onHideAccessLink}
+              />
+            )}
           </article>
         ))}
       </div>
