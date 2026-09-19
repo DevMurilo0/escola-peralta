@@ -1,8 +1,4 @@
-import { useState } from "react";
-import { ClassForm, ArchiveClass } from "@/features/classes/class-form";
-import { Feedback } from "@/shared/components/feedback";
-import type { SchoolClass } from "@/shared/academic/types";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useResource } from "@/shared/hooks/use-resource";
 import { QueryState } from "@/shared/components/query-state";
 import { db } from "@/shared/supabase/client";
@@ -29,10 +25,6 @@ async function loadDashboard() {
 }
 export default function Dashboard() {
   const { profile } = useAuth();
-  const navigate = useNavigate();
-  const [editing, setEditing] = useState<SchoolClass | null | undefined>();
-  const [archiving, setArchiving] = useState<SchoolClass | null>(null);
-  const [message, setMessage] = useState("");
   const resource = useResource(`dashboard:${profile!.id}`, loadDashboard);
   if (!resource.data || resource.error) return <QueryState {...resource} />;
   const { classes, sessions } = resource.data;
@@ -87,13 +79,19 @@ export default function Dashboard() {
           Meu perfil →
         </Link>
       </div>
-      <Feedback message={message} />
       <section id="turmas">
         <div className="page-heading">
-          <h2>
-            {profile!.role === "admin" ? "Turmas da escola" : "Minhas turmas"}
-          </h2>
-          <button onClick={() => setEditing(null)}>+ Nova turma</button>
+          <div>
+            <h2>
+              {profile!.role === "admin" ? "Turmas da escola" : "Minhas turmas"}
+            </h2>
+            {profile!.role === "teacher" && (
+              <p className="muted small">
+                As turmas são cadastradas pela direção e aparecem aqui quando
+                você for vinculado a elas.
+              </p>
+            )}
+          </div>
         </div>
         <div className="class-grid">
           {classes?.map((c) => (
@@ -125,28 +123,21 @@ export default function Dashboard() {
                   Acessar turma <ArrowUpRight size={16} />
                 </Link>
               </div>
-              {c.active && (profile!.role === "admin" || c.teacher_classes?.some((t: {teacher_id: string; can_manage_students: boolean}) => t.teacher_id === profile!.id && t.can_manage_students)) && <div className="actions class-actions">
-                <button className="secondary" onClick={() => setEditing(c)}>Editar turma</button>
-                <button className="secondary" onClick={() => setArchiving(c)}>Arquivar turma</button>
-              </div>}
             </article>
           ))}
         </div>
         {!classes?.length && (
           <div className="empty">
             <BookOpen />
-            <h3>Nenhuma turma criada ainda.</h3>
-            <p>Crie sua primeira turma para começar.</p>
-            <button onClick={() => setEditing(null)}>Criar minha primeira turma</button>
+            <h3>Nenhuma turma disponível.</h3>
+            <p>
+              {profile!.role === "teacher"
+                ? "A direção ainda não vinculou uma turma ao seu perfil."
+                : "Crie e organize as turmas pela área de Administração."}
+            </p>
           </div>
         )}
       </section>
-      {editing !== undefined && <ClassForm schoolClass={editing || undefined} onClose={() => setEditing(undefined)} onSaved={id => {
-        setEditing(undefined);
-        if (editing) setMessage("Turma atualizada com sucesso.");
-        else navigate(`/portal/turmas/${id}`, { state: { message: "Turma criada com sucesso." } });
-      }} />}
-      {archiving && <ArchiveClass schoolClass={archiving} onClose={() => setArchiving(null)} onSaved={() => { setArchiving(null); setMessage("Turma arquivada. Histórico preservado."); }} />}
     </>
   );
 }
