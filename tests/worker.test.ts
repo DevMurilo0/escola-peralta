@@ -321,6 +321,8 @@ function masterBackend(
         if (url.searchParams.get("id")?.includes(teacherId))
           return reply({
             id: teacherId,
+            full_name: "Ana Exemplo",
+            email: "ana@peralta.com",
             role: "teacher",
             active: true,
           });
@@ -361,6 +363,32 @@ function masterBackend(
         init?.method === "POST"
       )
         return reply(null, 201);
+      if (
+        url.pathname === `/auth/v1/admin/users/${teacherId}` &&
+        init?.method === "PUT"
+      )
+        return options.duplicate
+          ? reply(
+              { message: "User already registered", code: "email_exists" },
+              422,
+            )
+          : reply({
+              user: {
+                id: teacherId,
+                email:
+                  (body as { email?: string } | null)?.email ??
+                  "ana@peralta.com",
+                created_at: "2026-09-01T12:00:00.000Z",
+                last_sign_in_at: options.lastSignIn ?? null,
+                user_metadata: {
+                  full_name:
+                    (body as { user_metadata?: { full_name?: string } } | null)
+                      ?.user_metadata?.full_name ?? "Ana Exemplo",
+                },
+                app_metadata: {},
+                aud: "authenticated",
+              },
+            });
       if (url.pathname === "/auth/v1/admin/users" && init?.method === "POST")
         return options.duplicate
           ? reply(
@@ -530,6 +558,86 @@ describe("Worker Master", () => {
       backend.calls.some(
         (call) =>
           call.path === "/rest/v1/classes" && call.method === "POST",
+      ),
+    ).toBe(false);
+  });
+
+  it("Master atualiza nome, e-mail e senha sem expor a senha", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/teachers/update", {
+        id: teacherId,
+        full_name: "Ana Atualizada",
+        email: "ana.nova@gmail.com",
+        password: "nova-senha-segura-123",
+      }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).not.toContain("nova-senha-segura-123");
+
+    const profileUpdate = backend.calls.find(
+      (call) =>
+        call.path === "/rest/v1/profiles" &&
+        call.method === "PATCH" &&
+        call.authorization === "Bearer private-test-key",
+    );
+    expect(profileUpdate?.body).toMatchObject({
+      full_name: "Ana Atualizada",
+      email: "ana.nova@gmail.com",
+    });
+
+    const authUpdate = backend.calls.find(
+      (call) =>
+        call.path === `/auth/v1/admin/users/${teacherId}` &&
+        call.method === "PUT",
+    );
+    expect(authUpdate?.authorization).toBe("Bearer private-test-key");
+    expect(authUpdate?.body).toMatchObject({
+      email: "ana.nova@gmail.com",
+      email_confirm: true,
+      password: "nova-senha-segura-123",
+      user_metadata: { full_name: "Ana Atualizada" },
+    });
+  });
+
+  it("Master pode editar professor sem trocar a senha", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/teachers/update", {
+        id: teacherId,
+        full_name: "Ana Atualizada",
+        email: "ana@peralta.com",
+      }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(200);
+    const authUpdate = backend.calls.find(
+      (call) =>
+        call.path === `/auth/v1/admin/users/${teacherId}` &&
+        call.method === "PUT",
+    );
+    expect(authUpdate?.body).not.toHaveProperty("password");
+  });
+
+  it("admin comum não edita e-mail ou senha pela API Master", async () => {
+    const backend = masterBackend({ email: "admin@peralta.com" });
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/teachers/update", {
+        id: teacherId,
+        full_name: "Tentativa",
+        email: "tentativa@peralta.com",
+        password: "senha-segura-123",
+      }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(403);
+    expect(
+      backend.calls.some((call) =>
+        call.path.startsWith("/auth/v1/admin/users/"),
       ),
     ).toBe(false);
   });
