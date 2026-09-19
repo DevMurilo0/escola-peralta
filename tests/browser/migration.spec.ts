@@ -349,7 +349,7 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
   await expect(classDialog.getByLabel("Nome / identificador")).toHaveCount(0);
   await expect(classDialog.getByLabel("Professor responsável")).toBeVisible();
   await expect(classDialog.getByLabel("Série/Ano").locator("option")).toHaveCount(7);
-  await expect(classDialog.getByLabel("Turma").locator("option")).toHaveCount(3);
+  await expect(classDialog.getByLabel("Turma").locator("option")).toHaveCount(6);
   await classDialog.getByRole("button", { name: "Fechar janela" }).click();
 
   await page.getByRole("button", { name: "Professores", exact: true }).click();

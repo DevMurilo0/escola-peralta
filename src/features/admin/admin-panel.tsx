@@ -31,7 +31,7 @@ const CLASS_LEVELS = [
   "4º Ano",
   "5º Ano",
 ] as const;
-const CLASS_GROUPS = ["A", "B", "C"] as const;
+const CLASS_GROUPS = ["1", "2", "3", "A", "B", "C"] as const;
 
 function classGroup(schoolClass: Class | null) {
   if (!schoolClass) return "A";

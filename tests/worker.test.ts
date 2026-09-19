@@ -470,8 +470,8 @@ describe("Worker Master", () => {
     const backend = masterBackend();
     const response = await handleRequest(
       masterRequest("POST", "/api/master/classes", {
-        grade_level: "3º Ano",
-        group: "B",
+        grade_level: "Jardim",
+        group: "2",
         shift: "Manhã",
         school_year: 2026,
         teacher_id: teacherId,
@@ -483,8 +483,8 @@ describe("Worker Master", () => {
     expect(await response.json()).toMatchObject({
       success: true,
       schoolClass: {
-        name: "3º Ano B",
-        grade_level: "3º Ano",
+        name: "Jardim 2",
+        grade_level: "Jardim",
         shift: "Manhã",
         school_year: 2026,
       },
@@ -495,8 +495,8 @@ describe("Worker Master", () => {
     );
     expect(classCreate?.authorization).toBe("Bearer private-test-key");
     expect(classCreate?.body).toMatchObject({
-      name: "3º Ano B",
-      grade_level: "3º Ano",
+      name: "Jardim 2",
+      grade_level: "Jardim",
       shift: "Manhã",
       school_year: 2026,
       active: true,

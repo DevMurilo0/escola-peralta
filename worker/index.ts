@@ -36,7 +36,7 @@ const masterClassSchema = z
       "4º Ano",
       "5º Ano",
     ]),
-    group: z.enum(["A", "B", "C"]),
+    group: z.enum(["1", "2", "3", "A", "B", "C"]),
     shift: z.enum(["Manhã", "Tarde", "Integral"]),
     school_year: z.number().int().min(2000).max(2200),
     teacher_id: z.uuid(),
