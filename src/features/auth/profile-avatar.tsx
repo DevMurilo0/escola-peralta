@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { profileAvatarUrl } from "./profile-actions";
 
 export function ProfileAvatar({
@@ -10,9 +10,9 @@ export function ProfileAvatar({
   path?: string | null;
   size?: "small" | "large";
 }) {
-  const [broken, setBroken] = useState(false);
-  useEffect(() => setBroken(false), [path]);
-  const url = path && !broken ? profileAvatarUrl(path) : "";
+  const [failedPath, setFailedPath] = useState<string | null>(null);
+  const url =
+    path && failedPath !== path ? profileAvatarUrl(path) : "";
 
   return (
     <div className={`avatar profile-avatar profile-avatar-${size}`}>
@@ -21,7 +21,7 @@ export function ProfileAvatar({
           src={url}
           alt={`Foto de perfil de ${name}`}
           decoding="async"
-          onError={() => setBroken(true)}
+          onError={() => setFailedPath(path ?? null)}
         />
       ) : (
         <span aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
