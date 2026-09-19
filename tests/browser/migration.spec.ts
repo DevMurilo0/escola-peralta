@@ -115,17 +115,16 @@ test("professor: login, sessão persistida, notas e chamada persistem após refr
   expect(state.sessions[0].date).toBe(todayRecife());
 });
 
-test("professor cria turma própria pelo portal", async ({ page }) => {
+test("professor recebe turmas da direção e não pode criar novas", async ({
+  page,
+}) => {
   await installSupabaseTransport(page);
   await signIn(page);
-  await page.getByRole("button", { name: "+ Nova turma" }).click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel(/Nome da turma/).fill("5º Ano A");
-  await dialog.getByLabel(/Série\/Ano/).fill("5º Ano");
-  await dialog.getByLabel(/Turno/).selectOption("Tarde");
-  await dialog.getByRole("button", { name: "Criar turma" }).click();
-  await expect(page).toHaveURL(new RegExp(`/portal/turmas/${classId}$`));
-  await expect(page.getByRole("heading", { name: "5º Ano A" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "+ Nova turma" }),
+  ).toHaveCount(0);
+  await expect(page.getByText(/turmas são cadastradas pela direção/i)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Acessar turma/ })).toBeVisible();
 });
 
 test("I–IV bimestres, conteúdos curriculares e resultado final ficam integrados", async ({
@@ -339,6 +338,17 @@ test("Master cria professor real e o novo professor autentica pelo fluxo normal"
   await signIn(page, "admin");
   await page.getByRole("button", { name: "Abrir navegação" }).click();
   await page.getByRole("link", { name: "Administração", exact: true }).click();
+
+  await page.getByRole("button", { name: "+ Criar turma" }).click();
+  const classDialog = page.getByRole("dialog", { name: "Criar turma" });
+  await expect(classDialog.getByLabel("Série/Ano")).toBeVisible();
+  await expect(classDialog.getByLabel("Turma")).toBeVisible();
+  await expect(classDialog.getByLabel("Nome / identificador")).toHaveCount(0);
+  await expect(classDialog.getByLabel("Professor responsável")).toBeVisible();
+  await expect(classDialog.getByLabel("Série/Ano").locator("option")).toHaveCount(7);
+  await expect(classDialog.getByLabel("Turma").locator("option")).toHaveCount(3);
+  await classDialog.getByRole("button", { name: "Fechar" }).click();
+
   await page.getByRole("button", { name: "Professores", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Professores", exact: true }),
