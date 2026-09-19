@@ -102,6 +102,7 @@ export async function installSupabaseTransport(
     tokenRequests: number;
     workerRequests: number;
     masterCreates: number;
+    masterUpdates: number;
   } = {
     grades: [],
     sessions: [],
@@ -109,6 +110,7 @@ export async function installSupabaseTransport(
     tokenRequests: 0,
     workerRequests: 0,
     masterCreates: 0,
+    masterUpdates: 0,
   };
   await page.route("**/auth/v1/**", async (route) => {
     const url = new URL(route.request().url());
@@ -335,6 +337,27 @@ export async function installSupabaseTransport(
     }
     if (route.request().method() === "GET") {
       await route.fulfill({ json: { teachers: masterTeachers } });
+      return;
+    }
+    if (url.pathname.endsWith("/teachers/update")) {
+      const body = route.request().postDataJSON() as {
+        id: string;
+        full_name: string;
+        email: string;
+        password?: string;
+      };
+      const teacher = masterTeachers.find((item) => item.id === body.id);
+      if (!teacher) {
+        await route.fulfill({
+          status: 404,
+          json: { error: "Professor não encontrado." },
+        });
+        return;
+      }
+      teacher.full_name = body.full_name;
+      teacher.email = body.email;
+      state.masterUpdates++;
+      await route.fulfill({ json: { success: true } });
       return;
     }
     const body = route.request().postDataJSON() as {
