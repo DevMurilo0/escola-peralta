@@ -120,7 +120,7 @@ export function createMasterClass(payload: {
     | "3º Ano"
     | "4º Ano"
     | "5º Ano";
-  group: "A" | "B" | "C";
+  group: "1" | "2" | "3" | "A" | "B" | "C";
   shift: "Manhã" | "Tarde" | "Integral";
   school_year: number;
   teacher_id: string;
