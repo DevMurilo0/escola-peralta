@@ -385,23 +385,19 @@ async function deleteMasterClass(
     throw new ApiError(400, "Confira a turma selecionada.");
 
   const service = serviceClient(env, fetcher);
-  const existing = await service
-    .from("classes")
-    .select("id,name,grade_level")
-    .eq("id", parsed.data.id)
-    .maybeSingle();
-  if (existing.error || !existing.data)
-    throw new ApiError(404, "Turma não encontrada.");
-
   const deleted = await service.rpc("master_delete_class", {
     p_class: parsed.data.id,
     p_actor: actorId,
   });
-  if (deleted.error)
+  if (deleted.error) {
+    const message = deleted.error.message?.toLowerCase() || "";
+    if (message.includes("turma não encontrada"))
+      throw new ApiError(404, "Turma não encontrada.");
     throw new ApiError(
       502,
       "Não foi possível apagar a turma. Verifique se a migration de exclusão foi aplicada.",
     );
+  }
 
   return { success: true };
 }
