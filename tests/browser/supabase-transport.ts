@@ -103,6 +103,7 @@ export async function installSupabaseTransport(
     workerRequests: number;
     masterCreates: number;
     masterUpdates: number;
+    deletedClassIds: string[];
   } = {
     grades: [],
     sessions: [],
@@ -111,6 +112,7 @@ export async function installSupabaseTransport(
     workerRequests: 0,
     masterCreates: 0,
     masterUpdates: 0,
+    deletedClassIds: [],
   };
   await page.route("**/auth/v1/**", async (route) => {
     const url = new URL(route.request().url());
@@ -228,12 +230,16 @@ export async function installSupabaseTransport(
           : single
             ? profile
             : [profile];
-    else if (entity === "classes")
+    else if (entity === "classes") {
+      const availableClasses = [schoolClass, secondClass].filter(
+        (item) => !state.deletedClassIds.includes(item.id),
+      );
       data = single
-        ? schoolClass
+        ? availableClasses[0] ?? null
         : profile.role === "admin"
-          ? [schoolClass, secondClass]
-          : [schoolClass];
+          ? availableClasses
+          : availableClasses.filter((item) => item.id === schoolClass.id);
+    }
     else if (entity === "enrollments")
       data = url.searchParams.get("select")?.includes("classes")
         ? adminEnrollments
@@ -337,6 +343,12 @@ export async function installSupabaseTransport(
     }
     if (route.request().method() === "GET") {
       await route.fulfill({ json: { teachers: masterTeachers } });
+      return;
+    }
+    if (url.pathname.endsWith("/classes/delete")) {
+      const body = route.request().postDataJSON() as { id: string };
+      state.deletedClassIds.push(body.id);
+      await route.fulfill({ json: { success: true } });
       return;
     }
     if (url.pathname.endsWith("/teachers/update")) {
