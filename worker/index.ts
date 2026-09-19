@@ -283,19 +283,17 @@ async function createMasterTeacher(
 
 async function createMasterClass(
   request: Request,
-  env: Env,
-  fetcher: typeof fetch,
+  client: Awaited<ReturnType<typeof requireMaster>>["client"],
 ) {
   const payload = await readPayload(request);
   const parsed = masterClassSchema.safeParse(payload);
   if (!parsed.success)
     throw new ApiError(400, "Confira a série/ano, turma, turno e professor.");
 
-  const service = serviceClient(env, fetcher);
   const { grade_level, group, shift, school_year, teacher_id } = parsed.data;
   const name = `${grade_level} ${group}`;
 
-  const teacher = await service
+  const teacher = await client
     .from("profiles")
     .select("id,active,role")
     .eq("id", teacher_id)
@@ -304,7 +302,7 @@ async function createMasterClass(
   if (teacher.error || !teacher.data?.active)
     throw new ApiError(400, "Selecione um professor ativo.");
 
-  const existing = await service
+  const existing = await client
     .from("classes")
     .select("id")
     .eq("name", name)
@@ -315,7 +313,7 @@ async function createMasterClass(
   if ((existing.data ?? []).length > 0)
     throw new ApiError(409, "Esta turma já existe neste ano letivo.");
 
-  const created = await service
+  const created = await client
     .from("classes")
     .insert({
       name,
@@ -329,13 +327,13 @@ async function createMasterClass(
   if (created.error || !created.data)
     throw new ApiError(502, "Não foi possível criar a turma.");
 
-  const linked = await service.from("teacher_classes").insert({
+  const linked = await client.from("teacher_classes").insert({
     class_id: created.data.id,
     teacher_id,
     can_manage_students: true,
   });
   if (linked.error) {
-    await service.from("classes").delete().eq("id", created.data.id);
+    await client.from("classes").delete().eq("id", created.data.id);
     throw new ApiError(
       502,
       "Não foi possível vincular o professor. A turma não foi mantida.",
@@ -438,7 +436,7 @@ export async function handleRequest(
     const master = await requireMaster(token, env, fetcher);
     if (url.pathname === "/api/master/status") return json({ isMaster: true });
     if (url.pathname === "/api/master/classes")
-      return json(await createMasterClass(request, env, fetcher), 201);
+      return json(await createMasterClass(request, master.client), 201);
     if (
       url.pathname === "/api/master/teachers" &&
       request.method === "POST"
