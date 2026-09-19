@@ -49,6 +49,34 @@ for (const role of ["teacher", "admin"] as const) {
   });
 }
 
+test("perfil permite alterar nome e oferece foto de perfil", async ({ page }) => {
+  await installSupabaseTransport(page, "teacher");
+  await signIn(page);
+  await page.goto("/portal/perfil");
+
+  await expect(page.getByRole("heading", { name: "Ana Exemplo" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Escolher foto" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Escolher foto de perfil")).toHaveAttribute(
+    "accept",
+    "image/jpeg,image/png,image/webp",
+  );
+
+  const name = page.getByLabel("Nome", { exact: true });
+  await expect(name).toHaveValue("Ana Exemplo");
+  await name.fill("Ana Atualizada");
+  await page.getByRole("button", { name: "Salvar nome" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Nome atualizado.");
+  await expect(
+    page.getByRole("heading", { name: "Ana Atualizada", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".sidebar-bottom strong")).toHaveText(
+    "Ana Atualizada",
+  );
+});
+
 test("confirmação de convite abre diretamente e aguarda clique", async ({
   page,
 }) => {
