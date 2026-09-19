@@ -199,8 +199,9 @@ async function handleAdminEndpoint(
   if (!teacher?.active)
     throw new ApiError(404, "Professor inativo ou não encontrado.");
 
+  const service = serviceClient(env, fetcher);
   const redirectTo = `${allowed}/auth/confirm`;
-  const invite = await client.auth.admin.generateLink({
+  const invite = await service.auth.admin.generateLink({
     type: "recovery",
     email: teacher.email,
     options: { redirectTo },
@@ -232,7 +233,7 @@ async function createMasterTeacher(
 
   const service = serviceClient(env, fetcher);
   const { full_name, email, password } = parsed.data;
-  const created = await client.auth.admin.createUser({
+  const created = await service.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -289,7 +290,6 @@ async function createMasterClass(
   if (!parsed.success)
     throw new ApiError(400, "Confira a série/ano, turma, turno e professor.");
 
-  const service = serviceClient(env, fetcher);
   const { grade_level, group, shift, school_year, teacher_id } = parsed.data;
   const name = `${grade_level} ${group}`;
 
@@ -345,7 +345,7 @@ async function createMasterClass(
 
 async function listMasterTeachers(env: Env, fetcher: typeof fetch) {
   const service = serviceClient(env, fetcher);
-  const profilesResult = await client
+  const profilesResult = await service
     .from("profiles")
     .select("id,full_name,email,active,created_at")
     .eq("role", "teacher")
@@ -356,7 +356,7 @@ async function listMasterTeachers(env: Env, fetcher: typeof fetch) {
   const authUsers = [];
   const perPage = 1000;
   for (let page = 1; ; page++) {
-    const result = await client.auth.admin.listUsers({ page, perPage });
+    const result = await service.auth.admin.listUsers({ page, perPage });
     if (result.error)
       throw new ApiError(502, "Não foi possível carregar os professores.");
     authUsers.push(...result.data.users);
