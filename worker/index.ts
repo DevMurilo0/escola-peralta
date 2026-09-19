@@ -199,9 +199,8 @@ async function handleAdminEndpoint(
   if (!teacher?.active)
     throw new ApiError(404, "Professor inativo ou não encontrado.");
 
-  const service = serviceClient(env, fetcher);
   const redirectTo = `${allowed}/auth/confirm`;
-  const invite = await service.auth.admin.generateLink({
+  const invite = await client.auth.admin.generateLink({
     type: "recovery",
     email: teacher.email,
     options: { redirectTo },
@@ -233,7 +232,7 @@ async function createMasterTeacher(
 
   const service = serviceClient(env, fetcher);
   const { full_name, email, password } = parsed.data;
-  const created = await service.auth.admin.createUser({
+  const created = await client.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -283,8 +282,7 @@ async function createMasterTeacher(
 
 async function createMasterClass(
   request: Request,
-  env: Env,
-  fetcher: typeof fetch,
+  client: Awaited<ReturnType<typeof requireMaster>>["client"],
 ) {
   const payload = await readPayload(request);
   const parsed = masterClassSchema.safeParse(payload);
@@ -295,7 +293,7 @@ async function createMasterClass(
   const { grade_level, group, shift, school_year, teacher_id } = parsed.data;
   const name = `${grade_level} ${group}`;
 
-  const teacher = await service
+  const teacher = await client
     .from("profiles")
     .select("id,active,role")
     .eq("id", teacher_id)
@@ -304,7 +302,7 @@ async function createMasterClass(
   if (teacher.error || !teacher.data?.active)
     throw new ApiError(400, "Selecione um professor ativo.");
 
-  const existing = await service
+  const existing = await client
     .from("classes")
     .select("id")
     .eq("name", name)
@@ -315,7 +313,7 @@ async function createMasterClass(
   if ((existing.data ?? []).length > 0)
     throw new ApiError(409, "Esta turma já existe neste ano letivo.");
 
-  const created = await service
+  const created = await client
     .from("classes")
     .insert({
       name,
@@ -329,13 +327,13 @@ async function createMasterClass(
   if (created.error || !created.data)
     throw new ApiError(502, "Não foi possível criar a turma.");
 
-  const linked = await service.from("teacher_classes").insert({
+  const linked = await client.from("teacher_classes").insert({
     class_id: created.data.id,
     teacher_id,
     can_manage_students: true,
   });
   if (linked.error) {
-    await service.from("classes").delete().eq("id", created.data.id);
+    await client.from("classes").delete().eq("id", created.data.id);
     throw new ApiError(
       502,
       "Não foi possível vincular o professor. A turma não foi mantida.",
@@ -347,7 +345,7 @@ async function createMasterClass(
 
 async function listMasterTeachers(env: Env, fetcher: typeof fetch) {
   const service = serviceClient(env, fetcher);
-  const profilesResult = await service
+  const profilesResult = await client
     .from("profiles")
     .select("id,full_name,email,active,created_at")
     .eq("role", "teacher")
@@ -358,7 +356,7 @@ async function listMasterTeachers(env: Env, fetcher: typeof fetch) {
   const authUsers = [];
   const perPage = 1000;
   for (let page = 1; ; page++) {
-    const result = await service.auth.admin.listUsers({ page, perPage });
+    const result = await client.auth.admin.listUsers({ page, perPage });
     if (result.error)
       throw new ApiError(502, "Não foi possível carregar os professores.");
     authUsers.push(...result.data.users);
@@ -438,7 +436,7 @@ export async function handleRequest(
     const master = await requireMaster(token, env, fetcher);
     if (url.pathname === "/api/master/status") return json({ isMaster: true });
     if (url.pathname === "/api/master/classes")
-      return json(await createMasterClass(request, env, fetcher), 201);
+      return json(await createMasterClass(request, master.client), 201);
     if (
       url.pathname === "/api/master/teachers" &&
       request.method === "POST"
