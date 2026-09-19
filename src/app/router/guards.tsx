@@ -29,7 +29,11 @@ export function ProtectedRoute() {
     );
   if (!profile?.active) return <Navigate to="/portal/acesso-negado" replace />;
   return (
-    <PortalShell name={profile.full_name} admin={profile.role === "admin"}>
+    <PortalShell
+      name={profile.full_name}
+      admin={profile.role === "admin"}
+      avatarPath={profile.avatar_path}
+    >
       <Suspense fallback={<Loading />}>
         <Outlet />
       </Suspense>
