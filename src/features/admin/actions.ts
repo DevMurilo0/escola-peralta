@@ -11,7 +11,7 @@ const classSchema = z.object({
   school_year: z.number().int().min(2000).max(2200),
   active: z.boolean(),
   teacher_id: z.uuid().optional(),
-  group: z.enum(["A", "B", "C"]).optional(),
+  group: z.enum(["1", "2", "3", "A", "B", "C"]).optional(),
 });
 export async function adminAction(
   kind: string,
