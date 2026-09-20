@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
   House,
@@ -9,9 +8,12 @@ import {
   Settings,
   LogOut,
   Menu,
+  ExternalLink,
 } from "lucide-react";
 import { logout } from "@/features/auth/actions";
 import { ProfileAvatar } from "@/features/auth/profile-avatar";
+import { PortalBrand } from "@/components/portal-brand";
+
 export function PortalShell({
   name,
   admin,
@@ -28,6 +30,7 @@ export function PortalShell({
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+
   const links = [
     ["/portal", "Início", House],
     ["/portal/turmas", "Minhas turmas", BookOpen],
@@ -35,49 +38,64 @@ export function PortalShell({
     ["/portal/perfil", "Perfil", User],
     ...(admin ? [["/portal/admin", "Administração", Settings] as const] : []),
   ] as const;
+
   return (
     <div className="portal">
       <header className="mobile-bar">
-        <span className="portal-brand portal-brand-compact">
-          <strong>Escola Peralta</strong>
-          <small>Portal do Professor</small>
-        </span>
+        <Link to="/portal" aria-label="Ir para o início do portal">
+          <PortalBrand compact />
+        </Link>
         <button
-          aria-label="Abrir navegação"
+          className="mobile-menu-button"
+          aria-label={open ? "Fechar navegação" : "Abrir navegação"}
           aria-expanded={open}
           onClick={() => setOpen(!open)}
         >
           <Menu size={20} />
         </button>
       </header>
+
       <aside className={`sidebar ${open ? "open" : ""}`}>
-        <Link to="/portal" className="portal-brand">
-          <strong>Escola Peralta</strong>
-          <small>Portal do Professor</small>
+        <Link to="/portal" className="sidebar-brand-link">
+          <PortalBrand />
         </Link>
-        <span className="eyebrow">SALA DOS PROFESSORES</span>
+
+        <div className="sidebar-nav-heading">
+          <span className="eyebrow">SALA DOS PROFESSORES</span>
+          <small>Rotina escolar em um só lugar</small>
+        </div>
+
         <nav aria-label="Portal">
-          {links.map(([href, label, Icon]) => (
-            <Link
-              key={href}
-              onClick={() => setOpen(false)}
-              className={
-                path === href ||
-                (href === "/portal/turmas" && path.startsWith("/portal/turmas/"))
-                  ? "selected"
-                  : ""
-              }
-              to={href}
-            >
-              <Icon size={19} />
-              {label}
-            </Link>
-          ))}
+          {links.map(([href, label, Icon]) => {
+            const selected =
+              path === href ||
+              (href === "/portal/turmas" && path.startsWith("/portal/turmas/"));
+
+            return (
+              <Link
+                key={href}
+                onClick={() => setOpen(false)}
+                className={selected ? "selected" : ""}
+                to={href}
+              >
+                <span className="sidebar-nav-icon">
+                  <Icon size={18} />
+                </span>
+                <span>{label}</span>
+              </Link>
+            );
+          })}
         </nav>
+
         <div className="sidebar-bottom">
-          <ProfileAvatar name={name} path={avatarPath} />
-          <strong>{name}</strong>
-          <small>{admin ? "Administração" : "Professor(a)"}</small>
+          <div className="sidebar-profile">
+            <ProfileAvatar name={name} path={avatarPath} />
+            <div>
+              <strong>{name}</strong>
+              <small>{admin ? "Direção / Administração" : "Professor(a)"}</small>
+            </div>
+          </div>
+
           <form
             onSubmit={async (event) => {
               event.preventDefault();
@@ -92,15 +110,29 @@ export function PortalShell({
               }
             }}
           >
-            <button className="secondary" disabled={pending}>
-              <LogOut size={17} />
-              Sair da conta
+            <button className="secondary sidebar-logout" disabled={pending}>
+              <LogOut size={16} />
+              {pending ? "Saindo…" : "Sair da conta"}
             </button>
           </form>
+
           {error && <p role="alert">{error}</p>}
-          <Link to="/">Site da escola ↗</Link>
+
+          <Link to="/" className="sidebar-site-link">
+            Site da escola
+            <ExternalLink size={13} aria-hidden="true" />
+          </Link>
         </div>
       </aside>
+
+      {open && (
+        <button
+          className="portal-menu-backdrop"
+          aria-label="Fechar navegação"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
       <main id="main" className="portal-main">
         {children}
       </main>
