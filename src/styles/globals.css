@@ -4035,6 +4035,12 @@ td {
 }
 
 @media (max-width: 540px) {
+  .login-intro > .login-intro-media,
+  .login-intro > .login-intro-overlay,
+  .login-intro > .login-intro-copy {
+    display: block;
+  }
+
   .portal-main {
     padding: 22px 12px 44px;
   }
