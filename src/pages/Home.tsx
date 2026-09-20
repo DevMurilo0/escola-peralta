@@ -3,6 +3,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Instagram,
+  MessageCircle,
   Plus,
 } from "lucide-react";
 import { school, contactLink } from "@/config/school-config";
@@ -166,14 +167,6 @@ export default function Home() {
             <h2>{content.pedagogy.title}</h2>
             <div>
               <p>{content.pedagogy.description}</p>
-              <a
-                className="site-text-link"
-                href={contactLink}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Converse sobre a proposta pedagógica <ArrowUpRight size={18} />
-              </a>
             </div>
           </div>
           <div className="learning-concepts">
@@ -247,14 +240,6 @@ export default function Home() {
               <span className="site-kicker">{content.segments[1].title}</span>
               <h3>{content.segments[1].lead}</h3>
               <p>{content.segments[1].description}</p>
-              <a
-                className="site-text-link"
-                href={contactLink}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Conheça o Fundamental I <ArrowUpRight size={18} />
-              </a>
               <small>{content.segments[1].detail}</small>
             </div>
             <PhotoFrame
@@ -488,13 +473,15 @@ export default function Home() {
                 </span>
                 <ArrowUpRight />
               </a>
-              <a href={school.instagram} target="_blank" rel="noreferrer">
-                <span>
-                  <small>ACOMPANHE A ESCOLA</small>
-                  {school.instagramHandle}
-                </span>
-                <Instagram size={22} />
-              </a>
+              {school.whatsapp && (
+                <a href={contactLink} target="_blank" rel="noreferrer">
+                  <span>
+                    <small>WHATSAPP</small>
+                    {school.whatsappLabel}
+                  </span>
+                  <MessageCircle size={22} />
+                </a>
+              )}
               {school.phone && (
                 <a href={`tel:${school.phone}`}>
                   <span>
