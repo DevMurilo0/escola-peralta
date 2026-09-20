@@ -5,6 +5,7 @@ import { db } from "@/shared/supabase/client";
 import { useAuth } from "@/features/auth/auth-context";
 import { todayRecife } from "@/shared/academic/utils";
 import { ArrowUpRight, BookOpen, CheckCircle, Clock } from "lucide-react";
+import { school } from "@/config/school-config";
 async function loadDashboard() {
   const client = db();
   const [{ data: classes, error }, { data: sessions, error: sessionError }] =
@@ -37,19 +38,26 @@ export default function Dashboard() {
   ).length;
   return (
     <>
-      <div className="page-heading">
-        <div>
+      <section className="dashboard-welcome">
+        <div className="dashboard-welcome-copy">
           <span className="eyebrow">SEU DIA NA PERALTA</span>
           <h1>Olá, {profile!.full_name.split(" ")[0]}.</h1>
-          <p className="muted">Vamos acompanhar mais um dia de descobertas?</p>
+          <p>
+            Vamos acompanhar mais um dia de aprendizagem, presença e
+            descobertas?
+          </p>
+          <span className="pill dashboard-date">
+            {new Intl.DateTimeFormat("pt-BR", {
+              dateStyle: "long",
+              timeZone: "America/Recife",
+            }).format(new Date())}
+          </span>
         </div>
-        <span className="pill">
-          {new Intl.DateTimeFormat("pt-BR", {
-            dateStyle: "long",
-            timeZone: "America/Recife",
-          }).format(new Date())}
-        </span>
-      </div>
+        <div className="dashboard-welcome-brand" aria-hidden="true">
+          <img src={school.logo} alt="" width={84} height={84} />
+          <span>Escola Peralta</span>
+        </div>
+      </section>
       <div className="stats">
         <div>
           <BookOpen />
