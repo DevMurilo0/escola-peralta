@@ -9,6 +9,8 @@ export const school = {
   address: "Rua Izaltino Poggi, 73 • Prado",
   city: "Gravatá — Pernambuco",
   maps: "https://www.google.com/maps/search/?api=1&query=Rua+Izaltino+Poggi+73+Gravata+PE",
+  mapsEmbed:
+    "https://www.google.com/maps?q=Rua+Izaltino+Poggi+73+Prado+Gravata+PE&z=16&output=embed",
   logo: "/images/brand/escola-peralta-logo.webp",
   heroImage: "/images/school/hero-escola.webp",
   segments: [
