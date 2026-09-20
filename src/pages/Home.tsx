@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
 import {
-  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   Instagram,
-  MapPin,
   Plus,
 } from "lucide-react";
 import { school, contactLink } from "@/config/school-config";
@@ -34,80 +32,75 @@ export default function Home() {
       <PublicHeader />
       <main id="main">
         <section id="inicio" tabIndex={-1} className="opening-scene">
-          <div className="hero-location hero-intro-step">
-            <span>
-              <MapPin size={14} /> Gravatá, Pernambuco
-            </span>
-            <span>Infâncias cheias de possibilidades.</span>
-          </div>
-          <div className="opening-copy">
-            <p className="site-kicker hero-intro-step">
-              {content.hero.eyebrow}
-            </p>
-            <h1 aria-label={`${content.hero.title} ${content.hero.emphasis}`}>
-              <span className="hero-title-line" aria-hidden="true">
-                <span>{content.hero.title}</span>
-              </span>
-              <span
-                className="hero-title-line hero-title-emphasis"
-                aria-hidden="true"
-              >
-                <span>{content.hero.emphasis}</span>
-              </span>
-            </h1>
-            <div className="hero-introduction hero-intro-step">
-              <p>{content.hero.description}</p>
-              <a className="site-button" href="#escola">
-                Conheça nossa escola <ArrowDown size={17} />
-              </a>
-            </div>
-          </div>
-          <div className="hero-stage">
-            <div className="hero-caption">
-              <span className="editorial-cross" aria-hidden="true">
-                ✳
-              </span>
-              <p>
-                A infância acontece agora.
-                <br />
-                <strong>Vamos vivê-la por inteiro.</strong>
+          <div className="hero-layout">
+            <div className="opening-copy">
+              <p className="site-kicker hero-intro-step">
+                {content.hero.eyebrow}
               </p>
-              <a href={contactLink} target="_blank" rel="noreferrer">
-                Converse com a gente <ArrowUpRight size={18} />
+
+              <h1 aria-label={`${content.hero.title} ${content.hero.emphasis}`}>
+                <span className="hero-title-line" aria-hidden="true">
+                  <span>{content.hero.title}</span>
+                </span>
+                <span
+                  className="hero-title-line hero-title-emphasis"
+                  aria-hidden="true"
+                >
+                  <span>{content.hero.emphasis}</span>
+                </span>
+              </h1>
+
+              <p className="hero-description hero-intro-step">
+                {content.hero.description}
+              </p>
+
+              <div className="hero-actions hero-intro-step">
+                <a className="site-button" href="#escola">
+                  Conheça a escola <ArrowRight size={17} />
+                </a>
+                <a
+                  className="hero-secondary-action"
+                  href={contactLink}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Fale com a equipe <ArrowUpRight size={17} />
+                </a>
+              </div>
+
+              <div className="hero-facts hero-intro-step" aria-label="Informações da escola">
+                <span>Educação Infantil</span>
+                <span>Ensino Fundamental I</span>
+                <span>Gravatá · PE</span>
+              </div>
+            </div>
+
+            <div className="hero-media hero-intro-step">
+              <PhotoFrame
+                photo={
+                  school.heroImage
+                    ? { ...photos.hero, src: school.heroImage }
+                    : photos.hero
+                }
+                title="Escola Peralta"
+                number="01"
+                priority
+                className="hero-picture"
+                sizes="(max-width: 900px) 100vw, 52vw"
+                parallax={0.018}
+              />
+
+              <a
+                className="hero-media-note"
+                href={contactLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span>VISITAS À ESCOLA</span>
+                <strong>Conheça a Peralta de perto.</strong>
+                <ArrowUpRight size={19} />
               </a>
             </div>
-            <PhotoFrame
-              photo={
-                school.heroImage
-                  ? { ...photos.hero, src: school.heroImage }
-                  : photos.hero
-              }
-              title="Um mundo para descobrir."
-              number="01"
-              priority
-              className="hero-picture"
-              sizes="(max-width: 768px) 100vw, 72vw"
-              parallax={0.022}
-            />
-            <div className="hero-side-label" aria-hidden="true">
-              APRENDER É UMA DESCOBERTA DIÁRIA
-            </div>
-            <a className="hero-stamp" href="#proposta">
-              <span>
-                Aprender.
-                <br />
-                Conviver.
-                <br />
-                Crescer.
-              </span>
-              <ArrowDown size={20} />
-            </a>
-          </div>
-          <div className="opening-footnote hero-intro-step">
-            <span>Escola Peralta — Educação Infantil e Fundamental I</span>
-            <a href="#escola">
-              Continue descobrindo <ArrowDown size={14} />
-            </a>
           </div>
         </section>
         <section
