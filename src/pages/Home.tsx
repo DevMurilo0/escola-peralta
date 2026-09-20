@@ -443,7 +443,7 @@ export default function Home() {
             <span>Até já, na Peralta.</span>
           </div>
           <div className="contact-layout">
-            <div data-reveal="left">
+            <div className="contact-intro" data-reveal="left">
               <h2>
                 Nosso lugar
                 <br />é em <span>Gravatá.</span>
@@ -459,20 +459,41 @@ export default function Home() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Como chegar <ArrowUpRight size={18} />
+                Abrir no Google Maps <ArrowUpRight size={18} />
               </a>
             </div>
+
+            <div
+              className="contact-map"
+              data-reveal="scale"
+              data-delay="80"
+            >
+              <iframe
+                title="Localização da Escola Peralta no Google Maps"
+                src={school.mapsEmbed}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <a
+                className="contact-map-footer"
+                href={school.maps}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span>
+                  <small>ESCOLA PERALTA</small>
+                  Rua Izaltino Poggi, 73 · Prado
+                </span>
+                <ArrowUpRight size={18} />
+              </a>
+            </div>
+
             <div
               className="contact-directory"
               data-reveal="right"
-              data-delay="100"
+              data-delay="120"
             >
-              <a href={contactLink} target="_blank" rel="noreferrer">
-                <span>
-                  <small>PRIMEIRO CONTATO</small>Converse com a equipe
-                </span>
-                <ArrowUpRight />
-              </a>
               {school.whatsapp && (
                 <a href={contactLink} target="_blank" rel="noreferrer">
                   <span>
