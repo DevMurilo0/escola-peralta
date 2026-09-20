@@ -2338,3 +2338,511 @@
     );
   }
 }
+
+
+/* === 2026 presentation refresh — university editorial direction === */
+.opening-scene {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 52px max(5%, 42px) 92px;
+}
+
+.hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(520px, 1.1fr);
+  gap: clamp(52px, 7vw, 108px);
+  align-items: center;
+}
+
+.opening-copy {
+  max-width: 650px;
+  transform: none;
+  opacity: 1;
+}
+
+.opening-copy .site-kicker {
+  margin-bottom: 28px;
+  color: var(--brand-primary);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+}
+
+.opening-copy h1 {
+  margin: 0;
+  max-width: 680px;
+  font-size: clamp(58px, 6.4vw, 96px);
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+}
+
+.opening-copy .hero-title-line {
+  overflow: visible;
+  padding: 0;
+  margin: 0;
+}
+
+.opening-copy .hero-title-emphasis {
+  color: var(--brand-primary);
+}
+
+.hero-description {
+  margin: 32px 0 0;
+  max-width: 520px !important;
+  color: var(--brand-muted);
+  font-size: 16px;
+  line-height: 1.72;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 34px;
+}
+
+.hero-actions .site-button {
+  min-height: 54px;
+  padding: 15px 24px;
+  gap: 18px;
+}
+
+.hero-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  color: var(--brand-text);
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid #bcc3ca;
+}
+
+.hero-secondary-action svg {
+  transition: transform 240ms var(--motion-ease);
+}
+
+.hero-secondary-action:hover {
+  color: var(--brand-primary);
+}
+
+.hero-secondary-action:hover svg {
+  transform: translate(2px, -2px);
+}
+
+.hero-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 52px;
+  padding-top: 18px;
+  border-top: 1px solid var(--brand-line);
+}
+
+.hero-facts span {
+  min-height: 44px;
+  padding-right: 18px;
+  color: var(--brand-muted);
+  font-size: 10px;
+  line-height: 1.45;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.hero-facts span + span {
+  padding-left: 18px;
+  border-left: 1px solid var(--brand-line);
+}
+
+.hero-media {
+  position: relative;
+  min-width: 0;
+}
+
+.hero-picture {
+  width: 100%;
+  height: clamp(560px, 58vw, 700px);
+  margin: 0;
+  border-radius: 28px;
+  background: #dfe8f6;
+}
+
+.hero-picture .editorial-photo {
+  object-position: var(--photo-position, 50% 36%);
+}
+
+.hero-media-note {
+  position: absolute;
+  left: -34px;
+  bottom: 34px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 28px;
+  width: min(310px, 72%);
+  padding: 22px 22px 20px;
+  background: #fff;
+  border: 1px solid #e4e4df;
+  box-shadow: 0 18px 55px rgba(32, 50, 74, 0.12);
+  color: var(--brand-text);
+}
+
+.hero-media-note > span {
+  grid-column: 1 / -1;
+  color: var(--brand-muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.hero-media-note > strong {
+  font: 600 18px/1.2 var(--font-brand-display), Arial, sans-serif;
+  letter-spacing: -0.035em;
+}
+
+.hero-media-note > svg {
+  align-self: end;
+  color: var(--brand-primary);
+  transition: transform 240ms var(--motion-ease);
+}
+
+.hero-media-note:hover > svg {
+  transform: translate(3px, -3px);
+}
+
+.site-nav {
+  min-height: 88px;
+  padding-left: max(5%, calc((100vw - 1440px) / 2));
+  padding-right: max(5%, calc((100vw - 1440px) / 2));
+}
+
+.site-nav .brand-signature img {
+  width: 68px;
+  height: 68px;
+}
+
+.site-nav nav {
+  gap: 30px;
+}
+
+.site-nav nav > a:not(.site-button) {
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+.site-nav .nav-portal {
+  min-height: 46px;
+  padding: 12px 20px;
+  border-radius: 12px;
+}
+
+.chapter-label {
+  justify-content: flex-start;
+  margin-bottom: 50px;
+}
+
+.chapter-label > span:last-child {
+  display: none;
+}
+
+.school-story {
+  padding-top: 96px;
+}
+
+.story-layout {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(56px, 8vw, 110px);
+}
+
+.story-photo {
+  transform: none;
+}
+
+.story-photo .photo-frame,
+.segment-infant > .photo-frame,
+.segment-fundamental > .photo-frame,
+.spaces-mosaic > figure .photo-frame,
+.spaces-detail .photo-frame {
+  border-radius: 24px;
+}
+
+.story-note,
+.learning-note {
+  display: none;
+}
+
+.story-copy h2 {
+  max-width: 620px;
+}
+
+.learning-section {
+  padding-top: 88px;
+  padding-bottom: 88px;
+  border-radius: 0;
+  background: #edf3fb;
+}
+
+.learning-section .chapter-label,
+.learning-concepts article {
+  border-color: #cad8ea;
+}
+
+.learning-intro {
+  align-items: start;
+}
+
+.learning-intro h2 {
+  max-width: 700px;
+}
+
+.learning-concepts {
+  gap: 32px;
+  margin-top: 60px;
+}
+
+.learning-concepts article {
+  padding-top: 26px;
+}
+
+.concept-mark {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 24px;
+  font-size: 34px;
+}
+
+.mark-0,
+.mark-1,
+.mark-2 {
+  transform: none;
+  border-radius: 12px;
+}
+
+.segment-infant,
+.segment-fundamental {
+  gap: clamp(42px, 6vw, 82px);
+}
+
+.segment-infant .segment-text {
+  padding-left: 0;
+}
+
+.segment-fundamental {
+  padding-left: 0;
+}
+
+.spaces-mosaic {
+  gap: 28px;
+}
+
+.life-rail .photo-frame {
+  border-radius: 20px;
+}
+
+.school-invitation {
+  border-radius: 0;
+}
+
+@media (max-width: 1100px) {
+  .opening-scene {
+    padding-top: 34px;
+  }
+
+  .hero-layout {
+    grid-template-columns: minmax(0, 0.9fr) minmax(430px, 1.1fr);
+    gap: 48px;
+  }
+
+  .opening-copy h1 {
+    font-size: clamp(54px, 6.8vw, 78px);
+  }
+
+  .hero-picture {
+    height: 580px;
+  }
+
+  .hero-media-note {
+    left: -24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .opening-scene {
+    padding: 42px 6% 72px;
+  }
+
+  .hero-layout {
+    grid-template-columns: 1fr;
+    gap: 46px;
+  }
+
+  .opening-copy {
+    max-width: 760px;
+  }
+
+  .opening-copy h1 {
+    max-width: 760px;
+    font-size: clamp(58px, 9.5vw, 82px);
+  }
+
+  .hero-description {
+    max-width: 560px !important;
+  }
+
+  .hero-facts {
+    max-width: 620px;
+  }
+
+  .hero-media {
+    width: 100%;
+  }
+
+  .hero-picture {
+    height: min(72vw, 650px);
+    min-height: 500px;
+  }
+
+  .hero-media-note {
+    left: 24px;
+    bottom: 24px;
+  }
+
+  .story-layout {
+    gap: 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-nav {
+    min-height: 78px;
+    padding: 10px 6%;
+  }
+
+  .site-nav .brand-signature img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .opening-scene {
+    padding: 28px 6% 58px;
+  }
+
+  .opening-copy .site-kicker {
+    max-width: 290px;
+    margin-bottom: 18px;
+    font-size: 9px;
+    line-height: 1.5;
+  }
+
+  .opening-copy h1 {
+    font-size: clamp(46px, 13vw, 62px);
+    line-height: 1;
+    letter-spacing: -0.06em;
+  }
+
+  .hero-description {
+    margin-top: 24px;
+    max-width: 330px !important;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .hero-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 26px;
+  }
+
+  .hero-actions .site-button {
+    width: 100%;
+    justify-content: space-between;
+    min-height: 52px;
+  }
+
+  .hero-secondary-action {
+    margin-left: 3px;
+  }
+
+  .hero-facts {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: 36px;
+    padding-top: 0;
+  }
+
+  .hero-facts span,
+  .hero-facts span + span {
+    min-height: auto;
+    padding: 12px 0;
+    border-left: 0;
+    border-top: 1px solid var(--brand-line);
+  }
+
+  .hero-layout {
+    gap: 32px;
+  }
+
+  .hero-picture {
+    min-height: 0;
+    height: 112vw;
+    max-height: 520px;
+    border-radius: 18px;
+  }
+
+  .hero-media-note {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    width: auto;
+    padding: 17px 18px 16px;
+  }
+
+  .hero-media-note > strong {
+    font-size: 16px;
+  }
+
+  .school-story {
+    padding-top: 68px;
+  }
+
+  .chapter-label {
+    margin-bottom: 32px;
+  }
+
+  .story-photo {
+    width: 100%;
+    margin-left: 0;
+    transform: none;
+  }
+
+  .story-photo .photo-frame,
+  .segment-infant > .photo-frame,
+  .segment-fundamental > .photo-frame,
+  .spaces-mosaic > figure .photo-frame,
+  .spaces-detail .photo-frame {
+    border-radius: 18px;
+  }
+
+  .learning-section {
+    padding-top: 58px;
+    padding-bottom: 58px;
+  }
+
+  .learning-concepts article {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .concept-mark {
+    width: 44px;
+    height: 44px;
+    font-size: 30px;
+  }
+
+  .segment-fundamental > .photo-frame {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .spaces-detail {
+    margin-left: 0;
+  }
+}
