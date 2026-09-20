@@ -3,7 +3,61 @@ import { db } from "@/shared/supabase/client";
 import { z } from "zod";
 
 const avatarTypes = ["image/jpeg", "image/png", "image/webp"] as const;
-const avatarMaxBytes = 3 * 1024 * 1024;
+const avatarInputMaxBytes = 12 * 1024 * 1024;
+const avatarOutputMaxBytes = 3 * 1024 * 1024;
+const avatarMaxDimension = 512;
+const avatarWebpQuality = 0.82;
+
+function loadAvatarImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Não foi possível ler a imagem."));
+    };
+    image.src = url;
+  });
+}
+
+async function optimizeAvatar(file: File) {
+  const image = await loadAvatarImage(file);
+  const longestSide = Math.max(image.naturalWidth, image.naturalHeight);
+  if (!longestSide)
+    throw new Error("A imagem selecionada não possui dimensões válidas.");
+
+  const scale = Math.min(1, avatarMaxDimension / longestSide);
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d", { alpha: true });
+  if (!context)
+    throw new Error("Não foi possível preparar a imagem para envio.");
+
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(image, 0, 0, width, height);
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/webp", avatarWebpQuality),
+  );
+
+  if (!blob || blob.type !== "image/webp")
+    throw new Error("Seu navegador não conseguiu converter a foto para WebP.");
+  if (blob.size > avatarOutputMaxBytes)
+    throw new Error("A foto otimizada ficou maior que o limite permitido.");
+
+  return { blob, width, height };
+}
 
 export function profileAvatarUrl(path?: string | null) {
   if (!path) return "";
@@ -28,25 +82,31 @@ export async function uploadProfileAvatar(
   file: File,
   currentPath?: string | null,
 ) {
-  const { client, user } = await requireSession();
   if (!avatarTypes.includes(file.type as (typeof avatarTypes)[number]))
     return { error: "Use uma imagem JPG, PNG ou WebP." };
-  if (!file.size || file.size > avatarMaxBytes)
-    return { error: "A foto deve ter no máximo 3 MB." };
+  if (!file.size || file.size > avatarInputMaxBytes)
+    return { error: "A foto original deve ter no máximo 12 MB." };
 
-  const extension =
-    file.type === "image/png"
-      ? "png"
-      : file.type === "image/webp"
-        ? "webp"
-        : "jpg";
-  const path = `${user.id}/${Date.now()}.${extension}`;
+  let optimized: Awaited<ReturnType<typeof optimizeAvatar>>;
+  try {
+    optimized = await optimizeAvatar(file);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível otimizar a foto.",
+    };
+  }
+
+  const { client, user } = await requireSession();
+  const path = `${user.id}/${Date.now()}.webp`;
 
   const uploaded = await client.storage
     .from("profile-avatars")
-    .upload(path, file, {
+    .upload(path, optimized.blob, {
       cacheControl: "3600",
-      contentType: file.type,
+      contentType: "image/webp",
       upsert: false,
     });
   if (uploaded.error)
@@ -66,7 +126,14 @@ export async function uploadProfileAvatar(
   if (currentPath && currentPath !== path)
     await client.storage.from("profile-avatars").remove([currentPath]);
 
-  return { success: true, path };
+  return {
+    success: true,
+    path,
+    originalBytes: file.size,
+    optimizedBytes: optimized.blob.size,
+    width: optimized.width,
+    height: optimized.height,
+  };
 }
 
 export async function removeProfileAvatar(currentPath?: string | null) {

@@ -24,10 +24,13 @@ export function ProfileForm() {
   async function selectAvatar(file?: File) {
     if (!file) return;
     setUploading(true);
-    setIdentityMessage("Enviando foto…");
+    setIdentityMessage("Otimizando e enviando foto…");
     try {
       const result = await uploadProfileAvatar(file, currentAvatarPath);
-      setIdentityMessage(result.error || "Foto de perfil atualizada.");
+      setIdentityMessage(
+        result.error ||
+          "Foto otimizada em WebP e atualizada com sucesso.",
+      );
       if (!result.error) retry();
     } catch {
       setIdentityMessage("Erro ao enviar a foto. Tente novamente.");
@@ -58,7 +61,7 @@ export function ProfileForm() {
           <div className="profile-photo-copy">
             <strong>Foto de perfil</strong>
             <p className="small muted">
-              JPG, PNG ou WebP. Tamanho máximo de 3 MB.
+              JPG, PNG ou WebP até 12 MB. A foto é reduzida para no máximo 512 px e convertida para WebP antes do envio.
             </p>
             <div className="actions profile-photo-actions">
               <input
@@ -76,7 +79,7 @@ export function ProfileForm() {
                 onClick={() => fileInput.current?.click()}
               >
                 <Camera size={17} aria-hidden="true" />
-                {uploading ? "Enviando…" : "Escolher foto"}
+                {uploading ? "Otimizando…" : "Escolher foto"}
               </button>
               {profile.avatar_path && (
                 <button
