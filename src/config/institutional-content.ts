@@ -17,20 +17,20 @@ const slot = (alt: string): SchoolPhoto => ({
 export const institutional = {
   hero: {
     eyebrow: "Educação Infantil e Ensino Fundamental I",
-    title: "Educação que acolhe,",
-    emphasis: "valores que ficam.",
+    title: "Um lugar para aprender,",
+    emphasis: "conviver e crescer.",
     description:
-      "Em Gravatá, um lugar para aprender, criar laços e viver as descobertas da infância.",
+      "Na Escola Peralta, infância e aprendizagem caminham juntas em um ambiente de cuidado, curiosidade e presença.",
   },
   about: {
-    title: "Uma escola para aprender. Um lugar para pertencer.",
+    title: "Uma escola próxima das crianças e das famílias.",
     description:
       "A Escola Peralta faz parte da vida de famílias de Gravatá, com Educação Infantil e Ensino Fundamental I. Na sua apresentação pública, uma ideia ganha destaque: educar com valores.",
     invitation:
       "Conhecer a escola é também conhecer quem estará perto da sua criança. Venha conversar com a nossa equipe.",
   },
   pedagogy: {
-    title: "Descobrir o mundo começa com uma pergunta.",
+    title: "Aprender começa pela curiosidade.",
     description:
       "Perguntar, experimentar e trocar ideias fazem parte da construção do conhecimento. Conheça com a equipe como a proposta pedagógica acontece em cada etapa.",
     concepts: [
@@ -65,7 +65,7 @@ export const institutional = {
     },
   ],
   cta: {
-    title: "Vamos conhecer a Peralta?",
+    title: "Venha conhecer a Peralta.",
     description:
       "Uma conversa, uma visita e um novo começo. Nossa equipe espera por você.",
   },
