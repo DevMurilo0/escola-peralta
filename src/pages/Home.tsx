@@ -122,13 +122,6 @@ export default function Home() {
                 motion="clip-left"
                 parallax={0.018}
               />
-              <span
-                className="photo-footnote"
-                data-reveal="up"
-                data-delay="120"
-              >
-                Pessoas, encontros e um lugar em Gravatá.
-              </span>
             </div>
             <div className="story-copy" data-reveal="right" data-delay="80">
               <p className="site-kicker">ESCOLA PERALTA</p>
@@ -143,14 +136,6 @@ export default function Home() {
               >
                 Conheça a escola em uma visita <ArrowUpRight size={18} />
               </a>
-              <div className="story-note">
-                <span aria-hidden="true">↗</span>
-                <p>
-                  <strong>Educar com valores.</strong>
-                  <br />
-                  Uma ideia presente na apresentação da Peralta.
-                </p>
-              </div>
             </div>
           </div>
         </section>
@@ -181,10 +166,6 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <p className="learning-note">
-            Autonomia, criatividade e desenvolvimento são temas para conhecer de
-            perto, em uma conversa com a equipe.
-          </p>
         </section>
         <section
           id="ensino"
@@ -232,7 +213,6 @@ export default function Home() {
               >
                 <ArrowUpRight />
               </a>
-              <small>{content.segments[0].detail}</small>
             </div>
           </article>
           <article className="segment-fundamental">
@@ -240,7 +220,6 @@ export default function Home() {
               <span className="site-kicker">{content.segments[1].title}</span>
               <h3>{content.segments[1].lead}</h3>
               <p>{content.segments[1].description}</p>
-              <small>{content.segments[1].detail}</small>
             </div>
             <PhotoFrame
               photo={
@@ -285,10 +264,6 @@ export default function Home() {
                 motion="clip-left"
                 parallax={0.02}
               />
-              <figcaption data-reveal="up" data-delay="100">
-                <span>Um olhar sobre a escola</span>
-                <span>01 — visão geral</span>
-              </figcaption>
             </figure>
             <div className="spaces-detail">
               <figure>
@@ -299,10 +274,6 @@ export default function Home() {
                   motion="scale"
                   parallax={0.028}
                 />
-                <figcaption data-reveal="up" data-delay="140">
-                  <span>Ambientes para conhecer</span>
-                  <span>02 — detalhes</span>
-                </figcaption>
               </figure>
               <div className="visit-note" data-reveal="right" data-delay="180">
                 <Plus size={30} />
@@ -429,9 +400,6 @@ export default function Home() {
               </a>
             </div>
           </div>
-          <span className="invitation-caption">
-            Escola Peralta · Gravatá, PE
-          </span>
         </section>
         <section
           id="contato"
@@ -553,11 +521,6 @@ export default function Home() {
               </>
             )}
           </Link>
-          <p>
-            Aprender com o mundo.
-            <br />
-            Crescer com o outro.
-          </p>
           <a href="#inicio">
             Voltar ao início <ArrowUpRight size={18} />
           </a>
