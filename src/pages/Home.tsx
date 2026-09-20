@@ -136,14 +136,6 @@ export default function Home() {
               >
                 Conheça a escola em uma visita <ArrowUpRight size={18} />
               </a>
-              <div className="story-note">
-                <span aria-hidden="true">↗</span>
-                <p>
-                  <strong>Educar com valores.</strong>
-                  <br />
-                  Uma ideia presente na apresentação da Peralta.
-                </p>
-              </div>
             </div>
           </div>
         </section>
@@ -174,10 +166,6 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <p className="learning-note">
-            Autonomia, criatividade e desenvolvimento são temas para conhecer de
-            perto, em uma conversa com a equipe.
-          </p>
         </section>
         <section
           id="ensino"
@@ -533,11 +521,6 @@ export default function Home() {
               </>
             )}
           </Link>
-          <p>
-            Aprender com o mundo.
-            <br />
-            Crescer com o outro.
-          </p>
           <a href="#inicio">
             Voltar ao início <ArrowUpRight size={18} />
           </a>
