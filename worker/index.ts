@@ -143,10 +143,10 @@ async function requireAdmin(token: string, env: Env, fetcher: typeof fetch) {
     throw new ApiError(401, "Sessão inválida ou expirada.");
   const { data: profile, error } = await client
     .from("profiles")
-    .select("role,active")
+    .select("role,active,deleted_at")
     .eq("id", user.id)
     .single();
-  if (error || !profile?.active || profile.role !== "admin")
+  if (error || !profile?.active || profile.deleted_at || profile.role !== "admin")
     throw new ApiError(403, "Acesso não autorizado.");
   return { client, user };
 }
@@ -373,6 +373,114 @@ async function updateMasterTeacher(
   return { success: true };
 }
 
+async function deleteMasterTeacher(
+  request: Request,
+  env: Env,
+  fetcher: typeof fetch,
+  actorId: string,
+) {
+  const payload = await readPayload(request);
+  const parsed = idSchema.safeParse(payload);
+  if (!parsed.success)
+    throw new ApiError(400, "Confira o professor selecionado.");
+  const id = parsed.data.id;
+  if (id === actorId)
+    throw new ApiError(409, "Sua própria conta não pode ser excluída.");
+
+  const service = serviceClient(env, fetcher);
+  const authBefore = await service.auth.admin.getUserById(id);
+  const authMissing = !!authBefore.error && authBefore.error.status === 404;
+  if (authBefore.error && !authMissing)
+    throw new ApiError(502, "Não foi possível verificar a conta de acesso.");
+
+  const requestedToken = crypto.randomUUID();
+  const prepared = await service.rpc("master_prepare_teacher_deletion", {
+    p_teacher: id,
+    p_actor: actorId,
+    p_token: requestedToken,
+  });
+  if (prepared.error) {
+    const message = prepared.error.message?.toLowerCase() || "";
+    if (message.includes("professor não encontrado"))
+      throw new ApiError(404, "Professor não encontrado.");
+    throw new ApiError(502, "Não foi possível preparar a exclusão com segurança.");
+  }
+  const state = prepared.data as {
+    status?: string;
+    token?: string;
+    avatar_path?: string | null;
+  } | null;
+  if (state?.status === "already_deleted") {
+    if (!authMissing) {
+      const cleanup = await service.auth.admin.deleteUser(id);
+      if (cleanup.error)
+        throw new ApiError(502, "O perfil já estava excluído, mas a conta de acesso ainda não pôde ser removida.");
+    }
+    return { success: true };
+  }
+  const token = state?.token;
+  if (!token)
+    throw new ApiError(502, "O servidor retornou um estado de exclusão inválido.");
+
+  // A prior attempt may have removed Auth and crashed before finalization.
+  if (authMissing) {
+    if (state.avatar_path) {
+      const avatarRemoval = await service.storage
+        .from("profile-avatars")
+        .remove([state.avatar_path]);
+      if (avatarRemoval.error)
+        throw new ApiError(502, "A conta foi excluída, mas a remoção da foto e a finalização estão pendentes. Tente novamente.");
+    }
+    const finalized = await service.rpc("master_finalize_teacher_deletion", {
+      p_teacher: id,
+      p_actor: actorId,
+      p_token: token,
+    });
+    if (finalized.error || finalized.data !== true)
+      throw new ApiError(502, "A conta foi excluída, mas a finalização administrativa está pendente. Tente novamente.");
+    return { success: true };
+  }
+
+  const deleted = await service.auth.admin.deleteUser(id);
+  if (deleted.error && deleted.error.status !== 404) {
+    // A network/upstream error may happen after Auth committed the deletion.
+    // Re-check before compensating so we never restore access without Auth.
+    const verification = await service.auth.admin.getUserById(id);
+    const deletionActuallySucceeded =
+      !!verification.error && verification.error.status === 404;
+    if (verification.error && !deletionActuallySucceeded)
+      throw new ApiError(502, "Não foi possível confirmar a exclusão da conta. O perfil permanece bloqueado; tente novamente.");
+    if (deletionActuallySucceeded) {
+      // Continue with avatar cleanup and transactional finalization below.
+    } else {
+    const restored = await service.rpc("master_restore_teacher_deletion", {
+      p_teacher: id,
+      p_token: token,
+    });
+    if (restored.error || restored.data !== true)
+      throw new ApiError(502, "A exclusão do acesso falhou e a restauração automática não foi concluída. Não repita a operação antes de verificar o cadastro.");
+    throw new ApiError(502, "Não foi possível excluir a conta de acesso. O cadastro e os vínculos foram restaurados.");
+    }
+  }
+
+  if (state.avatar_path) {
+    const avatarRemoval = await service.storage
+      .from("profile-avatars")
+      .remove([state.avatar_path]);
+    if (avatarRemoval.error)
+      throw new ApiError(502, "A conta foi excluída, mas a remoção da foto e a finalização estão pendentes. Tente novamente.");
+  }
+
+  const finalized = await service.rpc("master_finalize_teacher_deletion", {
+    p_teacher: id,
+    p_actor: actorId,
+    p_token: token,
+  });
+  if (finalized.error || finalized.data !== true)
+    throw new ApiError(502, "A conta foi excluída, mas a finalização administrativa está pendente. Tente novamente.");
+  return { success: true };
+}
+
 async function deleteMasterClass(
   request: Request,
   env: Env,
@@ -419,6 +527,7 @@ async function createMasterClass(
     .select("id,active,role")
     .eq("id", teacher_id)
     .eq("role", "teacher")
+    .is("deleted_at", null)
     .maybeSingle();
   if (teacher.error || !teacher.data?.active)
     throw new ApiError(400, "Selecione um professor ativo.");
@@ -470,6 +579,7 @@ async function listMasterTeachers(env: Env, fetcher: typeof fetch) {
     .from("profiles")
     .select("id,full_name,email,active,created_at")
     .eq("role", "teacher")
+    .is("deleted_at", null)
     .order("full_name");
   if (profilesResult.error)
     throw new ApiError(502, "Não foi possível carregar os professores.");
@@ -531,6 +641,7 @@ export async function handleRequest(
     ["/api/master/status", ["GET"]],
     ["/api/master/teachers", ["GET", "POST"]],
     ["/api/master/teachers/update", ["POST"]],
+    ["/api/master/teachers/delete", ["POST"]],
     ["/api/master/classes", ["POST"]],
     ["/api/master/classes/delete", ["POST"]],
   ]);
@@ -572,6 +683,15 @@ export async function handleRequest(
     if (url.pathname === "/api/master/teachers/update")
       return json(
         await updateMasterTeacher(request, env, fetcher, master.client),
+      );
+    if (url.pathname === "/api/master/teachers/delete")
+      return json(
+        await deleteMasterTeacher(
+          request,
+          env,
+          fetcher,
+          master.user.id,
+        ),
       );
     if (
       url.pathname === "/api/master/teachers" &&

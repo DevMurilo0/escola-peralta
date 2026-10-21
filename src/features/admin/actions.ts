@@ -2,7 +2,7 @@ import { z } from "zod";
 import { requireSession } from "@/shared/services/session";
 import { adminApi } from "@/shared/services/admin-api";
 import { invalidateResources } from "@/shared/hooks/use-resource";
-import { createMasterClass, createMasterTeacher, updateMasterTeacher, deleteMasterClass } from "@/shared/services/master-api";
+import { createMasterClass, createMasterTeacher, updateMasterTeacher, deleteMasterClass, deleteMasterTeacher } from "@/shared/services/master-api";
 const classSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(2).max(100),
@@ -71,6 +71,11 @@ export async function adminAction(
         })
         .parse(input);
       const result = await updateMasterTeacher(values);
+      if (!result.error) invalidateResources();
+      return result;
+    } else if (kind === "master-teacher-delete") {
+      const values = z.object({ id: z.uuid() }).parse(input);
+      const result = await deleteMasterTeacher(values.id);
       if (!result.error) invalidateResources();
       return result;
     } else if (kind === "teacher-edit") {

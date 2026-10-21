@@ -6,6 +6,7 @@ import { adminAction } from "./actions";
 import { Feedback, Modal } from "@/shared/components/feedback";
 import type { SchoolClass } from "@/shared/academic/types";
 import { MasterTeachersPanel, TeacherAccessLink } from "./master-teachers-panel";
+import type { MasterTeacher } from "@/shared/services/master-api";
 import { AdminStudentsPanel } from "./students/admin-students-panel";
 import type { AdminStudent } from "./students/types";
 type Teacher = {
@@ -65,6 +66,7 @@ export function AdminPanel({
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [deletingClass, setDeletingClass] = useState<Class | null>(null);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [deletingTeacher, setDeletingTeacher] = useState<MasterTeacher | null>(null);
   const [confirm, setConfirm] = useState<{
     title: string;
     kind: string;
@@ -108,6 +110,8 @@ export function AdminPanel({
               ? "Professor criado com sucesso. A conta já pode acessar /portal/login."
               : kind === "master-teacher-update"
                 ? "Professor atualizado com sucesso."
+                : kind === "master-teacher-delete"
+                  ? "Conta do professor excluída permanentemente."
                 : kind === "class-delete"
                   ? "Turma apagada com sucesso."
                   : "Operação concluída."),
@@ -117,6 +121,7 @@ export function AdminPanel({
           setShowPassword(false);
           setConfirm(null);
           if (kind === "class-delete") setDeletingClass(null);
+          if (kind === "master-teacher-delete") setDeletingTeacher(null);
           if (r.link && kind === "teacher-link") {
             const teacherId = (values as { id?: string }).id;
             if (teacherId)
@@ -344,6 +349,10 @@ export function AdminPanel({
               values: { ...teacher, active: !teacher.active },
             })
           }
+          onDelete={(teacher) => {
+            setMessage("");
+            setDeletingTeacher(teacher);
+          }}
         />
       )}
       {tab === "teachers" && !isMaster && (
@@ -792,6 +801,38 @@ export function AdminPanel({
             >
               {pending ? "Apagando…" : "Sim, apagar turma"}
             </button>
+          </div>
+        </Modal>
+      )}
+      {deletingTeacher && (
+        <Modal
+          title="Excluir conta de professor?"
+          onClose={() => !pending && setDeletingTeacher(null)}
+        >
+          <div className="class-delete-confirmation">
+            <div className="class-delete-icon" aria-hidden="true">
+              <Trash2 size={24} />
+            </div>
+            <div>
+              <p className="class-delete-question">
+                Tem certeza de que deseja excluir permanentemente a conta de {deletingTeacher.full_name}?
+              </p>
+              <p className="class-delete-warning">
+                O professor perderá imediatamente o acesso ao sistema. Turmas e históricos acadêmicos serão preservados.
+              </p>
+              <div className="class-delete-actions">
+                <button className="secondary" disabled={pending} onClick={() => setDeletingTeacher(null)}>
+                  Cancelar
+                </button>
+                <button
+                  className="danger-button"
+                  disabled={pending}
+                  onClick={() => run("master-teacher-delete", { id: deletingTeacher.id })}
+                >
+                  {pending ? "Excluindo…" : "Excluir conta"}
+                </button>
+              </div>
+            </div>
           </div>
         </Modal>
       )}

@@ -11,6 +11,7 @@ async function loadAdmin() {
       .from("profiles")
       .select("*")
       .eq("role", "teacher")
+      .is("deleted_at", null)
       .order("full_name"),
     client
       .from("classes")

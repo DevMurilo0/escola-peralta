@@ -8,6 +8,47 @@ import { Feedback } from "@/shared/components/feedback";
 import type { Enrollment, AttendanceSession, AttendanceRecord } from "@/shared/academic/types";
 const labels = { present: "Presente", absent: "Falta", justified: "Falta justificada" };
 type Records = Record<string, AttendanceRecord["status"] | "">;
+
+export function StudentAttendanceView({ sessions, studentId, term }: {
+  sessions: AttendanceSession[];
+  studentId: string;
+  term: number;
+}) {
+  const rows = sessions
+    .filter((session) => session.term === term)
+    .flatMap((session) => {
+      const record = session.attendance_records.find((item) => item.student_id === studentId);
+      return record ? [{ date: session.date, status: record.status }] : [];
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
+  return (
+    <section className="panel call-panel student-attendance-view">
+      <div className="page-heading">
+        <div>
+          <h2>Frequência diária</h2>
+          <p className="muted">{term}º bimestre · consulta individual</p>
+        </div>
+      </div>
+      {!rows.length ? (
+        <div className="empty">Nenhuma frequência registrada para este aluno neste bimestre.</div>
+      ) : (
+        <div className="table-scroll">
+          <table>
+            <thead><tr><th>Data</th><th>Registro</th></tr></thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.date}>
+                  <td>{row.date.split("-").reverse().join("/")}</td>
+                  <td><span className={`attendance-status ${row.status}`}>{labels[row.status]}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
 export function AttendancePanel({ classId, year, term, enrollments, sessions, disabled, onDirty, onSaved }: {
   classId: string; year: number; term: number; enrollments: Enrollment[]; sessions: AttendanceSession[];
   disabled: boolean; onDirty: (dirty: boolean) => void; onSaved: () => void;

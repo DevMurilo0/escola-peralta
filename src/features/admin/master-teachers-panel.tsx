@@ -67,6 +67,7 @@ export function MasterTeachersPanel({
   onEdit,
   onAccessLink,
   onToggle,
+  onDelete,
   accessLink,
   onHideAccessLink,
 }: {
@@ -75,6 +76,7 @@ export function MasterTeachersPanel({
   onEdit: (teacher: MasterTeacher) => void;
   onAccessLink: (teacher: MasterTeacher) => void;
   onToggle: (teacher: MasterTeacher) => void;
+  onDelete: (teacher: MasterTeacher) => void;
   accessLink: { teacherId: string; value: string } | null;
   onHideAccessLink: () => void;
 }) {
@@ -122,6 +124,13 @@ export function MasterTeachersPanel({
               </button>
               <button className="secondary" onClick={() => onToggle(teacher)}>
                 {teacher.active ? "Desativar" : "Reativar"}
+              </button>
+              <button
+                className="secondary class-delete-button"
+                disabled={pending}
+                onClick={() => onDelete(teacher)}
+              >
+                Excluir conta
               </button>
             </div>
             {accessLink?.teacherId === teacher.id && (

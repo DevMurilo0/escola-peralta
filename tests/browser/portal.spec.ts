@@ -54,6 +54,15 @@ for (const width of [360, 375, 390, 430, 768, 1440]) {
     await page.getByRole("button", { name: "Adicionar aluno" }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("button", { name: "Fechar janela" }).click();
+    await page.getByRole("button", { name: "Notas e frequência" }).first().click();
+    await expect(page.getByRole("heading", { name: "Alice Exemplo" })).toBeVisible();
+    await page.getByRole("button", { name: "Consultar I Bimestre" }).click();
+    await expect(page.getByText("somente leitura")).toBeVisible();
+    await expect(page.getByLabel("1ª Nota de Alice Exemplo")).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Salvar alterações" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Salvar frequência" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Voltar aos bimestres" }).click();
+    await page.getByRole("button", { name: "Voltar para alunos" }).click();
     await page.getByRole("button", { name: "Voltar para a turma" }).click();
 
     await page.getByRole("button", { name: /Resultado final/ }).click();

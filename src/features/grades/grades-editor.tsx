@@ -10,6 +10,7 @@ export function GradesEditor({
   grades,
   disabled,
   onDirty,
+  readOnly = false,
 }: {
   classId: string;
   term: number;
@@ -18,6 +19,7 @@ export function GradesEditor({
   minimum: number;
   disabled: boolean;
   onDirty: (dirty: boolean) => void;
+  readOnly?: boolean;
 }) {
   const ordered = alphabetical(enrollments);
   function initialScores(id: string) {
@@ -78,6 +80,7 @@ export function GradesEditor({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (readOnly) return;
             start(async () => {
               setMessage("Salvando…");
               try {
@@ -137,7 +140,7 @@ export function GradesEditor({
                         aria-invalid={invalid}
                         inputMode="decimal"
                         value={v[key]}
-                        disabled={disabled || pending || e.status !== "active"}
+                        disabled={readOnly || disabled || pending || e.status !== "active"}
                         onChange={(event) =>
                           edit(e.student_id, key, event.target.value)
                         }
@@ -157,7 +160,7 @@ export function GradesEditor({
               );
             })}
           </div>
-          <div className="save-bar">
+          {!readOnly && <div className="save-bar">
             <Feedback
               message={
                 message ||
@@ -169,7 +172,7 @@ export function GradesEditor({
             <button disabled={disabled || pending || !changed.length}>
               {pending ? "Salvando…" : "Salvar alterações"}
             </button>
-          </div>
+          </div>}
         </form>
       )}
     </section>

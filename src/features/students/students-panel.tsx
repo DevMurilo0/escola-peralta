@@ -67,11 +67,13 @@ export function StudentsPanel({
   enrollments,
   canManage,
   hideAdd = false,
+  onAcademicView,
 }: {
   classId: string;
   enrollments: Enrollment[];
   canManage: boolean;
   hideAdd?: boolean;
+  onAcademicView?: (enrollment: Enrollment) => void;
 }) {
   const [showInactive, setShowInactive] = useState(false);
   const rows = alphabetical(enrollments.filter(e => showInactive || e.status === "active"));
@@ -118,8 +120,17 @@ export function StudentsPanel({
                   <td>{age(e.students.birth_date)} anos</td>
                   <td>{e.status === "active" ? "Ativo" : "Inativo"}</td>
                   <td>
+                    <div className="actions">
+                      {onAcademicView && (
+                        <button
+                          className="secondary"
+                          onClick={() => onAcademicView(e)}
+                        >
+                          Notas e frequência
+                        </button>
+                      )}
                     {canManage && (
-                      <div className="actions">
+                      <>
                         <button
                           className="secondary"
                           onClick={() => setEditing(e.students)}
@@ -134,8 +145,9 @@ export function StudentsPanel({
                             ? "Remover da turma"
                             : "Reativar matrícula"}
                         </button>
-                      </div>
+                      </>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}

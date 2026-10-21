@@ -619,6 +619,35 @@ describe.sequential(
           [c1, admin],
         ),
       ).rejects.toThrow(/permission denied/i);
+      await expect(
+        asUser(
+          admin,
+          "select public.master_prepare_teacher_deletion($1,$2,$3)",
+          [teacher, admin, "30000000-0000-4000-8000-000000000001"],
+        ),
+      ).rejects.toThrow(/permission denied/i);
+    });
+    it("prepara e restaura a exclusão atomicamente sem tocar no histórico acadêmico", async () => {
+      const token = "30000000-0000-4000-8000-000000000002";
+      const before = await db.query<{ grades: number; sessions: number; records: number; curriculum: number }>(
+        "select (select count(*) from public.grades)::int grades,(select count(*) from public.attendance_sessions)::int sessions,(select count(*) from public.attendance_records)::int records,(select count(*) from public.curriculum_records)::int curriculum",
+      );
+      const prepared = await db.query<{ result: { status: string; token: string } }>(
+        "select public.master_prepare_teacher_deletion($1,$2,$3) result",
+        [teacher, admin, token],
+      );
+      expect(prepared.rows[0].result).toMatchObject({ status: "prepared", token });
+      const archived = await db.query<{ full_name: string; active: boolean; deleted: boolean; links: number }>(
+        "select p.full_name,p.active,(p.deleted_at is not null) deleted,(select count(*) from public.teacher_classes where teacher_id=p.id)::int links from public.profiles p where p.id=$1",
+        [teacher],
+      );
+      expect(archived.rows[0]).toMatchObject({ full_name: "Professor excluído", active: false, deleted: true, links: 0 });
+      const after = await db.query<{ grades: number; sessions: number; records: number; curriculum: number }>(
+        "select (select count(*) from public.grades)::int grades,(select count(*) from public.attendance_sessions)::int sessions,(select count(*) from public.attendance_records)::int records,(select count(*) from public.curriculum_records)::int curriculum",
+      );
+      expect(after.rows[0]).toEqual(before.rows[0]);
+      expect((await db.query<{ restored: boolean }>("select public.master_restore_teacher_deletion($1,$2) restored", [teacher, token])).rows[0].restored).toBe(true);
+      expect((await db.query("select * from public.teacher_classes where teacher_id=$1", [teacher])).rows).toHaveLength(1);
     });
     it("desativação bloqueia imediatamente consulta e gravação", async () => {
       await db.query("update public.profiles set active=false where id=$1", [
@@ -630,6 +659,14 @@ describe.sequential(
       await expect(
         asUser(teacher, "select public.save_grades($1,1,$2)", [c1, "[]"]),
       ).rejects.toThrow(/Acesso negado/);
+    });
+    it("JWT antigo de perfil excluído não lê nem escreve dados protegidos", async () => {
+      await db.query("update public.profiles set active=true,deleted_at=now() where id=$1", [teacher]);
+      expect((await asUser(teacher, "select * from public.classes")).rows).toHaveLength(0);
+      expect((await asUser(teacher, "select * from public.school_settings")).rows).toHaveLength(0);
+      expect((await asUser(teacher, "select * from public.profiles")).rows).toHaveLength(0);
+      await expect(asUser(teacher, "select public.save_grades($1,1,$2)", [c1, "[]"])).rejects.toThrow(/Acesso negado/);
+      await expect(asUser(teacher, "select public.update_own_profile_name('Tentativa Antiga')")).rejects.toThrow(/inativo/);
     });
     it("preserva o último administrador ativo", async () => {
       await expect(

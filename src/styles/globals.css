@@ -3056,6 +3056,20 @@ td {
   gap: 7px;
 }
 
+.student-attendance-view {
+  margin-top: 1rem;
+}
+
+.attendance-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--surface-soft);
+}
+
 .class-delete-confirmation {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

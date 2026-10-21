@@ -16,7 +16,7 @@ type ApiResult<T> = T & {
 };
 
 async function request<T>(
-  path: "status" | "teachers" | "teachers/update" | "classes" | "classes/delete",
+  path: "status" | "teachers" | "teachers/update" | "teachers/delete" | "classes" | "classes/delete",
   method: "GET" | "POST",
   payload?: unknown,
   accessToken?: string,
@@ -121,6 +121,10 @@ export function updateMasterTeacher(payload: {
     "POST",
     payload,
   );
+}
+
+export function deleteMasterTeacher(id: string) {
+  return request<{ success: boolean }>("teachers/delete", "POST", { id });
 }
 
 

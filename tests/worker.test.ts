@@ -280,6 +280,15 @@ function masterBackend(
     duplicate?: boolean;
     auditFail?: boolean;
     lastSignIn?: string | null;
+    deleteFail?: boolean;
+    authMissing?: boolean;
+    deletedProfile?: boolean;
+    prepareFail?: "missing" | "profile" | "links";
+    restoreFail?: boolean;
+    finalizeFail?: boolean;
+    deletedAdmin?: boolean;
+    avatarPath?: string;
+    avatarFail?: boolean;
   } = {},
 ) {
   const calls: {
@@ -347,6 +356,7 @@ function masterBackend(
         return reply({
           role: options.role ?? "admin",
           active: options.active !== false,
+          deleted_at: options.deletedAdmin ? "2026-10-01T00:00:00Z" : null,
         });
       }
       if (url.pathname === "/rest/v1/classes") {
@@ -370,6 +380,24 @@ function masterBackend(
         init?.method === "POST"
       )
         return reply(null, 201);
+      if (url.pathname === "/rest/v1/teacher_classes")
+        return init?.method === "DELETE"
+          ? reply(null)
+          : reply([{ teacher_id: teacherId, class_id: "20000000-0000-4000-8000-000000000010", can_manage_students: true }]);
+      if (
+        url.pathname === `/auth/v1/admin/users/${teacherId}` &&
+        init?.method === "GET"
+      )
+        return options.authMissing
+          ? reply({ message: "User not found" }, 404)
+          : reply({ user: { id: teacherId, email: "ana@peralta.com" } });
+      if (
+        url.pathname === `/auth/v1/admin/users/${teacherId}` &&
+        init?.method === "DELETE"
+      )
+        return options.deleteFail
+          ? reply({ message: "private auth detail" }, 500)
+          : reply({ user: null });
       if (
         url.pathname === `/auth/v1/admin/users/${teacherId}` &&
         init?.method === "PUT"
@@ -430,6 +458,19 @@ function masterBackend(
         });
       if (url.pathname === "/rest/v1/rpc/master_delete_class")
         return reply(null);
+      if (url.pathname === "/rest/v1/rpc/master_prepare_teacher_deletion") {
+        if (options.prepareFail)
+          return reply({ message: options.prepareFail === "missing" ? "Professor não encontrado" : `private ${options.prepareFail} failure` }, 400);
+        return reply(options.deletedProfile
+          ? { status: "already_deleted" }
+          : { status: "prepared", token: "30000000-0000-4000-8000-000000000001", avatar_path: options.avatarPath ?? null });
+      }
+      if (url.pathname === "/rest/v1/rpc/master_restore_teacher_deletion")
+        return options.restoreFail ? reply({ message: "private restore" }, 500) : reply(true);
+      if (url.pathname === "/rest/v1/rpc/master_finalize_teacher_deletion")
+        return options.finalizeFail ? reply({ message: "private finalize" }, 500) : reply(true);
+      if (url.pathname.startsWith("/storage/v1/object/profile-avatars"))
+        return options.avatarFail ? reply({ message: "private storage" }, 500) : reply([]);
       if (url.pathname === "/rest/v1/rpc/log_admin_event")
         return options.auditFail
           ? reply({ message: "private SQL" }, 500)
@@ -456,6 +497,7 @@ describe("Worker Master", () => {
     ["professor", { role: "teacher" as const }, 403],
     ["admin comum", { email: "admin@peralta.com" }, 403],
     ["perfil inativo", { active: false }, 403],
+    ["perfil excluído", { deletedAdmin: true }, 403],
   ])("bloqueia %s", async (_name, options, status) => {
     const backend = masterBackend(options);
     const response = await handleRequest(
@@ -695,6 +737,108 @@ describe("Worker Master", () => {
         call.path.startsWith("/auth/v1/admin/users/"),
       ),
     ).toBe(false);
+  });
+
+  it("Master exclui somente a conta Auth do professor e preserva o perfil histórico", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true });
+    expect(backend.calls.some((call) => call.path === `/auth/v1/admin/users/${teacherId}` && call.method === "DELETE")).toBe(true);
+    expect(backend.calls.some((call) => call.path === "/rest/v1/rpc/master_prepare_teacher_deletion")).toBe(true);
+    expect(backend.calls.some((call) => call.path === "/rest/v1/rpc/master_finalize_teacher_deletion")).toBe(true);
+  });
+
+  it("não permite excluir a própria conta Master", async () => {
+    const backend = masterBackend();
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/teachers/delete", { id: userId }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(409);
+    expect(backend.calls.some((call) => call.method === "DELETE")).toBe(false);
+  });
+
+  it("restaura perfil e vínculos quando a exclusão no Auth falha", async () => {
+    const backend = masterBackend({ deleteFail: true });
+    const response = await handleRequest(
+      masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }),
+      masterEnv,
+      backend.fetcher,
+    );
+    expect(response.status).toBe(502);
+    expect(await response.text()).not.toContain("private auth detail");
+    expect(backend.calls.some((call) => call.path === "/rest/v1/rpc/master_restore_teacher_deletion")).toBe(true);
+  });
+
+  it.each([
+    ["professor comum", { role: "teacher" as const }],
+    ["administrador não Master", { email: "admin@peralta.com" }],
+  ])("%s não exclui professor", async (_label, options) => {
+    const backend = masterBackend(options);
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(403);
+    expect(backend.calls.some((call) => call.path.includes("master_prepare_teacher_deletion"))).toBe(false);
+  });
+
+  it("retorna 404 para conta inexistente ou alvo que não seja professor", async () => {
+    const backend = masterBackend({ prepareFail: "missing" });
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(404);
+    expect(backend.calls.some((call) => call.method === "DELETE")).toBe(false);
+  });
+
+  it.each(["profile", "links"] as const)("não toca no Auth quando a preparação falha em %s", async (failure) => {
+    const backend = masterBackend({ prepareFail: failure });
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(502);
+    expect(backend.calls.some((call) => call.method === "DELETE")).toBe(false);
+  });
+
+  it("sinaliza restauração incompleta sem expor o backend", async () => {
+    const backend = masterBackend({ deleteFail: true, restoreFail: true });
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(502);
+    const body = await response.text();
+    expect(body).toContain("restauração automática não foi concluída");
+    expect(body).not.toContain("private restore");
+  });
+
+  it("repetição após sucesso é idempotente quando Auth e perfil já foram excluídos", async () => {
+    const backend = masterBackend({ authMissing: true, deletedProfile: true });
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(200);
+    expect(backend.calls.some((call) => call.method === "DELETE")).toBe(false);
+  });
+
+  it("finaliza tentativa interrompida depois que o Auth já foi removido", async () => {
+    const backend = masterBackend({ authMissing: true });
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(200);
+    expect(backend.calls.some((call) => call.path.includes("master_finalize_teacher_deletion"))).toBe(true);
+  });
+
+  it("remove a foto privada antes de finalizar a anonimização", async () => {
+    const backend = masterBackend({ avatarPath: `${teacherId}/avatar.webp` });
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(200);
+    const storageIndex = backend.calls.findIndex((call) => call.path.startsWith("/storage/v1/object/profile-avatars"));
+    const finalizeIndex = backend.calls.findIndex((call) => call.path.includes("master_finalize_teacher_deletion"));
+    expect(storageIndex).toBeGreaterThan(-1);
+    expect(finalizeIndex).toBeGreaterThan(storageIndex);
+  });
+
+  it("mantém finalização pendente se a remoção da foto falhar", async () => {
+    const backend = masterBackend({ avatarPath: `${teacherId}/avatar.webp`, avatarFail: true });
+    const response = await handleRequest(masterRequest("POST", "/api/master/teachers/delete", { id: teacherId }), masterEnv, backend.fetcher);
+    expect(response.status).toBe(502);
+    expect(await response.text()).not.toContain("private storage");
+    expect(backend.calls.some((call) => call.path.includes("master_finalize_teacher_deletion"))).toBe(false);
   });
 
   it("cria usuário confirmado e audita sem retornar senha", async () => {

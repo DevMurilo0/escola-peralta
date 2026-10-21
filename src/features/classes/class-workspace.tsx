@@ -9,7 +9,7 @@ import {
   LibraryBig,
   Users,
 } from "lucide-react";
-import { AttendancePanel } from "@/features/attendance/attendance-panel";
+import { AttendancePanel, StudentAttendanceView } from "@/features/attendance/attendance-panel";
 import CurriculumPanel from "@/features/curriculum/curriculum-panel";
 import FinalResults from "@/features/grades/final-results";
 import { GradesEditor } from "@/features/grades/grades-editor";
@@ -68,7 +68,11 @@ export function ClassWorkspace({
     ? requestedSection as ClassSection
     : null;
   const selectedTerm = Number(query.get("term"));
-  const term = !section && [1, 2, 3, 4].includes(selectedTerm)
+  const studentId = query.get("student");
+  const selectedEnrollment = studentId
+    ? enrollments.find((enrollment) => enrollment.student_id === studentId) ?? null
+    : null;
+  const term = !section && !selectedEnrollment && [1, 2, 3, 4].includes(selectedTerm)
     ? selectedTerm
     : null;
   const requestedModule = query.get("module") || legacyTab;
@@ -89,7 +93,8 @@ export function ClassWorkspace({
   }
 
   const termLabel = term ? termLabels[term - 1] : "";
-  const isOverview = !term && !section;
+  const studentTerm = selectedEnrollment && [1, 2, 3, 4].includes(selectedTerm) ? selectedTerm : null;
+  const isOverview = !term && !section && !selectedEnrollment;
 
   return (
     <div className="class-workspace">
@@ -123,6 +128,19 @@ export function ClassWorkspace({
           <>
             <ChevronRight aria-hidden="true" />
             <strong>{section === "students" ? "Alunos" : "Resultado final"}</strong>
+          </>
+        )}
+        {selectedEnrollment && (
+          <>
+            <ChevronRight aria-hidden="true" />
+            {studentTerm ? (
+              <button onClick={() => navigate({ student: selectedEnrollment.student_id })}>
+                {selectedEnrollment.students.full_name}
+              </button>
+            ) : (
+              <strong>{selectedEnrollment.students.full_name}</strong>
+            )}
+            {studentTerm && <><ChevronRight aria-hidden="true" /><strong>{termLabels[studentTerm - 1]}</strong></>}
           </>
         )}
       </nav>
@@ -277,7 +295,54 @@ export function ClassWorkspace({
               classId={c.id}
               enrollments={enrollments}
               canManage={canManage && c.active}
+              onAcademicView={(enrollment) => navigate({ student: enrollment.student_id })}
             />
+          </>
+        )}
+
+        {selectedEnrollment && !studentTerm && (
+          <>
+            <button className="workspace-back secondary" onClick={() => navigate({ section: "students" })}>
+              <ArrowLeft size={17} /> Voltar para alunos
+            </button>
+            <header className="module-selection-heading">
+              <span className="eyebrow">CONSULTA INDIVIDUAL</span>
+              <h1>{selectedEnrollment.students.full_name}</h1>
+              <p className="muted">Selecione o bimestre para consultar notas e frequência.</p>
+            </header>
+            <div className="term-cards">
+              {termLabels.map((label, index) => (
+                <button className="term-card" key={label} onClick={() => navigate({ student: selectedEnrollment.student_id, term: String(index + 1) })} aria-label={`Consultar ${label}`}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{label}</strong>
+                  <ChevronRight />
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {selectedEnrollment && studentTerm && (
+          <>
+            <button className="workspace-back secondary" onClick={() => navigate({ student: selectedEnrollment.student_id })}>
+              <ArrowLeft size={17} /> Voltar aos bimestres
+            </button>
+            <header className="module-selection-heading student-academic-heading">
+              <span className="eyebrow">{termLabels[studentTerm - 1].toUpperCase()}</span>
+              <h1>{selectedEnrollment.students.full_name}</h1>
+              <p className="muted">Notas e frequência · somente leitura</p>
+            </header>
+            <GradesEditor
+              classId={c.id}
+              term={studentTerm}
+              enrollments={[selectedEnrollment]}
+              grades={grades.filter((grade) => grade.term === studentTerm && grade.student_id === selectedEnrollment.student_id)}
+              minimum={minimum}
+              disabled
+              readOnly
+              onDirty={() => undefined}
+            />
+            <StudentAttendanceView sessions={sessions} studentId={selectedEnrollment.student_id} term={studentTerm} />
           </>
         )}
 
