@@ -2714,3 +2714,32 @@
   animation: none !important;
   transition: none !important;
 }
+
+
+/* Publicações da galeria com origem verificável no perfil oficial da escola. */
+.institutional .life-rail figcaption .life-photo-source {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  min-width: 45px;
+  min-height: 36px;
+  border-radius: 12px;
+  background: rgba(35, 83, 160, .10);
+  color: #1a4d91;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+.institutional .life-rail figcaption .life-photo-source:hover {
+  background: rgba(35, 83, 160, .19);
+  transform: translateY(-2px);
+}
+.institutional .life-rail figcaption .life-photo-source:focus-visible {
+  outline: 3px solid #b64734;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .institutional .life-rail figcaption .life-photo-source {
+    transition: none;
+  }
+}
