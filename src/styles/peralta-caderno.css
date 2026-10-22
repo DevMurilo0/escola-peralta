@@ -301,3 +301,9 @@
  .institutional .learning-concepts article,
  .institutional .life-rail figure img {transition:none!important;}
 }
+
+@media(max-width:540px){
+  /* Preserva o lettering integral no espaço estreito, sem recortar letras da marca tipográfica. */
+  .institutional .peralta-footer-word strong{font-size:clamp(48px,14vw,74px);}
+  .institutional .peralta-footer-word img{width:52px;height:52px;}
+}
