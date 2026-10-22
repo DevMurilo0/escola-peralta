@@ -22,10 +22,34 @@ export function SiteMotion({
     let frame = 0;
     const cleanups: Array<() => void> = [];
 
-    const revealEverything = () => {
-      container
-        .querySelectorAll<HTMLElement>("[data-reveal]")
-        .forEach((element) => element.classList.add("is-revealed"));
+    const animations = new Set<Animation>();
+    const animate = (element: HTMLElement, delay = 0, hero = false) => {
+      if (reducedMotion.matches || typeof element.animate !== "function")
+        return;
+      const kind = element.dataset.reveal;
+      const isPhoto =
+        kind?.startsWith("clip") ||
+        element.classList.contains("hero-main-print");
+      const frames: Keyframe[] = isPhoto
+        ? [
+            { clipPath: "inset(0 0 100% 0)", opacity: 0.5 },
+            { clipPath: "inset(0)", opacity: 1 },
+          ]
+        : [
+            { opacity: 0, translate: `0 ${hero ? 30 : 20}px` },
+            { opacity: 1, translate: "0 0" },
+          ];
+      const animation = element.animate(frames, {
+        duration: isPhoto || hero ? 700 : 540,
+        delay,
+        easing: "cubic-bezier(.22,1,.36,1)",
+        // No persistent hidden state: cancelled/unsupported animation exposes content.
+        fill: "backwards",
+      });
+      animations.add(animation);
+      animation.finished
+        .then(() => animations.delete(animation))
+        .catch(() => {});
     };
 
     const updateScrollMotion = () => {
@@ -67,32 +91,37 @@ export function SiteMotion({
 
     const startRevealSystem = () => {
       observer?.disconnect();
+      animations.forEach((animation) => animation.cancel());
+      animations.clear();
       container.classList.toggle("motion-ready", !reducedMotion.matches);
       if (reducedMotion.matches || !("IntersectionObserver" in window)) {
-        revealEverything();
         updateScrollMotion();
         return;
       }
-
+      const heroParts = container.querySelectorAll<HTMLElement>(
+        ".hero-line-ink, .hero-description, .hero-actions, .hero-facts, .hero-main-print, .hero-small-print, .hero-round-print, .hero-flower, .hero-handnote",
+      );
+      heroParts.forEach((element, index) =>
+        animate(element, Math.min(index * 60, 360), true),
+      );
       observer = new IntersectionObserver(
         (entries) => {
+          let sequence = 0;
           entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
             const element = entry.target as HTMLElement;
+            animate(element, (sequence++ % 4) * 60);
             element.classList.add("is-revealed");
             observer?.unobserve(element);
           });
         },
-        { threshold: 0.08, rootMargin: "0px 0px -6%" },
+        { threshold: 0.08, rootMargin: "0px 0px -4%" },
       );
-
       container
-        .querySelectorAll<HTMLElement>("[data-reveal]")
-        .forEach((element) => {
-          const delay = clamp(Number(element.dataset.delay) || 0, 0, 240);
-          element.style.setProperty("--reveal-delay", `${delay}ms`);
-          observer?.observe(element);
-        });
+        .querySelectorAll<HTMLElement>(
+          "[data-reveal], section:not(.opening-scene) h2, section:not(.opening-scene) h3, section:not(.opening-scene) p, section:not(.opening-scene) .site-text-link, section:not(.opening-scene) .site-button, section:not(.opening-scene) .peralta-flower, .footer-opening, .footer-main, .footer-word",
+        )
+        .forEach((element) => observer?.observe(element));
       updateScrollMotion();
     };
 
@@ -166,6 +195,7 @@ export function SiteMotion({
 
     return () => {
       observer?.disconnect();
+      animations.forEach((animation) => animation.cancel());
       if (frame) cancelAnimationFrame(frame);
       container.classList.remove("motion-ready");
       removeEventListener("scroll", requestScrollUpdate);

@@ -14,7 +14,7 @@ export const institutional = {
     title: "Um lugar para aprender,",
     emphasis: "conviver e crescer.",
     description:
-      "Em Gravatá, cada descoberta merece espaço. Educação Infantil e Ensino Fundamental I com histórias para viver, aprender e compartilhar.",
+      "Em Gravatá, cada descoberta merece espaço. Uma infância de histórias para viver, aprender e compartilhar.",
   },
   about: {
     title: "Uma escola próxima das crianças e das famílias.",
@@ -90,13 +90,13 @@ export const institutional = {
     },
     structureMain: {
       src: "/images/school/estrutura-patio.webp",
-      alt: "Área externa com brinquedos coloridos na Escola Peralta",
+      alt: "Estudante no pátio da Escola Peralta, com brinquedos coloridos ao fundo",
       position: "50% 40%",
       mobilePosition: "50% 42%",
     },
     structureDetail: {
       src: "/images/school/estrutura-convivencia.webp",
-      alt: "Banco e área de convivência da Escola Peralta",
+      alt: "Estudante com frutas na área de convivência da Escola Peralta",
       position: "50% 40%",
       mobilePosition: "50% 42%",
     },

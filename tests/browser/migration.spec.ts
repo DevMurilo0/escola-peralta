@@ -56,7 +56,7 @@ test("perfil permite alterar nome e oferece foto de perfil", async ({ page }) =>
 
   await expect(page.getByRole("heading", { name: "Ana Exemplo" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Escolher foto" }),
+    page.getByRole("button", { name: "Escolher foto", exact: true }),
   ).toBeVisible();
   await expect(page.getByLabel("Escolher foto de perfil")).toHaveAttribute(
     "accept",
@@ -504,7 +504,7 @@ test("Master edita nome, e-mail e senha do professor", async ({ page }) => {
   const dialog = page.getByRole("dialog", { name: "Editar professor" });
   await expect(dialog.getByLabel("Nome completo")).toHaveValue("Maria Ferreira");
   await expect(dialog.getByLabel("E-mail")).toHaveValue("maria@peralta.com");
-  await expect(dialog.getByLabel("Nova senha")).toHaveAttribute(
+  await expect(dialog.getByLabel("Nova senha", { exact: true })).toHaveAttribute(
     "placeholder",
     "Deixe em branco para manter a senha atual",
   );
@@ -512,7 +512,7 @@ test("Master edita nome, e-mail e senha do professor", async ({ page }) => {
 
   await dialog.getByLabel("Nome completo").fill("Maria Atualizada");
   await dialog.getByLabel("E-mail").fill("maria.nova@gmail.com");
-  await dialog.getByLabel("Nova senha").fill("nova-senha-segura-123");
+  await dialog.getByLabel("Nova senha", { exact: true }).fill("nova-senha-segura-123");
   await dialog
     .getByLabel("Confirmar nova senha")
     .fill("senha-diferente-123");

@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
-for (const width of [360, 375, 390, 430, 768, 1024, 1440]) {
+for (const width of [360, 375, 390, 430, 768, 1024, 1366, 1440]) {
   test(`site e login sem overflow em ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      "Educação que acolhe",
+      "Aprender é",
     );
-    if ([375, 390, 768, 1440].includes(width)) {
+    if ([360, 375, 390, 768, 1366, 1440].includes(width)) {
       const photos = page.locator("img.editorial-photo");
       for (let index = 0; index < (await photos.count()); index++) {
         const photo = photos.nth(index);
@@ -32,7 +32,7 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1440]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    if (width <= 800) {
+    if (width <= 1050) {
       await page.getByRole("button", { name: "Abrir menu" }).click();
     }
     await page
@@ -76,12 +76,16 @@ test("marca e fotografias oficiais são locais, acessíveis e carregam corretame
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute("alt", "Logo da Escola Peralta");
   expect(
-    await logo.evaluate((image: HTMLImageElement) => ({
-      naturalWidth: image.naturalWidth,
-      naturalHeight: image.naturalHeight,
-      renderedWidth: image.getBoundingClientRect().width,
-    })),
-  ).toEqual({ naturalWidth: 100, naturalHeight: 100, renderedWidth: 60 });
+    await logo.evaluate(
+      (image: HTMLImageElement) =>
+        image.complete &&
+        image.naturalWidth >= 600 &&
+        image.naturalHeight > 400,
+    ),
+  ).toBe(true);
+  expect(
+    await logo.evaluate((image) => image.getBoundingClientRect().width),
+  ).toBeGreaterThanOrEqual(60);
 
   const photos = page.locator("img.editorial-photo");
   await expect(photos).toHaveCount(12);
@@ -288,4 +292,112 @@ test("conteúdo institucional permanece acessível sem JavaScript", async ({
       ),
   ).toBe(true);
   await context.close();
+});
+
+test("Caderno Vivo troca os três capítulos com controles e teclado", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const caderno = page.locator("#caderno");
+  await caderno.scrollIntoViewIfNeeded();
+  await expect(caderno.getByRole("heading", { level: 3 })).toHaveText(
+    "Descobrir é experimentar.",
+  );
+  const convivio = caderno.getByRole("button", {
+    name: "Conviver",
+    exact: true,
+  });
+  await convivio.focus();
+  await page.keyboard.press("Enter");
+  await expect(convivio).toHaveAttribute("aria-pressed", "true");
+  await expect(caderno.getByRole("heading", { level: 3 })).toHaveText(
+    "Juntos é mais gostoso.",
+  );
+  await caderno.getByRole("button", { name: "Próximo capítulo" }).click();
+  await expect(caderno.getByRole("heading", { level: 3 })).toHaveText(
+    "Espaço para ser criança.",
+  );
+  await expect(caderno.locator(".caderno-main-photo img")).toHaveAttribute(
+    "src",
+    /estrutura-patio/,
+  );
+  await caderno.getByRole("button", { name: "Próximo capítulo" }).click();
+  await expect(
+    caderno.getByRole("button", { name: "Descobrir", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await caderno.getByRole("button", { name: "Capítulo anterior" }).click();
+  await expect(caderno.getByRole("heading", { level: 3 })).toHaveText(
+    "Espaço para ser criança.",
+  );
+});
+
+test("localização, contato e crédito preservam os destinos corretos", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const contact = page.locator("#contato");
+  await contact.scrollIntoViewIfNeeded();
+  await expect(contact.locator("iframe")).toHaveAttribute(
+    "src",
+    /Rua\+Izaltino\+Poggi\+73\+Prado\+Gravata\+PE/,
+  );
+  const mapBox = await contact.locator("iframe").boundingBox();
+  expect(mapBox?.width).toBeGreaterThan(300);
+  expect(mapBox?.height).toBeGreaterThanOrEqual(360);
+  await expect(
+    contact.getByRole("link", { name: "Como chegar" }),
+  ).toHaveAttribute("href", /google\.com\/maps\/search/);
+  await expect(
+    contact.getByRole("link", { name: "Fale com a escola" }),
+  ).toHaveAttribute("href", "https://wa.me/5581991190026");
+  const footer = page.locator("footer");
+  await expect(
+    footer.getByRole("link", { name: "Murilo Gabriel" }),
+  ).toHaveAttribute("href", "https://murilogabriel.com.br");
+  await expect(
+    footer.getByRole("link", { name: "Portal do Professor" }),
+  ).toHaveAttribute("href", "/portal/login");
+  await expect(
+    footer.getByRole("link", { name: "@escolaperaltagravata" }),
+  ).toHaveAttribute("href", "https://www.instagram.com/escolaperaltagravata/");
+});
+
+test("galeria navega pelos botões sem perder o conteúdo", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#projetos").scrollIntoViewIfNeeded();
+  const rail = page.locator(".life-rail");
+  await expect(
+    page.getByRole("button", { name: "Fotografias anteriores" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Próximas fotografias" }).click();
+  await expect
+    .poll(() => rail.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(150);
+  await expect(
+    page.getByRole("button", { name: "Fotografias anteriores" }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Fotografias anteriores" }).click();
+  await expect
+    .poll(() => rail.evaluate((element) => element.scrollLeft))
+    .toBeLessThan(2);
+});
+
+test("falha da API de animação preserva conteúdo e controles", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(Element.prototype, "animate", {
+      value: undefined,
+      configurable: true,
+    });
+  });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.locator("#caderno").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Conviver", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Juntos é mais gostoso." }),
+  ).toBeVisible();
+  await page.locator("#contato").scrollIntoViewIfNeeded();
+  await expect(page.getByRole("link", { name: "Como chegar" })).toBeVisible();
 });

@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 
 const links = [
-  ["inicio", "Início"],
   ["escola", "A Escola"],
+  ["proposta", "Proposta"],
+  ["caderno", "Caderno Vivo"],
   ["ensino", "Ensino"],
   ["estrutura", "Estrutura"],
   ["projetos", "Projetos"],
@@ -48,7 +49,7 @@ export function PublicHeader() {
         }
       }
     };
-    const desktop = matchMedia("(min-width: 801px)");
+    const desktop = matchMedia("(min-width: 1051px)");
     const onResize = () => {
       if (desktop.matches) setOpen(false);
     };
@@ -71,11 +72,15 @@ export function PublicHeader() {
       >
         <img
           decoding="async"
-          src="/images/brand/escola-peralta-selo-transparente.webp"
+          src="/images/brand/escola-peralta-logo-recortada.webp"
           width={100}
           height={100}
           alt="Logo da Escola Peralta"
+          aria-hidden="true"
         />
+        <span className="brand-name">
+          <small>ESCOLA</small> Peralta
+        </span>
       </Link>
       <button
         ref={toggle}

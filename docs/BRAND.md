@@ -35,3 +35,9 @@ A escola ainda precisa confirmar o logo atual, a paleta oficial, tipografia, fot
 
 - [Instagram oficial](https://www.instagram.com/escolaperaltagravata/)
 - [Cadastro público da escola](https://www.melhorescola.com.br/escola/escola-peralta-gravata)
+
+## Experiência institucional refatorada
+
+A direção atual está documentada em [Caderno de descobertas](design/INSTITUCIONAL.md). A página pública usa campos cromáticos, colagens com registros reais, Caderno Vivo manual e uma galeria navegável. `institutional.css` foi reconstruído e `peralta-renovacao.css` removido; o portal mantém sua identidade e configuração compartilhada.
+
+A marca pública recortada está em `escola-peralta-logo-recortada.png` e `.webp`; consulte [proveniência e limitações](ASSETS-ESCOLA.md). A matriz original de 100×100 px permanece preservada. Não se trata de uma nova marca oficial homologada.

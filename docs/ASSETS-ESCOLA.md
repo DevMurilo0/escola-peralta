@@ -34,3 +34,15 @@ Todas as fotografias vieram do carrossel oficial [“Terça da Nutri”](https:/
 | `vivencia-06.webp`           |                19 | Vida na Peralta             |
 
 Não foram aplicados filtros, recortes destrutivos ou identificação de crianças. O enquadramento é feito responsivamente por CSS sobre os arquivos originais do carrossel.
+
+## Tratamento da marca — outubro de 2026
+
+`escola-peralta-logo-recortada.png` (PNG RGBA) e `escola-peralta-logo-recortada.webp` (WebP RGBA) são derivados da matriz original de apenas 100×100 px. Foi utilizado Imagegen integrado para extração do fundo e refinamento das bordas, com preservação solicitada das letras, mascote, plantas, proporções e cores. A saída foi aparada e reduzida para 640 px de largura; o WebP foi otimizado com qualidade 92. Os originais foram preservados.
+
+Trata-se de um **derivado assistido por IA**, não de uma nova matriz oficial: a reconstrução de detalhes de uma fonte tão pequena não recupera informação original. Uma matriz vetorial ou raster maior continua sendo a melhor substituição futura. O selo transparente antigo foi retirado da página institucional. A configuração de marca compartilhada com o portal permanece intacta.
+
+Conferência: transparência real, bordas e letras sobre creme, azul escuro e amarelo. Em azul escuro as letras pretas perdem contraste; por isso os usos no rodapé e no selo recebem suporte creme.
+
+Prompt utilizado (Imagegen integrado):
+
+> Use case: background-extraction. Edit target: attached original Escola Peralta logo. Create a faithful refined transparent cutout of precisely this existing logo, at higher pixel resolution for a school website. Remove ONLY the pastel rainbow background, including inside the letter counters and between separate illustration pieces; preserve all black lettering 'Escola Peralta' in its original arc, exactly these characters, the smiling blue-and-green Earth mascot, its eyes and smile, both feet, the small plants and their tan pots. Preserve the original proportions, colors, shapes, composition and details; do not redesign, add badges, add text or invent new illustration elements. Carefully refined antialiased alpha edges, no pale halos, no remnant pastel background, no missing internal mascot areas. Genuine transparent background PNG. Artwork centered with tight reasonable padding.
