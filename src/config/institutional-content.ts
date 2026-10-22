@@ -8,31 +8,25 @@ export type SchoolPhoto = {
   position?: string;
   mobilePosition?: string;
 };
-const slot = (alt: string): SchoolPhoto => ({
-  src: "",
-  alt,
-  position: "50% 50%",
-  mobilePosition: "50% 50%",
-});
 export const institutional = {
   hero: {
     eyebrow: "Educação Infantil e Ensino Fundamental I",
     title: "Um lugar para aprender,",
     emphasis: "conviver e crescer.",
     description:
-      "Na Escola Peralta, infância e aprendizagem caminham juntas em um ambiente de cuidado, curiosidade e presença.",
+      "Em Gravatá, cada descoberta merece espaço. Educação Infantil e Ensino Fundamental I com histórias para viver, aprender e compartilhar.",
   },
   about: {
     title: "Uma escola próxima das crianças e das famílias.",
     description:
-      "A Escola Peralta faz parte da vida de famílias de Gravatá, com Educação Infantil e Ensino Fundamental I. Na sua apresentação pública, uma ideia ganha destaque: educar com valores.",
+      "A Escola Peralta é um espaço de encontro entre infância, aprendizagem e convivência. Em Gravatá, aproxima famílias e educadores com um cotidiano feito de experiências e descobertas.",
     invitation:
-      "Conhecer a escola é também conhecer quem estará perto da sua criança. Venha conversar com a nossa equipe.",
+      "As fotografias mostram momentos reais da rotina. Para conhecer o espaço, as turmas e a equipe, nada substitui uma visita.",
   },
   pedagogy: {
     title: "Aprender começa pela curiosidade.",
     description:
-      "Perguntar, experimentar e trocar ideias fazem parte da construção do conhecimento. Conheça com a equipe como a proposta pedagógica acontece em cada etapa.",
+      "Experimentar, fazer perguntas e viver novas experiências: pequenos gestos que podem abrir grandes caminhos de aprendizagem.",
     concepts: [
       {
         title: "Descoberta",
@@ -71,7 +65,7 @@ export const institutional = {
   },
   photos: {
     hero: {
-      src: "",
+      src: "/images/school/hero-escola.webp",
       alt: "Estudantes reunidas no pátio da Escola Peralta",
       position: "50% 36%",
       mobilePosition: "50% 43%",
@@ -83,13 +77,13 @@ export const institutional = {
       mobilePosition: "50% 50%",
     },
     infantil: {
-      src: "",
+      src: "/images/school/educacao-infantil.webp",
       alt: "Criança participando de atividade com frutas na Escola Peralta",
       position: "50% 42%",
       mobilePosition: "50% 45%",
     },
     fundamental: {
-      src: "",
+      src: "/images/school/fundamental.webp",
       alt: "Estudante em momento de convivência no pátio da Escola Peralta",
       position: "50% 38%",
       mobilePosition: "50% 42%",
@@ -106,8 +100,20 @@ export const institutional = {
       position: "50% 40%",
       mobilePosition: "50% 42%",
     },
-    lifeProject: slot("Projeto realizado na Escola Peralta"),
-    lifePlay: slot("Momento de brincadeira na Escola Peralta"),
-    lifeTogether: slot("Encontro ou evento na Escola Peralta"),
+    lifeProject: {
+      src: "/images/school/vivencia-03.webp",
+      alt: "Criança participando de atividade na Escola Peralta",
+      position: "50% 43%",
+    },
+    lifePlay: {
+      src: "/images/school/vivencia-02.webp",
+      alt: "Estudantes em atividade de convivência na Escola Peralta",
+      position: "50% 42%",
+    },
+    lifeTogether: {
+      src: "/images/school/vivencia-01.webp",
+      alt: "Aluna em atividade na Escola Peralta",
+      position: "50% 42%",
+    },
   },
 };
