@@ -72,7 +72,7 @@ export function PublicHeader() {
       >
         <img
           decoding="async"
-          src="/images/brand/escola-peralta-logo-recortada.webp"
+          src="/images/brand/escola-peralta-logo-refinada.webp"
           width={100}
           height={100}
           alt="Logo da Escola Peralta"

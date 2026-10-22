@@ -46,3 +46,7 @@ Conferência: transparência real, bordas e letras sobre creme, azul escuro e am
 Prompt utilizado (Imagegen integrado):
 
 > Use case: background-extraction. Edit target: attached original Escola Peralta logo. Create a faithful refined transparent cutout of precisely this existing logo, at higher pixel resolution for a school website. Remove ONLY the pastel rainbow background, including inside the letter counters and between separate illustration pieces; preserve all black lettering 'Escola Peralta' in its original arc, exactly these characters, the smiling blue-and-green Earth mascot, its eyes and smile, both feet, the small plants and their tan pots. Preserve the original proportions, colors, shapes, composition and details; do not redesign, add badges, add text or invent new illustration elements. Carefully refined antialiased alpha edges, no pale halos, no remnant pastel background, no missing internal mascot areas. Genuine transparent background PNG. Artwork centered with tight reasonable padding.
+
+## Segunda rodada — transparência preservando a arte
+
+A aplicação institucional agora usa `escola-peralta-logo-refinada.png` e `.webp`. Os canais RGB da versão anterior permanecem idênticos; somente a máscara alfa recebeu refinamento espacial em superamostragem. A tentativa de IA desta rodada foi rejeitada por alterar a tipografia. Consulte o método e a proveniência em [ASSETS-LUDICOS.md](ASSETS-LUDICOS.md). Arquivos originais e versões anteriores não foram sobrescritos.

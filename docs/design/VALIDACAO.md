@@ -1,32 +1,39 @@
-# Validação da experiência institucional
+# Validação — segunda rodada visual da Escola Peralta
 
-Data: 22 de outubro de 2026. Navegador: Chromium real via Playwright, em modo headless. Os tamanhos representam viewports emulados, não testes em aparelhos físicos.
+22/10/2026. Escopo: somente experiência institucional. Direção em [DESIGN.md](../../DESIGN.md); fontes e adaptações em [ASSETS-LUDICOS.md](../ASSETS-LUDICOS.md).
 
-## Evidências
+## Resultado
 
-- Lint, typecheck e build executados; verificação do bundle confirma ausência de service role no frontend.
-- Vitest: 102 testes aprovados, incluindo Worker e regras acadêmicas existentes.
-- Página pública: 20 cenários aprovados, com larguras 360, 375, 390, 430, 768, 1024, 1366 e 1440 px; fotos locais, marca, ausência de overflow, menu, teclado, acesso ao portal, SEO, Caderno Vivo, galeria, destinos de contato, mapa e crédito.
-- Animação: preferência por movimento reduzido, alteração da preferência em execução, fallback sem Element.animate, parallax e progresso/arraste da galeria verificados. Entradas instrumentadas: 70 elementos no desktop e 68 no mobile.
-- Axe: zero violações detectadas na página institucional em 1440 e 390 px. O documento externo do Google Maps foi excluído dessa auditoria; seu funcionamento foi inspecionado separadamente.
-- Maps: iframe carregou a cartografia real e o marcador do endereço configurado. Links externos de rotas e WhatsApp conferidos. O endereço e as configurações compartilhadas foram preservados.
-- PNG e WebP da logo possuem canal alfa real e cantos transparentes. Versões conferidas sobre creme, azul e amarelo.
-- Taste: lint sem falhas; inspeção em 1440, 768 e 390 px sem falhas após as exceções justificadas no documento de direção. Avisos de estilo não foram confundidos com falhas funcionais.
+- Lint, typecheck e build aprovados no código final. Verificação do bundle confirma ausência de service role no frontend.
+- Vitest: **102 testes aprovados**, incluindo Worker e regras acadêmicas existentes.
+- Navegador: **47 cenários validados**. A execução longa foi interrompida pelo limite de duração do terminal após 39 cenários aprovados, sem falhas; os 25 cenários do portal já estavam completos. Os **22 cenários públicos foram executados integralmente em separado no build final, todos aprovados**.
+- Larguras cobertas: 360, 375, 390, 430, 768, 1024, 1366 e 1440 px. Inspeção visual e capturas nos cinco tamanhos solicitados: 1440, 1366, 768, 390 e 360.
+- Axe: **zero violações detectadas** no documento institucional em 1440 e 390 px. Documento externo do Google Maps excluído do Axe e verificado funcionalmente em separado.
+- Impeccable detect: lista vazia de achados nas superfícies alteradas.
+- Taste: lint sem falhas, com apenas um aviso de borda no botão de menu; inspeção em 1440, 768 e 390 sem falhas após as exceções explícitas do briefing. Avisos: variação de tamanhos fluidos, heurística de fonte, ausência de vídeo real disponível e galeria horizontal deliberada com controles.
 
-## Escopo preservado
+## Interações e conteúdo
 
-Nenhuma alteração em worker/, Supabase, migrations, RLS, RPCs, autenticação, permissões, administração, componentes do portal, turmas, alunos, notas, frequência ou calendário. Duas buscas ambíguas nos testes legados do portal foram tornadas exatas, sem modificar sua implementação.
+Fotografias reais locais decodificadas; nenhuma imagem de outra escola. Zero imagens quebradas, zero erros de JavaScript nas capturas e nenhum overflow horizontal nos cinco tamanhos solicitados.
 
-Não foi executado deploy de produção.
+Menu mobile abre, fecha com Escape, restaura o scroll e navega. Link do Portal do Professor abre o login. Caderno Vivo troca os três capítulos por clique e teclado. Galeria funciona com botões, arraste, progresso e navegação por teclado.
 
-## Capturas
+Movimento: títulos por linhas, máscara fotográfica, sublinhados desenhados, blur reveal e entradas decorativas. Flutuações são limitadas a três ciclos, sem loop infinito. Pausar cancela animações e parallax; retomar restaura a camada. Conteúdo e controles funcionam com movimento reduzido ou sem Element.animate. O fallback sem JavaScript permanece acessível.
 
-Os arquivos WebP na pasta [screenshots](screenshots/) mostram hero em 1440, 1366, 768, 390 e 360 px, páginas completas em desktop/mobile, mapas carregados e a logo sobre três fundos. As capturas de página completa usam movimento reduzido para registrar o conteúdo já revelado.
+Mapas: iframe real carregado em desktop e mobile; imagens cartográficas Google /maps/vt confirmadas como completas e com dimensão natural. Endereço preservado: Rua Izaltino Poggi, 73, Prado, Gravatá — Pernambuco. Destinos do Google Maps, WhatsApp, Instagram, Portal e crédito do desenvolvedor verificados.
 
-## Limitações
+## Marca e assets
 
-O Instagram não permitiu recuperar novas imagens; as 12 fotos locais foram preservadas e reaproveitadas. Todas são do mesmo carrossel, portanto não documentam toda a estrutura ou a diversidade de projetos da escola. A matriz da logo disponível tem apenas 100×100 px; o derivado refinado com IA não substitui um original vetorial de alta resolução. A comparação de marca e o prompt estão em [ASSETS-ESCOLA.md](../ASSETS-ESCOLA.md).
+Sete SVGs do Tabler foram adaptados sob MIT: paleta, preenchimento, espessura de contorno e acabamento de adesivo. A licença acompanha os assets. Pipa, flores, trilhas, fitas, textura e bordas editoriais são autorais. Os arquivos são locais, sem hotlink ou marca d'água.
 
-## Resultado da suíte completa
+A nova tentativa de IA foi descartada porque alterava as letras. PNG refinado preserva exatamente os canais RGB da versão anterior; comparação pixel a pixel confirmou igualdade de cor. Somente o alfa foi retrabalhado, com cantos totalmente transparentes. Conferência sobre creme, azul e amarelo; suporte claro no rodapé preserva contraste das letras pretas. Originais preservados.
 
-A execução completa percorreu 45 cenários: 43 passaram de primeira e 2 falharam por seletores parciais ambíguos dos testes legados. Após restringir as buscas aos nomes exatos, ambos passaram novamente (2/2). A página pública foi repetida integralmente no build final (20 cenários). Os demais cenários do portal já aprovados não tiveram código de aplicação modificado.
+## Escopo técnico preservado
+
+Nenhuma alteração em Worker, Supabase, migrations, RLS, RPCs, autenticação, permissões, administração, componentes do portal, turmas, alunos, notas, frequência, calendário ou configurações compartilhadas da escola. Nenhuma dependência nova de produção. Não foi executado deploy de produção.
+
+## Capturas e limites
+
+Capturas vigentes em [screenshots/rodada-2](screenshots/rodada-2/). Primeira rodada mantida no diretório superior para comparação. Layout e interações foram verificados em viewports usuais de desktop e mobile; as capturas do mapa usam viewport alto para manter o componente inteiro visível. Como o Chromium suprime a pintura de iframe fora da dobra em capturas longas, as páginas integrais combinam a captura da página com a captura real do componente, no mesmo tamanho e posição, sem alterar seu conteúdo. Os recortes reais do mapa também estão disponíveis separadamente. Capturas estáticas usam movimento reduzido.
+
+São viewports emulados em Chromium real, não testes em aparelhos físicos. O Instagram continua indisponível para extração; as 12 fotografias locais foram mantidas. Elas vêm de um mesmo carrossel e não documentam toda a estrutura ou diversidade de projetos. A matriz original da marca tem apenas 100×100 px; o refinamento não substitui um original vetorial.

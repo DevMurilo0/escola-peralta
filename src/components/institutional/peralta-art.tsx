@@ -50,3 +50,76 @@ export function Trail({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+export type DoodleKind =
+  | "balloon"
+  | "books"
+  | "pencil"
+  | "blocks"
+  | "cloud"
+  | "star"
+  | "rainbow"
+  | "kite";
+
+/** SVGs locais adaptados, com proveniência em docs/ASSETS-LUDICOS.md. */
+export function Doodle({
+  kind,
+  className = "",
+  float = false,
+}: {
+  kind: DoodleKind;
+  className?: string;
+  float?: boolean;
+}) {
+  return (
+    <span
+      className={`school-doodle doodle-${kind} ${className}`}
+      data-reveal="doodle"
+      aria-hidden="true"
+    >
+      <img
+        src={`/images/playful/${kind}.svg`}
+        alt=""
+        width={160}
+        height={kind === "kite" ? 196 : 160}
+        loading="lazy"
+        decoding="async"
+        data-float={float || undefined}
+      />
+    </span>
+  );
+}
+
+export function PaperEdge({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={`paper-edge ${className}`}
+      viewBox="0 0 1440 48"
+      preserveAspectRatio="none"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M0 23C30 0 60 0 90 23s60 23 90 0 60-23 90 0 60 23 90 0 60-23 90 0 60 23 90 0 60-23 90 0 60 23 90 0 60-23 90 0 60 23 90 0 60-23 90 0 60 23 90 0 60-23 90 0 60 23 90 0 60-23 90 0 60 23 90 0v25H0Z" />
+    </svg>
+  );
+}
+
+export function PencilLine({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={`pencil-line ${className}`}
+      viewBox="0 0 360 28"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M8 16C87 3 238 7 348 13M17 24c107-9 219-8 316-5"
+        stroke="currentColor"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

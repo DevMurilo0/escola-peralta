@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Instagram } from "lucide-react";
 import { school } from "@/config/school-config";
+import { Doodle, PaperEdge } from "./peralta-art";
 import { PhotoFrame } from "./photo-frame";
 
 export function LifeGallery() {
@@ -19,6 +20,8 @@ export function LifeGallery() {
   };
   return (
     <section id="projetos" tabIndex={-1} className="school-life">
+      <PaperEdge className="life-edge" />
+      <Doodle kind="balloon" className="life-balloon" float />
       <div className="section-wrap life-heading">
         <div>
           <h2>
@@ -70,6 +73,7 @@ export function LifeGallery() {
       >
         {school.gallery.map((photo, index) => (
           <figure key={photo.src} data-reveal="up">
+            <span className="gallery-tape" aria-hidden="true" />
             <PhotoFrame
               photo={photo}
               title={photo.caption}

@@ -1,5 +1,7 @@
 # Escola Peralta — caderno de descobertas
 
+> Histórico da primeira rodada. A direção vigente da segunda rodada está em [DESIGN.md](../../DESIGN.md).
+
 ## Escopo e verdade
 
 Refatoração exclusiva da página pública em Vite/React. Famílias devem conhecer a escola e agendar uma visita. Portal, autenticação, Worker, banco e regras acadêmicas permanecem fora do escopo.

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   Instagram,
@@ -14,12 +13,19 @@ import { PublicHeader } from "@/components/public-header";
 import { PhotoFrame } from "@/components/institutional/photo-frame";
 import { SiteMotion } from "@/components/institutional/site-motion";
 import { PeraltaCaderno } from "@/components/institutional/peralta-caderno";
-import { Flower, Trail } from "@/components/institutional/peralta-art";
+import {
+  Doodle,
+  Flower,
+  PaperEdge,
+  PencilLine,
+  Trail,
+} from "@/components/institutional/peralta-art";
+import { DiscoveryHero } from "@/components/institutional/discovery-hero";
 import { LifeGallery } from "@/components/institutional/life-gallery";
 import "@/styles/institutional.css";
 import "@/styles/peralta-caderno.css";
 
-const logo = "/images/brand/escola-peralta-logo-recortada.webp";
+const logo = "/images/brand/escola-peralta-logo-refinada.webp";
 export default function Home() {
   const photos = content.photos;
   const jsonLd = {
@@ -40,89 +46,9 @@ export default function Home() {
     <SiteMotion className="institutional">
       <PublicHeader />
       <main id="main">
-        <section id="inicio" tabIndex={-1} className="opening-scene">
-          <div className="section-wrap hero-layout">
-            <div className="opening-copy">
-              <h1>
-                <span className="hero-title-line">
-                  <span className="hero-line-ink">Aprender é</span>
-                </span>{" "}
-                <span className="hero-title-line">
-                  <em className="hero-line-ink">uma aventura.</em>
-                </span>
-              </h1>
-              <p className="hero-description">{content.hero.description}</p>
-              <div className="hero-actions">
-                <a
-                  className="site-button"
-                  href={contactLink}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Venha conhecer <ArrowUpRight size={21} />
-                </a>
-                <a className="site-text-link" href="#escola">
-                  Explore a Peralta <ArrowDown size={18} />
-                </a>
-              </div>
-              <div className="hero-facts">
-                <span>Educação Infantil</span>
-                <span>Ensino Fundamental I</span>
-                <span>
-                  <MapPin size={15} /> Gravatá · PE
-                </span>
-              </div>
-              <Trail className="hero-copy-trail" />
-            </div>
-            <div className="hero-media">
-              <div className="hero-sun" aria-hidden="true" />
-              <figure className="hero-main-print">
-                <PhotoFrame
-                  photo={photos.hero}
-                  title="Vida na Peralta"
-                  number="1"
-                  priority
-                  className="hero-picture"
-                  sizes="(max-width: 800px) 80vw, 36vw"
-                  parallax={0.025}
-                />
-              </figure>
-              <figure className="hero-small-print">
-                <img
-                  src={photos.infantil.src}
-                  alt={photos.infantil.alt}
-                  width={1080}
-                  height={1350}
-                  decoding="async"
-                />
-                <figcaption>Pequenas descobertas.</figcaption>
-              </figure>
-              <figure className="hero-round-print">
-                <img
-                  src="/images/school/vivencia-06.webp"
-                  alt="Estudante da Escola Peralta com seu lanche"
-                  width={1080}
-                  height={1350}
-                  decoding="async"
-                />
-              </figure>
-              <Flower className="hero-flower" />
-              <Trail className="hero-photo-trail" />
-              <span className="hero-handnote">
-                Infância com espaço
-                <br />
-                para florescer.
-              </span>
-            </div>
-          </div>
-          <div className="hero-bottom section-wrap">
-            <a href="#escola">
-              <ArrowDown size={18} /> Tem muito para descobrir por aqui.
-            </a>
-            <span>Uma escola. Muitas histórias.</span>
-          </div>
-        </section>
+        <DiscoveryHero />
         <section id="escola" tabIndex={-1} className="school-story">
+          <Doodle kind="cloud" className="story-cloud" />
           <div className="section-wrap story-layout">
             <div className="story-photo">
               <PhotoFrame
@@ -138,12 +64,15 @@ export default function Home() {
               <Flower className="story-flower" />
             </div>
             <div className="story-copy">
+              <Doodle kind="books" className="story-books" />
               <h2>
                 Perto da infância.
                 <br />
                 <em>Perto de você.</em>
               </h2>
-              <p className="site-lead">{content.about.description}</p>
+              <p className="site-lead" data-reveal="blur">
+                {content.about.description}
+              </p>
               <p>{content.about.invitation}</p>
               <a
                 className="site-text-link"
@@ -176,8 +105,11 @@ export default function Home() {
               <Flower className="learning-flower" />
             </div>
             <div className="learning-concepts">
-              {content.pedagogy.concepts.map((concept) => (
+              {content.pedagogy.concepts.map((concept, index) => (
                 <article key={concept.title}>
+                  <Doodle
+                    kind={(["pencil", "blocks", "balloon"] as const)[index]}
+                  />
                   <h3>
                     {concept.title}
                     <ArrowUpRight aria-hidden="true" />
@@ -187,20 +119,21 @@ export default function Home() {
               ))}
             </div>
             <Trail className="learning-trail" />
+            <Doodle kind="pencil" className="learning-pencil" />
           </div>
         </section>
         <PeraltaCaderno />
         <section id="ensino" tabIndex={-1} className="school-segments">
+          <PaperEdge className="segments-edge" />
           <div className="section-wrap segments-heading">
+            <Doodle kind="rainbow" className="segments-rainbow" />
             <h2>
               Crescer é
               <br />
               <em>descobrir.</em>
             </h2>
             <p>
-              Da Educação Infantil ao Fundamental I,
-              <br />
-              um caminho para conhecer juntos.
+              Um caminho para crescer, da Educação Infantil ao Fundamental I.
             </p>
           </div>
           <div className="segment-fields">
@@ -217,6 +150,10 @@ export default function Home() {
                   parallax={0.018}
                 />
                 <div className="segment-text">
+                  <Doodle
+                    kind={index === 0 ? "blocks" : "books"}
+                    className="segment-doodle"
+                  />
                   <h3>{segment.title}</h3>
                   <p className="segment-lead">{segment.lead}</p>
                   <p>{segment.description}</p>
@@ -235,6 +172,7 @@ export default function Home() {
           </div>
         </section>
         <section id="estrutura" tabIndex={-1} className="school-spaces">
+          <Doodle kind="kite" className="spaces-kite" float />
           <div className="section-wrap">
             <div className="spaces-heading">
               <h2>
@@ -290,6 +228,7 @@ export default function Home() {
         <LifeGallery />
         <section id="matriculas" tabIndex={-1} className="school-invitation">
           <div className="section-wrap invitation-layout">
+            <Doodle kind="balloon" className="invitation-balloon" float />
             <Flower className="invitation-flower" />
             <h2>
               Vamos começar
@@ -308,30 +247,62 @@ export default function Home() {
               </a>
             </div>
             <Trail className="invitation-trail" />
+            <Doodle kind="star" className="invitation-star" />
           </div>
         </section>
         <section id="contato" tabIndex={-1} className="school-contact">
+          <PaperEdge className="contact-edge" />
           <div className="section-wrap">
             <div className="contact-heading">
-              <h2>
-                A descoberta
-                <br />
-                <em>tem endereço.</em>
-              </h2>
+              <div>
+                <h2>
+                  Nosso próximo
+                  <br />
+                  <em>encontro é aqui.</em>
+                </h2>
+                <PencilLine />
+              </div>
               <p>
                 A gente se encontra em Gravatá.
                 <br />
                 Venha conhecer a Escola Peralta de perto.
               </p>
+              <Doodle kind="cloud" className="contact-cloud" />
             </div>
             <div className="contact-layout">
-              <div className="contact-intro">
+              <div className="contact-map" data-reveal="clip-right">
+                <div className="map-paper-label" aria-hidden="true">
+                  <Doodle kind="star" />
+                  <span>Um caminho até a Peralta.</span>
+                </div>
+                <iframe
+                  title="Localização da Escola Peralta no Google Maps"
+                  src={school.mapsEmbed}
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                <a
+                  className="contact-map-footer"
+                  href={school.maps}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>
+                    <strong>Escola Peralta</strong>Rua Izaltino Poggi, 73 ·
+                    Prado · Gravatá
+                  </span>
+                  <ArrowUpRight size={25} />
+                </a>
+                <Doodle kind="pencil" className="map-pencil" />
+              </div>
+              <div className="contact-intro" data-reveal="paper">
                 <span className="address-icon">
                   <MapPin size={30} />
                 </span>
                 <h3>
-                  Esperamos <br />
-                  por você.
+                  De pertinho
+                  <br />é ainda melhor.
                 </h3>
                 <address>
                   {school.address}
@@ -355,41 +326,24 @@ export default function Home() {
                   <MessageCircle size={19} /> Fale com a escola
                 </a>
                 <span className="contact-number">{school.whatsappLabel}</span>
-                <Flower className="contact-flower" />
-              </div>
-              <div className="contact-map" data-reveal="clip-right">
-                <iframe
-                  title="Localização da Escola Peralta no Google Maps"
-                  src={school.mapsEmbed}
-                  loading="lazy"
-                  allowFullScreen
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-                <a
-                  className="contact-map-footer"
-                  href={school.maps}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span>
-                    <strong>Escola Peralta</strong>Rua Izaltino Poggi, 73 ·
-                    Prado · Gravatá
-                  </span>
-                  <ArrowUpRight size={25} />
-                </a>
+                <Doodle kind="kite" className="contact-kite" float />
               </div>
             </div>
           </div>
         </section>
       </main>
       <footer className="school-footer">
+        <PaperEdge className="footer-edge" />
         <div className="section-wrap">
           <div className="footer-opening">
-            <p>
-              O mundo é grande.
-              <br />
-              <em>O começo é aqui.</em>
-            </p>
+            <div>
+              <p>
+                Um mundo inteiro.
+                <br />
+                <em>Um começo Peralta.</em>
+              </p>
+              <PencilLine />
+            </div>
             <a
               href={contactLink}
               className="footer-visit"
@@ -398,7 +352,8 @@ export default function Home() {
             >
               <Flower />
               <span>
-                Vem conhecer <br />a Peralta!
+                Vamos marcar <br />
+                uma visita?
               </span>
               <ArrowUpRight size={24} />
             </a>
@@ -419,18 +374,24 @@ export default function Home() {
                 <br />
                 Gravatá · Pernambuco.
               </p>
+              <div className="footer-brand-art" aria-hidden="true">
+                <Doodle kind="books" />
+                <Doodle kind="pencil" />
+                <Doodle kind="blocks" />
+              </div>
             </div>
             <nav aria-label="Rodapé">
-              <h2>Explore a Peralta</h2>
+              <h2>Explore esse mundo</h2>
               <a href="#escola">A Escola</a>
               <a href="#proposta">Proposta pedagógica</a>
               <a href="#caderno">Caderno Vivo</a>
               <a href="#ensino">Ensino</a>
               <a href="#estrutura">Estrutura</a>
               <a href="#projetos">Projetos e vivências</a>
+              <a href="#contato">Contato e localização</a>
             </nav>
             <div className="footer-connect">
-              <h2>Vamos conversar</h2>
+              <h2>Estamos por aqui</h2>
               <a href={contactLink} target="_blank" rel="noreferrer">
                 <MessageCircle size={18} />
                 {school.whatsappLabel}
@@ -455,9 +416,21 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="footer-word" aria-hidden="true">
-            peralta
-            <Flower />
+          <div className="footer-playground" aria-hidden="true">
+            <Doodle kind="cloud" className="footer-cloud" />
+            <Doodle kind="kite" className="footer-kite" float />
+            <div className="footer-word">
+              <span>p</span>
+              <span>e</span>
+              <span>r</span>
+              <span>a</span>
+              <span>l</span>
+              <span>t</span>
+              <span>a</span>
+              <Flower />
+            </div>
+            <Trail />
+            <Doodle kind="balloon" className="footer-balloon" />
           </div>
           <div className="footer-end">
             <span>© {new Date().getFullYear()} Escola Peralta</span>

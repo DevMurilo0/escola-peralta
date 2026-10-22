@@ -1,4 +1,22 @@
-import { useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Pause, Play } from "lucide-react";
+
+const MotionContext = createContext({ paused: false, toggle: () => {} });
+
+export function MotionToggle() {
+  const { paused, toggle } = useContext(MotionContext);
+  return (
+    <button
+      type="button"
+      className="motion-toggle"
+      aria-pressed={paused}
+      onClick={toggle}
+    >
+      {paused ? <Play size={15} /> : <Pause size={15} />}
+      {paused ? "Retomar movimento" : "Pausar movimento"}
+    </button>
+  );
+}
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -11,6 +29,7 @@ export function SiteMotion({
   className: string;
 }) {
   const root = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const container = root.current;
@@ -20,25 +39,48 @@ export function SiteMotion({
     const coarsePointer = matchMedia("(pointer: coarse)");
     let observer: IntersectionObserver | undefined;
     let frame = 0;
+    let disposed = false;
     const cleanups: Array<() => void> = [];
 
     const animations = new Set<Animation>();
     const animate = (element: HTMLElement, delay = 0, hero = false) => {
-      if (reducedMotion.matches || typeof element.animate !== "function")
+      if (
+        paused ||
+        reducedMotion.matches ||
+        typeof element.animate !== "function"
+      )
         return;
       const kind = element.dataset.reveal;
       const isPhoto =
         kind?.startsWith("clip") ||
         element.classList.contains("hero-main-print");
-      const frames: Keyframe[] = isPhoto
-        ? [
-            { clipPath: "inset(0 0 100% 0)", opacity: 0.5 },
-            { clipPath: "inset(0)", opacity: 1 },
-          ]
-        : [
-            { opacity: 0, translate: `0 ${hero ? 30 : 20}px` },
-            { opacity: 1, translate: "0 0" },
-          ];
+      const fromClip =
+        kind === "clip-left"
+          ? "inset(0 100% 0 0)"
+          : kind === "clip-right"
+            ? "inset(0 0 0 100%)"
+            : "inset(0 0 100% 0)";
+      const frames: Keyframe[] = element.classList.contains("pencil-line")
+        ? [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0)" }]
+        : kind === "doodle"
+          ? [
+              { opacity: 0, translate: "0 14px", rotate: "-8deg" },
+              { opacity: 1, translate: "0 0", rotate: "0deg" },
+            ]
+          : kind === "blur"
+            ? [
+                { opacity: 0, filter: "blur(3px)", translate: "0 10px" },
+                { opacity: 1, filter: "blur(0px)", translate: "0 0" },
+              ]
+            : isPhoto
+              ? [
+                  { clipPath: fromClip, opacity: 0.5 },
+                  { clipPath: "inset(0)", opacity: 1 },
+                ]
+              : [
+                  { opacity: 0, translate: `0 ${hero ? 30 : 20}px` },
+                  { opacity: 1, translate: "0 0" },
+                ];
       const animation = element.animate(frames, {
         duration: isPhoto || hero ? 700 : 540,
         delay,
@@ -48,7 +90,22 @@ export function SiteMotion({
       });
       animations.add(animation);
       animation.finished
-        .then(() => animations.delete(animation))
+        .then(() => {
+          animations.delete(animation);
+          if (disposed) return;
+          const floating = element.querySelector<HTMLElement>("[data-float]");
+          if (!floating || paused || reducedMotion.matches) return;
+          const drift = floating.animate(
+            [
+              { translate: "0 0", rotate: "0deg" },
+              { translate: "0 -6px", rotate: "2deg", offset: 0.5 },
+              { translate: "0 0", rotate: "0deg" },
+            ],
+            { duration: 3600, iterations: 3, easing: "ease-in-out" },
+          );
+          animations.add(drift);
+          drift.finished.then(() => animations.delete(drift)).catch(() => {});
+        })
         .catch(() => {});
     };
 
@@ -62,7 +119,10 @@ export function SiteMotion({
       }
 
       const allowParallax =
-        !reducedMotion.matches && innerWidth > 800 && !coarsePointer.matches;
+        !paused &&
+        !reducedMotion.matches &&
+        innerWidth > 800 &&
+        !coarsePointer.matches;
       container
         .querySelectorAll<HTMLElement>("[data-parallax]")
         .forEach((element) => {
@@ -93,13 +153,20 @@ export function SiteMotion({
       observer?.disconnect();
       animations.forEach((animation) => animation.cancel());
       animations.clear();
-      container.classList.toggle("motion-ready", !reducedMotion.matches);
-      if (reducedMotion.matches || !("IntersectionObserver" in window)) {
+      container.classList.toggle(
+        "motion-ready",
+        !paused && !reducedMotion.matches,
+      );
+      if (
+        paused ||
+        reducedMotion.matches ||
+        !("IntersectionObserver" in window)
+      ) {
         updateScrollMotion();
         return;
       }
       const heroParts = container.querySelectorAll<HTMLElement>(
-        ".hero-line-ink, .hero-description, .hero-actions, .hero-facts, .hero-main-print, .hero-small-print, .hero-round-print, .hero-flower, .hero-handnote",
+        ".hero-line-ink, .hero-description, .hero-actions, .hero-facts, .hero-main-print, .hero-small-print, .hero-round-print, .hero-handnote",
       );
       heroParts.forEach((element, index) =>
         animate(element, Math.min(index * 60, 360), true),
@@ -119,7 +186,7 @@ export function SiteMotion({
       );
       container
         .querySelectorAll<HTMLElement>(
-          "[data-reveal], section:not(.opening-scene) h2, section:not(.opening-scene) h3, section:not(.opening-scene) p, section:not(.opening-scene) .site-text-link, section:not(.opening-scene) .site-button, section:not(.opening-scene) .peralta-flower, .footer-opening, .footer-main, .footer-word",
+          "[data-reveal], .pencil-line, .paper-edge, section:not(.opening-scene) h2, section:not(.opening-scene) h3, section:not(.opening-scene) p, section:not(.opening-scene) .site-text-link, section:not(.opening-scene) .site-button, section:not(.opening-scene) .peralta-flower, .footer-opening, .footer-main, .footer-word",
         )
         .forEach((element) => observer?.observe(element));
       updateScrollMotion();
@@ -194,6 +261,7 @@ export function SiteMotion({
     reducedMotion.addEventListener("change", startRevealSystem);
 
     return () => {
+      disposed = true;
       observer?.disconnect();
       animations.forEach((animation) => animation.cancel());
       if (frame) cancelAnimationFrame(frame);
@@ -203,11 +271,19 @@ export function SiteMotion({
       reducedMotion.removeEventListener("change", startRevealSystem);
       cleanups.forEach((cleanup) => cleanup());
     };
-  }, []);
+  }, [paused]);
 
   return (
-    <div className={className} ref={root}>
-      {children}
-    </div>
+    <MotionContext.Provider
+      value={{ paused, toggle: () => setPaused((value) => !value) }}
+    >
+      <div
+        className={className}
+        ref={root}
+        data-motion-paused={paused || undefined}
+      >
+        {children}
+      </div>
+    </MotionContext.Provider>
   );
 }

@@ -4,7 +4,7 @@ for (const width of [360, 375, 390, 430, 768, 1024, 1366, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      "Aprender é",
+      "Um mundo de",
     );
     if ([360, 375, 390, 768, 1366, 1440].includes(width)) {
       const photos = page.locator("img.editorial-photo");
@@ -55,6 +55,8 @@ test("marca e fotografias oficiais são locais, acessíveis e carregam corretame
 }) => {
   const assets = [
     "/images/brand/escola-peralta-logo.webp",
+    "/images/brand/escola-peralta-logo-refinada.webp",
+    "/images/brand/escola-peralta-logo-refinada.png",
     "/images/brand/favicon-32.png",
     "/images/brand/favicon.png",
     "/images/school/hero-escola.webp",
@@ -400,4 +402,73 @@ test("falha da API de animação preserva conteúdo e controles", async ({
   ).toBeVisible();
   await page.locator("#contato").scrollIntoViewIfNeeded();
   await expect(page.getByRole("link", { name: "Como chegar" })).toBeVisible();
+});
+
+test("controle de movimento pausa animações sem bloquear a navegação", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".institutional")).toHaveClass(/motion-ready/);
+  await page.getByRole("button", { name: "Pausar movimento" }).click();
+  await expect(page.locator(".institutional")).toHaveAttribute(
+    "data-motion-paused",
+    "true",
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.getAnimations().filter((a) => a.playState === "running")
+            .length,
+      ),
+    )
+    .toBe(0);
+  await page.locator("#caderno").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Conviver", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Juntos é mais gostoso." }),
+  ).toBeVisible();
+  await page.locator("#inicio").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Retomar movimento" }).click();
+  await expect(page.locator(".institutional")).toHaveClass(/motion-ready/);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.getAnimations().filter((a) => a.playState === "running")
+            .length,
+      ),
+    )
+    .toBe(0);
+});
+
+test("ilustrações infantis adaptadas têm arquivos locais e licença preservada", async ({
+  page,
+  request,
+}) => {
+  for (const name of [
+    "balloon",
+    "books",
+    "pencil",
+    "blocks",
+    "cloud",
+    "star",
+    "rainbow",
+    "kite",
+  ]) {
+    const response = await request.get(`/images/playful/${name}.svg`);
+    expect(response.ok()).toBe(true);
+    expect(await response.text()).toContain("<svg");
+  }
+  expect(
+    await (await request.get("/images/playful/LICENSE.tabler.txt")).text(),
+  ).toContain("MIT License");
+  await page.goto("/");
+  await expect(page.locator(".school-doodle").first()).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  expect(await page.locator(".school-doodle").count()).toBeGreaterThan(20);
+  expect(await page.locator('.school-doodle img[src^="http"]').count()).toBe(0);
 });

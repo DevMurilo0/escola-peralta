@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { school } from "@/config/school-config";
-import { Flower } from "./peralta-art";
+import { Doodle, Flower, PencilLine } from "./peralta-art";
 
 const chapters = [
   {
@@ -53,6 +53,7 @@ export function PeraltaCaderno() {
     >
       <div className="section-wrap">
         <div className="caderno-heading">
+          <Doodle kind="pencil" className="caderno-heading-pencil" />
           <h2 id="peralta-caderno-heading">
             Caderno <em>Vivo.</em>
           </h2>
@@ -63,6 +64,7 @@ export function PeraltaCaderno() {
           </p>
         </div>
         <div className={`caderno-spread theme-${chapter.theme}`}>
+          <div className="caderno-binding" aria-hidden="true" />
           <div className="caderno-art" data-reveal="clip-left">
             <div className="caderno-photo-page" key={active}>
               <figure className="caderno-main-photo">
@@ -87,6 +89,7 @@ export function PeraltaCaderno() {
               </figure>
             </div>
             <Flower className="caderno-flower" />
+            <Doodle kind="star" className="caderno-star" />
             <span className="caderno-photo-note">
               Fotografias da Escola Peralta
             </span>
@@ -117,6 +120,7 @@ export function PeraltaCaderno() {
               aria-atomic="true"
             >
               <h3>{chapter.title}</h3>
+              <PencilLine />
               <p className="caderno-subtitle">{chapter.subtitle}</p>
               <p>{chapter.body}</p>
               <a
