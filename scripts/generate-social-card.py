@@ -51,7 +51,6 @@ def build() -> None:
     # Elementos lúdicos nas bordas, mantendo a área do texto limpa.
     draw.ellipse((-170,435,300,940),fill="#f9ebc4")
     draw.ellipse((455,-300,805,160),fill="#e2f0e0")
-    draw.arc((-55,450,580,980),180,295,fill=GREEN,width=7)
     for x,y,r,c in [(522,88,16,CORAL),(502,565,18,BLUE),(1150,46,16,YELLOW)]:
         star(draw,x,y,r,c)
 
