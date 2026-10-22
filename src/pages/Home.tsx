@@ -11,7 +11,9 @@ import { institutional as content } from "@/config/institutional-content";
 import { PublicHeader } from "@/components/public-header";
 import { PhotoFrame } from "@/components/institutional/photo-frame";
 import { SiteMotion } from "@/components/institutional/site-motion";
+import { PeraltaCaderno } from "@/components/institutional/peralta-caderno";
 import "@/styles/institutional.css";
+import "@/styles/peralta-caderno.css";
 export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -91,6 +93,18 @@ export default function Home() {
                 parallax={0.018}
               />
 
+              <div className="peralta-hero-mark" aria-hidden="true">
+                <svg viewBox="0 0 120 120" focusable="false">
+                  <text x="60" y="26" textAnchor="middle">AQUI A GENTE</text>
+                  <path className="mark-flower" d="M60 35c6-14 18-7 16 3 11-6 22 6 13 15 14 1 14 17 1 20 8 12-5 23-16 14-3 14-20 14-23 0-11 9-24-2-16-14-13-3-13-19 1-20-9-9 2-21 13-15-2-10 10-17 16-3Z"/>
+                  <circle className="mark-center" cx="60" cy="61" r="14"/>
+                  <text x="60" y="65" textAnchor="middle" style={{ fontSize: 18, letterSpacing: 0 }}>✦</text>
+                  <text x="60" y="108" textAnchor="middle">DESCOBRE</text>
+                </svg>
+              </div>
+              <div className="peralta-hero-mini" aria-hidden="true">
+                <img src="/images/school/vivencia-01.webp" alt="" width={360} height={430} loading="eager" />
+              </div>
               <a
                 className="hero-media-note"
                 href={contactLink}
@@ -104,6 +118,15 @@ export default function Home() {
             </div>
           </div>
         </section>
+        <div className="peralta-ribbon" aria-label="Aprender, brincar, conviver e crescer">
+          <div className="peralta-ribbon-track" aria-hidden="true">
+            {[0, 1].map((i) => (
+              <span key={i}>
+                aprender <b>✳</b> brincar <b>✳</b> conviver <b>✳</b> crescer <b>✳</b>
+              </span>
+            ))}
+          </div>
+        </div>
         <section
           id="escola"
           tabIndex={-1}
@@ -167,6 +190,7 @@ export default function Home() {
             ))}
           </div>
         </section>
+        <PeraltaCaderno />
         <section
           id="ensino"
           tabIndex={-1}
@@ -500,6 +524,11 @@ export default function Home() {
         </section>
       </main>
       <footer className="school-footer">
+        <div className="peralta-footer-word" aria-hidden="true">
+          <strong>PERALTA</strong>
+          <img src="/images/brand/escola-peralta-selo-transparente.webp" alt="" loading="lazy" />
+          <span className="peralta-footer-word-note">GRAVATÁ · PERNAMBUCO</span>
+        </div>
         <div className="footer-top">
           <Link
             className="brand-signature"

@@ -1,0 +1,28 @@
+name: Qualidade do site institucional
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/images/**'
+      - 'package*.json'
+      - '.github/workflows/qualidade-institucional.yml'
+  push:
+    branches: [design/peralta-caderno-vivo]
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Verificar lint
+        run: npm run lint
+      - name: Compilar
+        run: npm run build

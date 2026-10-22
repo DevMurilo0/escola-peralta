@@ -1,0 +1,309 @@
+/* Escola Peralta — Caderno Vivo
+   Projeto institucional apenas; regras isoladas da área acadêmica.
+   Fotografia e cores partem de assets existentes da própria escola.
+*/
+.institutional {
+  --peralta-ink: #20324a;
+  --peralta-blue: #2353a0;
+  --peralta-coral: #ba4a38;
+  --peralta-leaf: #2e6952;
+  --peralta-butter: #f1cd58;
+  --peralta-paper: #faf5e9;
+  --peralta-ease: cubic-bezier(.22,1,.36,1);
+}
+.institutional .opening-scene { position: relative; isolation: isolate; }
+.institutional .opening-scene::before {
+  content: ""; pointer-events: none; position: absolute; z-index: -1;
+  width: min(43vw, 540px); aspect-ratio: 1; top: 6%; right: -12%;
+  border: 1px solid rgba(35,83,160,.14); border-radius: 50%;
+  transform: rotate(-18deg);
+}
+.institutional .peralta-hero-mark {
+  position: absolute; top: -26px; right: -28px; z-index: 5;
+  width: 132px; height: 132px; display: grid; place-items: center;
+  transform: rotate(11deg); border-radius: 50%;
+  background: var(--peralta-butter); color: var(--peralta-ink);
+  box-shadow: 0 9px 38px rgba(17,40,72,.14);
+  pointer-events: none;
+}
+.institutional .peralta-hero-mark svg {width: 89%; height: 89%;}
+.institutional .peralta-hero-mark text {
+  font: 700 12px "Peralta Body",sans-serif; letter-spacing: 1.9px;
+  fill: var(--peralta-ink);
+}
+.institutional .peralta-hero-mark .mark-flower { fill: var(--peralta-coral); }
+.institutional .peralta-hero-mark .mark-center {fill: #fff8dd;}
+.institutional .peralta-hero-mini {
+  position: absolute; z-index: 3; width: clamp(100px,12vw,172px); height: clamp(123px,15vw,208px);
+  right: -34px; bottom: 80px; overflow: hidden;
+  transform: rotate(6deg); border: 7px solid #f9f7ee; border-bottom-width: 25px;
+  background: var(--peralta-paper); box-shadow: 0 18px 45px rgba(24,41,57,.16);
+  pointer-events: none; border-radius: 5px;
+}
+.institutional .peralta-hero-mini img {
+  width: 100%;height: 100%;object-fit: cover;object-position: 40% 45%;
+  transition: transform .7s var(--peralta-ease);
+}
+.institutional .hero-media:hover .peralta-hero-mini img {transform: scale(1.055);}
+.institutional .peralta-hero-mini::after {
+  content:"PERALTA • GRAVATÁ"; position:absolute;bottom:-20px;left:4px;
+  color:var(--peralta-ink);font-size:7px;letter-spacing:.16em;font-weight:700;
+}
+.institutional .hero-actions .site-button,
+.institutional .peralta-caderno-cta {transition: background .22s ease,transform .16s var(--peralta-ease),box-shadow .22s ease;}
+.institutional .hero-actions .site-button:active,
+.institutional .peralta-caderno-cta:active {transform: scale(.975);}
+.institutional .school-story {position:relative;}
+.institutional .school-story::before {
+  content:"";pointer-events:none;position:absolute;right:1.5%;top:9%;
+  background:url('/images/brand/escola-peralta-selo-transparente.webp') center/contain no-repeat;
+  width:clamp(130px,18vw,265px);height:clamp(130px,18vw,265px);
+  opacity:.09;transform:rotate(13deg);
+}
+.institutional .peralta-ribbon {
+  overflow:hidden; background: var(--peralta-butter); color:var(--peralta-ink);
+  border-top: 1px solid rgba(32,50,74,.1);border-bottom: 1px solid rgba(32,50,74,.1);
+  padding:17px 0 15px;display:flex; align-items:center;
+}
+.institutional .peralta-ribbon-track {
+  display:flex; gap:40px; width:max-content; align-items:center;
+  animation: peralta-ribbon-move 34s linear infinite;
+}
+.institutional .peralta-ribbon-track > span {
+  font-family:var(--font-brand-display),sans-serif;
+  font-weight:700;font-size:clamp(19px,2.4vw,31px);letter-spacing:-.04em;
+  white-space:nowrap;display:flex;gap:36px;align-items:center;
+}
+.institutional .peralta-ribbon-track b {
+  color:var(--peralta-coral);font-size:20px;line-height:1;
+  font-family:serif;font-weight:400;
+}
+@keyframes peralta-ribbon-move{to{transform:translateX(-50%);}}
+/* Editorial interactive spread */
+.institutional .peralta-caderno {
+  color:var(--peralta-ink);background:#faf2e5;position:relative;overflow:hidden;
+  padding:clamp(72px,8vw,126px) max(6%,calc((100vw - 1320px)/2)) 55px;
+  isolation:isolate;
+}
+.institutional .peralta-caderno::before {
+  content:"";pointer-events:none; position:absolute;right:-170px;top:-240px;
+  width:540px;height:540px;border:2px dashed rgba(186,74,56,.14);
+  border-radius:50%;z-index:-1;
+}
+.institutional .peralta-caderno-top {
+  display:grid;grid-template-columns:minmax(0,1.25fr) minmax(270px,.55fr);
+  align-items:end;gap:clamp(30px,6vw,100px);margin-bottom:60px;
+}
+.institutional .peralta-caderno-kicker {
+  display:flex;align-items:center;gap:13px;color:var(--peralta-coral);
+  text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:700;margin-bottom:22px;
+}
+.institutional .peralta-caderno-kicker span {font-size:30px;line-height:.6;font-family:serif;}
+.institutional .peralta-caderno-top h2 {
+  max-width:880px;margin:0;font-size:clamp(53px,6.6vw,104px);
+  line-height:.98;letter-spacing:-.066em;
+}
+.institutional .peralta-caderno-top h2 em {display:block;font-weight:500;color:var(--peralta-coral);font-style:normal;}
+.institutional .peralta-caderno-top > p {margin:0 0 6px;font-size:clamp(16px,1.4vw,19px);line-height:1.6;color:#5b5c53;}
+.institutional .peralta-caderno-layout {
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(350px,.95fr);
+  gap:clamp(46px,6vw,110px);align-items:center;
+}
+.institutional .peralta-caderno-art {
+  position:relative;min-height:560px;height:min(53vw,690px);
+  display:flex;justify-content:center;align-items:center;isolation:isolate;
+}
+.institutional .peralta-caderno-art-disc {
+  position:absolute;z-index:-1;left:-1%;top:6%;width:95%;height:87%;
+  border-radius:48% 52% 50% 46%;background:#f4cf6a;
+  transform:rotate(-12deg); transition: background .45s ease, border-radius .6s var(--peralta-ease);
+}
+.institutional .peralta-caderno-art.theme-blue .peralta-caderno-art-disc{background:#cbdff1;border-radius:42% 59% 44% 52%;}
+.institutional .peralta-caderno-art.theme-green .peralta-caderno-art-disc{background:#cfe7d3;border-radius:58% 45% 49% 44%;}
+.institutional .peralta-caderno-art-squiggle{
+  position:absolute;left:-4%;top:5%;font: 100px/1 Georgia,serif;color:var(--peralta-coral);
+  transform:rotate(-20deg);z-index:3;
+}
+.institutional .peralta-caderno-main-photo {
+  position:absolute;inset:8% 19% 8% 11%;margin:0;
+  border-radius:180px 180px 22px 22px;overflow:hidden;background:#f4ebd9;
+  box-shadow:0 28px 70px rgba(32,50,74,.17);
+  animation:peralta-photo-appear .5s var(--peralta-ease) both;
+}
+.institutional .peralta-caderno-main-photo img,
+.institutional .peralta-caderno-small-photo img {display:block;width:100%;height:100%;object-fit:cover;}
+.institutional .peralta-caderno-main-photo img {object-position:center 40%;}
+.institutional .peralta-caderno-small-photo {
+  position:absolute;right:0;bottom:4%;height:43%;width:40%;
+  margin:0;border:8px solid #fffaf1;border-bottom-width:30px;
+  background:#f9f3e9;box-shadow:0 18px 40px rgba(32,50,74,.19);
+  transform:rotate(8deg);overflow:hidden;border-radius:5px;
+  animation:peralta-photo-appear .55s var(--peralta-ease) both;
+}
+.institutional .peralta-caderno-seal {
+  position:absolute;z-index:4;top:5%;right:1%;width:clamp(90px,10vw,148px);
+  aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+  border:2px solid rgba(32,50,74,.16);background:#fffdf1;
+  transform:rotate(12deg);box-shadow:0 9px 24px rgba(32,50,74,.12);
+}
+.institutional .peralta-caderno-seal img {width:81%;height:81%;object-fit:contain;}
+.institutional .peralta-caderno-photo-note {
+  position:absolute;left:2%;bottom:8%;padding:13px 18px;
+  background:#fffbf5;box-shadow:0 10px 30px rgba(32,50,74,.09);
+  color:var(--peralta-ink);font-size:10px;font-weight:700;letter-spacing:.17em;
+  transform:rotate(-6deg);
+}
+@keyframes peralta-photo-appear {
+  from {opacity:.4;clip-path:inset(0 0 16% 0); }
+  to {opacity:1;clip-path:inset(0 0 0 0);}
+}
+.institutional .peralta-caderno-copy{align-self:stretch;display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.institutional .peralta-caderno-controls {display:flex;gap:10px;margin-bottom:clamp(50px,6vw,90px);}
+.institutional .peralta-caderno-controls button{
+  display:flex;align-items:center;gap:10px;min-height:48px;padding:12px 16px;
+  border:1px solid rgba(32,50,74,.2);border-radius:999px;background:transparent;
+  color:var(--peralta-ink);cursor:pointer;font:600 13px/1.2 var(--font-brand-body),sans-serif;
+  transition:background .22s ease,color .22s ease,transform .16s var(--peralta-ease);
+}
+.institutional .peralta-caderno-controls button span:first-child{opacity:.55;font-size:10px;}
+.institutional .peralta-caderno-controls button[aria-pressed="true"]{color:#fff;background:var(--peralta-ink);border-color:var(--peralta-ink);}
+.institutional .peralta-caderno-controls button:not([aria-pressed="true"]):hover{background:#fffaf0;}
+.institutional .peralta-caderno-controls button:active,
+.institutional .peralta-caderno-arrows button:active{transform:scale(.96);}
+.institutional .peralta-caderno-copy-inner {animation:peralta-copy-in .4s var(--peralta-ease) both;}
+@keyframes peralta-copy-in{from{opacity:.25;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.institutional .peralta-caderno-eyebrow{font-size:11px;font-weight:700;color:var(--peralta-coral);letter-spacing:.14em;}
+.institutional .peralta-caderno-copy-inner h3{
+  font-size:clamp(40px,4.4vw,69px);letter-spacing:-.062em;line-height:1.02;
+  margin:25px 0;max-width:500px;
+}
+.institutional .peralta-caderno-copy-inner p {font-size:clamp(16px,1.25vw,18px);line-height:1.65;color:#59625e;max-width:45ch;margin:0 0 18px;}
+.institutional .peralta-caderno-copy-inner .peralta-caderno-subtitle{
+  color:var(--peralta-ink);font-size:clamp(18px,1.4vw,21px);font-weight:600;
+}
+.institutional .peralta-caderno-cta {
+  display:inline-flex;align-items:center;gap:25px;margin-top:16px;
+  min-height:48px;width:max-content;border-bottom:1px solid var(--peralta-ink);
+  color:var(--peralta-ink);font-size:14px;font-weight:700;text-decoration:none;
+}
+.institutional .peralta-caderno-cta svg{transition:transform .22s var(--peralta-ease);}
+.institutional .peralta-caderno-cta:hover svg{transform:translate(3px,-3px);}
+.institutional .peralta-caderno-bottom {display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:42px;}
+.institutional .peralta-caderno-pagecount{display:flex;align-items:baseline;gap:12px;font:600 15px/1 var(--font-brand-body),sans-serif;color:#66746e;}
+.institutional .peralta-caderno-pagecount strong {font:600 43px/1 var(--font-brand-display),sans-serif;letter-spacing:-.05em;color:var(--peralta-ink);}
+.institutional .peralta-caderno-arrows{display:flex;gap:9px;}
+.institutional .peralta-caderno-arrows button{
+  display:grid;place-items:center;width:50px;height:50px;
+  background:#fffaf2;border:1px solid #c9c9bb;border-radius:50%;
+  color:var(--peralta-ink);cursor:pointer;transition:transform .18s var(--peralta-ease),background .18s ease;
+}
+.institutional .peralta-caderno-arrows button:hover{background:var(--peralta-butter);}
+.institutional .peralta-caderno-footnote {
+  display:flex;justify-content:space-between;gap:20px;padding-top:25px;margin-top:52px;
+  border-top:1px solid #d9d2c4;color:#6b7166;
+  font-size:11px;font-weight:700;letter-spacing:.08em;
+}
+.institutional .peralta-caderno-footnote a {display:flex;gap:9px;align-items:center;color:var(--peralta-ink);letter-spacing:0;font-size:13px;}
+.institutional .peralta-footer-word {
+  position:relative;overflow:hidden;padding:25px 5% 20px;
+  display:flex;align-items:center;gap:32px;background:#f2ce55;color:#20324a;
+}
+.institutional .peralta-footer-word strong {font:700 clamp(78px,16vw,260px)/.8 var(--font-brand-display),sans-serif;letter-spacing:-.085em;}
+.institutional .peralta-footer-word img{width:clamp(70px,9vw,140px);height:clamp(70px,9vw,140px);object-fit:contain;transform:rotate(12deg);}
+.institutional .peralta-footer-word .peralta-footer-word-note{
+  position:absolute;right:5%;bottom:15px;font-size:11px;letter-spacing:.13em;font-weight:700;
+}
+@media(max-width:1080px){
+  .institutional .peralta-caderno-layout{grid-template-columns:1fr 1fr;gap:34px;}
+  .institutional .peralta-caderno-art{height:570px;min-height:500px;}
+  .institutional .peralta-caderno-top{grid-template-columns:1fr 1fr;}
+  .institutional .peralta-caderno-controls{gap:6px;margin-bottom:42px;}
+  .institutional .peralta-caderno-controls button{padding:11px 12px;gap:6px;}
+  .institutional .peralta-hero-mini{right:14px;}
+  .institutional .peralta-hero-mark{right:12px;top:-35px;width:104px;height:104px;}
+}
+@media(max-width:790px){
+  .institutional .peralta-caderno{padding:70px 6% 45px;}
+  .institutional .peralta-caderno-top{display:block;margin-bottom:24px;}
+  .institutional .peralta-caderno-top h2{font-size:clamp(50px,10vw,74px);max-width:700px;}
+  .institutional .peralta-caderno-top > p{max-width:540px;margin:25px 0 0;}
+  .institutional .peralta-caderno-layout{grid-template-columns:1fr;gap:26px;}
+  .institutional .peralta-caderno-art{width:min(100%,650px);margin:auto;min-height:0;height:min(100vw,600px);}
+  .institutional .peralta-caderno-copy{max-width:700px;width:100%;margin:auto;}
+  .institutional .peralta-caderno-controls{margin-bottom:28px;}
+  .institutional .peralta-caderno-bottom{margin-top:20px;padding-top:15px;}
+  .institutional .peralta-caderno-footnote{margin-top:32px;}
+}
+@media(max-width:540px){
+  .institutional .peralta-hero-mini{right:8px;bottom:110px;width:106px;height:143px;border-width:5px;border-bottom-width:20px;}
+  .institutional .peralta-hero-mark{top:-20px;right:-9px;width:92px;height:92px;}
+  .institutional .peralta-caderno-top h2{font-size:clamp(42px,11vw,59px);}
+  .institutional .peralta-caderno-art{height:110vw;max-height:470px;}
+  .institutional .peralta-caderno-seal{width:90px;top:0;}
+  .institutional .peralta-caderno-main-photo{inset:9% 14% 7% 8%;}
+  .institutional .peralta-caderno-small-photo{right:0;width:39%;border-width:5px;border-bottom-width:23px;}
+  .institutional .peralta-caderno-art-squiggle{font-size:60px;top:3%;}
+  .institutional .peralta-caderno-photo-note{font-size:8px;padding:10px 12px;}
+  .institutional .peralta-caderno-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
+  .institutional .peralta-caderno-controls button{min-height:45px;padding:10px 7px;gap:6px;font-size:11px;justify-content:center;}
+  .institutional .peralta-caderno-copy-inner h3{font-size:clamp(39px,11vw,51px);margin:19px 0;}
+  .institutional .peralta-caderno-footnote{flex-direction:column;gap:9px;}
+  .institutional .peralta-footer-word{gap:12px;padding:28px 6%;}
+  .institutional .peralta-footer-word strong{font-size:clamp(64px,17vw,100px);}
+  .institutional .peralta-footer-word img{width:62px;height:62px;}
+  .institutional .peralta-footer-word .peralta-footer-word-note{font-size:8px;bottom:8px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .institutional .peralta-ribbon-track{animation:none;}
+  .institutional .peralta-caderno-copy-inner,
+  .institutional .peralta-caderno-main-photo,
+  .institutional .peralta-caderno-small-photo{animation:none;}
+  .institutional .peralta-hero-mini img{transition:none;}
+}
+
+/* Refinamento das seções existentes: grafismos têm relação com descoberta, não são UI decorativa genérica. */
+.institutional .learning-section {
+  position:relative; isolation:isolate;
+  background:linear-gradient(134deg,#e5effb 0%,#dce9f9 50%,#eef3fa 100%);
+}
+.institutional .learning-section::after {
+  content:"✳";position:absolute;right:2.5%;top:7%;pointer-events:none;
+  color:rgba(35,83,160,.085);font:400 clamp(160px,23vw,320px)/1 Georgia,serif;
+  transform:rotate(8deg);z-index:-1;
+}
+.institutional .learning-concepts article {
+  padding:30px 26px 34px;min-width:0;border:1px solid #b6c9e2;
+  background:rgba(255,255,255,.63);border-radius:22px;
+  transition:transform .28s var(--peralta-ease),box-shadow .28s ease,background .28s ease;
+}
+.institutional .learning-concepts article:nth-child(2){background:#fff8e7;}
+.institutional .learning-concepts article:nth-child(3){background:#e5f3e8;}
+@media (hover:hover) and (pointer:fine){
+  .institutional .learning-concepts article:hover{
+    transform:translateY(-7px);box-shadow:0 15px 40px rgba(34,65,91,.09);
+  }
+}
+.institutional .life-rail figure .photo-frame {overflow:hidden;}
+.institutional .life-rail figure img {transition:transform .65s var(--peralta-ease);}
+@media (hover:hover) and (pointer:fine){
+ .institutional .life-rail figure:hover img {transform:scale(1.035);}
+}
+.institutional .instagram-invitation{position:relative;}
+.institutional .instagram-invitation::before {
+  content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;
+  background:var(--peralta-butter);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;
+}
+@media(max-width:700px){
+ .institutional .learning-concepts article{padding:21px 18px;}
+ .institutional .instagram-invitation::before{display:none;}
+}
+@media(prefers-reduced-motion:reduce){
+ .institutional .learning-concepts article,
+ .institutional .life-rail figure img {transition:none!important;}
+}
+
+@media(max-width:540px){
+  /* Preserva o lettering integral no espaço estreito, sem recortar letras da marca tipográfica. */
+  .institutional .peralta-footer-word strong{font-size:clamp(48px,14vw,74px);}
+  .institutional .peralta-footer-word img{width:52px;height:52px;}
+}
