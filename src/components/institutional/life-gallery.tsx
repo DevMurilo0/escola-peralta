@@ -81,7 +81,20 @@ export function LifeGallery() {
             />
             <figcaption>
               <span>{photo.caption}</span>
-              <span aria-hidden="true">{index + 1}</span>
+              {"sourcePost" in photo && typeof photo.sourcePost === "string" ? (
+                <a
+                  className="life-photo-source"
+                  href={photo.sourcePost}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Ver publicação original: ${photo.caption}`}
+                >
+                  <Instagram size={16} aria-hidden="true" />
+                  <ArrowUpRight size={15} aria-hidden="true" />
+                </a>
+              ) : (
+                <span aria-hidden="true">{index + 1}</span>
+              )}
             </figcaption>
           </figure>
         ))}
