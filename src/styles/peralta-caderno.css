@@ -260,3 +260,44 @@
   .institutional .peralta-caderno-small-photo{animation:none;}
   .institutional .peralta-hero-mini img{transition:none;}
 }
+
+/* Refinamento das seções existentes: grafismos têm relação com descoberta, não são UI decorativa genérica. */
+.institutional .learning-section {
+  position:relative; isolation:isolate;
+  background:linear-gradient(134deg,#e5effb 0%,#dce9f9 50%,#eef3fa 100%);
+}
+.institutional .learning-section::after {
+  content:"✳";position:absolute;right:2.5%;top:7%;pointer-events:none;
+  color:rgba(35,83,160,.085);font:400 clamp(160px,23vw,320px)/1 Georgia,serif;
+  transform:rotate(8deg);z-index:-1;
+}
+.institutional .learning-concepts article {
+  padding:30px 26px 34px;min-width:0;border:1px solid #b6c9e2;
+  background:rgba(255,255,255,.63);border-radius:22px;
+  transition:transform .28s var(--peralta-ease),box-shadow .28s ease,background .28s ease;
+}
+.institutional .learning-concepts article:nth-child(2){background:#fff8e7;}
+.institutional .learning-concepts article:nth-child(3){background:#e5f3e8;}
+@media (hover:hover) and (pointer:fine){
+  .institutional .learning-concepts article:hover{
+    transform:translateY(-7px);box-shadow:0 15px 40px rgba(34,65,91,.09);
+  }
+}
+.institutional .life-rail figure .photo-frame {overflow:hidden;}
+.institutional .life-rail figure img {transition:transform .65s var(--peralta-ease);}
+@media (hover:hover) and (pointer:fine){
+ .institutional .life-rail figure:hover img {transform:scale(1.035);}
+}
+.institutional .instagram-invitation{position:relative;}
+.institutional .instagram-invitation::before {
+  content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;
+  background:var(--peralta-butter);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;
+}
+@media(max-width:700px){
+ .institutional .learning-concepts article{padding:21px 18px;}
+ .institutional .instagram-invitation::before{display:none;}
+}
+@media(prefers-reduced-motion:reduce){
+ .institutional .learning-concepts article,
+ .institutional .life-rail figure img {transition:none!important;}
+}
