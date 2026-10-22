@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'index.html'
+      - 'tests/social-preview.test.ts'
+      - 'scripts/generate-social-card.py'
       - 'public/images/**'
       - 'package*.json'
       - '.github/workflows/qualidade-institucional.yml'
@@ -24,5 +27,7 @@ jobs:
         run: npm ci
       - name: Verificar lint
         run: npm run lint
+      - name: Verificar Open Graph e arquivo do cartão
+        run: npx vitest run tests/social-preview.test.ts
       - name: Compilar
         run: npm run build
