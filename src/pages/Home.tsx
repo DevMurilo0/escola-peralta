@@ -14,6 +14,7 @@ import { SiteMotion } from "@/components/institutional/site-motion";
 import { PeraltaCaderno } from "@/components/institutional/peralta-caderno";
 import "@/styles/institutional.css";
 import "@/styles/peralta-caderno.css";
+import "@/styles/peralta-renovacao.css";
 export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -118,15 +119,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <div className="peralta-ribbon" aria-label="Aprender, brincar, conviver e crescer">
-          <div className="peralta-ribbon-track" aria-hidden="true">
-            {[0, 1].map((i) => (
-              <span key={i}>
-                aprender <b>✳</b> brincar <b>✳</b> conviver <b>✳</b> crescer <b>✳</b>
-              </span>
-            ))}
-          </div>
-        </div>
+        <PeraltaCaderno />
         <section
           id="escola"
           tabIndex={-1}
@@ -190,7 +183,6 @@ export default function Home() {
             ))}
           </div>
         </section>
-        <PeraltaCaderno />
         <section
           id="ensino"
           tabIndex={-1}
@@ -538,7 +530,7 @@ export default function Home() {
             {school.logo ? (
               <img
                 decoding="async"
-                src={school.logo}
+                src="/images/brand/escola-peralta-selo-transparente.webp"
                 width={100}
                 height={100}
                 alt="Logo da Escola Peralta"
@@ -563,7 +555,7 @@ export default function Home() {
         </nav>
         <div className="footer-end">
           <span>© {new Date().getFullYear()} Escola Peralta</span>
-          <span>Gravatá · Pernambuco</span>
+          <span className="developer-credit">Desenvolvido por <a href="https://murilogabriel.com.br" target="_blank" rel="noopener noreferrer">Murilo Gabriel <ArrowUpRight size={14} aria-hidden="true" /></a></span>
         </div>
       </footer>
       <script

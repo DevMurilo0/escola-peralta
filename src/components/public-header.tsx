@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
-import { school } from "@/config/school-config";
+
 const links = [
   ["inicio", "Início"],
   ["escola", "A Escola"],
@@ -69,20 +69,13 @@ export function PublicHeader() {
         to="/"
         aria-label="Escola Peralta — início"
       >
-        {school.logo ? (
-          <img
-            decoding="async"
-            src={school.logo}
-            width={100}
-            height={100}
-            alt="Logo da Escola Peralta"
-          />
-        ) : (
-          <>
-            <span>ESCOLA</span>
-            <strong>Peralta</strong>
-          </>
-        )}
+        <img
+          decoding="async"
+          src="/images/brand/escola-peralta-selo-transparente.webp"
+          width={100}
+          height={100}
+          alt="Logo da Escola Peralta"
+        />
       </Link>
       <button
         ref={toggle}
