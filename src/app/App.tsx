@@ -33,7 +33,7 @@ export default function App() {
   useEffect(() => {
     const isPublic = pathname === "/";
     document.title = isPublic
-      ? "Escola Peralta | Aprender e crescer em Gravatá"
+      ? "Escola Peralta | Um mundo de descobertas em Gravatá"
       : "Portal Peralta | Escola Peralta";
     document
       .querySelector('meta[name="robots"]')
