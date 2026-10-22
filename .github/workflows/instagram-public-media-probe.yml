@@ -7,15 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
-      - name: Testar acesso anônimo aos arquivos públicos
+      - name: Testar acesso a URLs completas de imagem
         shell: bash
         run: |
           set +e
           urls=(
-            'https://lookaside.instagram.com/seo/google_widget/crawler/?media_id=3915735742059057909'
-            'https://s2.imginn.com/858994531_18380643646233426_1903077507743111519_n.webp'
-            'https://imginn.com/p/DevA8svNElE/'
-            'https://www.instagram.com/p/DdXeyhWtCxt/'
+            'https://s2.imginn.com/846567826_1703042888163116_3391598036603448694_n.jpg?t51.71878-15/846567826_1703042888163116_3391598036603448694_n.jpg?stp=dst-jpg_e35_s640x640_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=uKr_YHAcdsAQ7kNvwGH9zA4&_nc_oc=Adqe91RCEWmLRrc8FBxZ_r4z7teFFAqcZFX0Es7Qb0EFOm8DP2AHawaKmyBoJqF25sLQXrtohNCZar-366RigyPO&_nc_zt=23&_nc_ht=scontent-atl3-2.cdninstagram.com&_nc_gid=fn7x93ZaqriPnl-Nom7_cw&_nc_ss=70689&oh=00_AQML5e1koNfRg-ucNkiFArDX9INqIQaTDgaqtB5kUTE25A&oe=6AE03606'
+            'https://s2.imginn.com/626278022_1953908385521075_2491066876884984971_n.jpg?t51.71878-15/626278022_1953908385521075_2491066876884984971_n.jpg?stp=dst-jpg_e35_s640x640_tt6&_nc_cat=104&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=nNWX6xEVON8Q7kNvwH-aqUs&_nc_oc=AdqTX1tfrZuAdJz46AhCe-pyJsVqobX_s_2R419aLErw4yxqwmb4qMvQgN2uowMZmQcTSbGSUPbGKuU2wzovDcMv&_nc_zt=23&_nc_ht=scontent-atl3-2.cdninstagram.com&_nc_gid=fn7x93ZaqriPnl-Nom7_cw&_nc_ss=70689&oh=00_AQN0ZyiYCMOqjULjh-GroJnGPJcBgYAmY1F7R1_6bM3a8w&oe=6AE0286F'
           )
           for i in "${!urls[@]}"; do
             echo "Testing source $i"
