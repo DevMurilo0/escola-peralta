@@ -29,6 +29,22 @@ export const school = {
   ],
   gallery: [
     {
+      src: "/images/school/instagram/DdXeyhWtCxt.webp",
+      alt: "Alunos e educadores reunidos em atividade coletiva no pátio da Escola Peralta, vistos entre folhas",
+      caption: "Aprendendo juntos, além da sala",
+      position: "50% 52%",
+      mobilePosition: "50% 52%",
+      sourcePost: "https://www.instagram.com/p/DdXeyhWtCxt/",
+    },
+    {
+      src: "/images/school/instagram/DZXfOkzuxL1.webp",
+      alt: "Aluna da Escola Peralta participa de atividade temática com as cores do Brasil",
+      caption: "Criatividade em ritmo de Copa",
+      position: "50% 45%",
+      mobilePosition: "50% 45%",
+      sourcePost: "https://www.instagram.com/p/DZXfOkzuxL1/",
+    },
+    {
       src: "/images/school/vivencia-01.webp",
       alt: "Estudante com frutas durante atividade de alimentação saudável na Escola Peralta",
       caption: "Hábitos saudáveis na escola",
