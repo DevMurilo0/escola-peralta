@@ -247,7 +247,7 @@ export function SiteMotion({
           if (candidateSet.has(ancestor)) return false;
           ancestor = ancestor.parentElement;
         }
-        return !heroParts.some((hero) => hero.contains(element));
+        return !heroParts.some((hero) => hero === element || hero.contains(element));
       });
       const targets = [...heroParts, ...revealTargets];
       targets.forEach((element) => {
