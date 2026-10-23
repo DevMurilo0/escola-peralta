@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+// CI usa o mesmo Chrome presente no runner, sem baixar Chromium.
+test.use({
+  launchOptions: process.env.CI
+    ? { executablePath: "/usr/bin/google-chrome" }
+    : {},
+});
+
 test("cards pedagógicos e controles de galeria recebem entradas progressivas", async ({
   page,
 }) => {
