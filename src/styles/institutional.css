@@ -21,6 +21,12 @@
   overflow: clip;
   text-rendering: optimizeLegibility;
 }
+/* Apenas elementos com animação preparada são ocultados. O CSS chega com o
+   primeiro paint do React (useLayoutEffect). Sem JS, WAAPI ou com redução
+   de movimento, o conteúdo permanece normalmente legível e acessível. */
+.institutional.motion-ready [data-motion-state="pending"] {
+  opacity: 0;
+}
 .institutional ::selection {
   background: var(--sun);
   color: var(--deep-blue);
