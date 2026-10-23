@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 
 const MotionContext = createContext({ paused: false, toggle: () => {} });
@@ -31,7 +31,9 @@ export function SiteMotion({
   const root = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
 
-  useEffect(() => {
+  // useLayoutEffect prepara o estado de entrada antes do primeiro paint do React:
+  // evita o flash de conteúdo totalmente visível que ocorria com useEffect.
+  useLayoutEffect(() => {
     const container = root.current;
     if (!container) return;
 
@@ -48,8 +50,10 @@ export function SiteMotion({
         paused ||
         reducedMotion.matches ||
         typeof element.animate !== "function"
-      )
+      ) {
+        element.dataset.motionState = "complete";
         return;
+      }
       const kind = element.dataset.reveal;
       const isPhoto =
         kind?.startsWith("clip") ||
@@ -74,24 +78,35 @@ export function SiteMotion({
               ]
             : isPhoto
               ? [
-                  { clipPath: fromClip, opacity: 0.5 },
+                  { clipPath: fromClip, opacity: 0 },
                   { clipPath: "inset(0)", opacity: 1 },
                 ]
               : [
                   { opacity: 0, translate: `0 ${hero ? 30 : 20}px` },
                   { opacity: 1, translate: "0 0" },
                 ];
-      const animation = element.animate(frames, {
-        duration: isPhoto || hero ? 700 : 540,
-        delay,
-        easing: "cubic-bezier(.22,1,.36,1)",
-        // No persistent hidden state: cancelled/unsupported animation exposes content.
-        fill: "backwards",
-      });
+      // O elemento já está invisível desde o layout effect via CSS. A animação
+      // assume o estado visual imediatamente, sem uma pintura intermediária.
+      element.dataset.motionState = "running";
+      let animation: Animation;
+      try {
+        animation = element.animate(frames, {
+          duration: isPhoto || hero ? 700 : 540,
+          delay,
+          easing: "cubic-bezier(.22,1,.36,1)",
+          // Preserva o primeiro frame durante o delay, sem esconder após terminar.
+          fill: "backwards",
+        });
+      } catch {
+        // Fallback progressivo: nunca deixe textos invisíveis se WAAPI falhar.
+        element.dataset.motionState = "complete";
+        return;
+      }
       animations.add(animation);
       animation.finished
         .then(() => {
           animations.delete(animation);
+          element.dataset.motionState = "complete";
           if (disposed) return;
           const floating = element.querySelector<HTMLElement>("[data-float]");
           if (!floating || paused || reducedMotion.matches) return;
@@ -150,45 +165,70 @@ export function SiteMotion({
     };
 
     const startRevealSystem = () => {
+      // Primeiro desativa qualquer máscara anterior para preservar conteúdo
+      // em pause, reduced motion, browsers sem IO/WAAPI e navegação sem JS.
+      container.classList.remove("motion-ready");
       observer?.disconnect();
       animations.forEach((animation) => animation.cancel());
       animations.clear();
-      container.classList.toggle(
-        "motion-ready",
-        !paused && !reducedMotion.matches,
-      );
-      if (
-        paused ||
-        reducedMotion.matches ||
-        !("IntersectionObserver" in window)
-      ) {
+
+      const canAnimate =
+        !paused &&
+        !reducedMotion.matches &&
+        "IntersectionObserver" in window &&
+        typeof Element.prototype.animate === "function";
+      if (!canAnimate) {
         updateScrollMotion();
         return;
       }
-      const heroParts = container.querySelectorAll<HTMLElement>(
-        ".hero-line-ink, .hero-description, .hero-actions, .hero-facts, .hero-main-print, .hero-small-print, .hero-round-print, .hero-handnote",
+
+      const heroParts = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          ".hero-line-ink, .hero-description, .hero-actions, .hero-facts, .hero-main-print, .hero-small-print, .hero-round-print, .hero-handnote",
+        ),
       );
+      const candidates = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          "[data-reveal], .pencil-line, .paper-edge, section:not(.opening-scene) h2, section:not(.opening-scene) h3, section:not(.opening-scene) p, section:not(.opening-scene) .site-text-link, section:not(.opening-scene) .site-button, section:not(.opening-scene) .peralta-flower, .footer-opening, .footer-main, .footer-word",
+        ),
+      );
+      // Não fade um texto duas vezes quando ele já está dentro de um bloco
+      // que ganha reveal. Isso elimina ghosting em cards, fotos e rodapé.
+      const candidateSet = new Set(candidates);
+      const revealTargets = candidates.filter((element) => {
+        let ancestor = element.parentElement;
+        while (ancestor && ancestor !== container) {
+          if (candidateSet.has(ancestor)) return false;
+          ancestor = ancestor.parentElement;
+        }
+        return !heroParts.some((hero) => hero.contains(element));
+      });
+      const targets = [...heroParts, ...revealTargets];
+      targets.forEach((element) => {
+        element.dataset.motionState = "pending";
+      });
+      // Aplicar CSS pending + habilitar a máscara acontece na mesma fase
+      // de layout anterior ao primeiro paint do conteúdo do React.
+      container.classList.add("motion-ready");
+
       heroParts.forEach((element, index) =>
         animate(element, Math.min(index * 60, 360), true),
       );
+
       observer = new IntersectionObserver(
         (entries) => {
           let sequence = 0;
           entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
             const element = entry.target as HTMLElement;
+            observer?.unobserve(element);
             animate(element, (sequence++ % 4) * 60);
             element.classList.add("is-revealed");
-            observer?.unobserve(element);
           });
         },
         { threshold: 0.08, rootMargin: "0px 0px -4%" },
       );
-      container
-        .querySelectorAll<HTMLElement>(
-          "[data-reveal], .pencil-line, .paper-edge, section:not(.opening-scene) h2, section:not(.opening-scene) h3, section:not(.opening-scene) p, section:not(.opening-scene) .site-text-link, section:not(.opening-scene) .site-button, section:not(.opening-scene) .peralta-flower, .footer-opening, .footer-main, .footer-word",
-        )
-        .forEach((element) => observer?.observe(element));
+      revealTargets.forEach((element) => observer?.observe(element));
       updateScrollMotion();
     };
 
