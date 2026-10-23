@@ -21,6 +21,18 @@ export function MotionToggle() {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
+// Um ritmo editorial mais calmo, com entradas progressivas sem esconder
+// blocos por tempo excessivo. A API de animação preserva o primeiro frame
+// durante o atraso para evitar qualquer flash de conteúdo.
+const MOTION_TIMING = {
+  scrollDuration: 880,
+  imageDuration: 1100,
+  heroDuration: 1150,
+  initialDelay: 85,
+  staggerDelay: 110,
+  maxStagger: 5,
+} as const;
+
 export function SiteMotion({
   children,
   className,
@@ -68,21 +80,26 @@ export function SiteMotion({
         ? [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0)" }]
         : kind === "doodle"
           ? [
-              { opacity: 0, translate: "0 14px", rotate: "-8deg" },
+              { opacity: 0, translate: "0 12px", rotate: "-4deg" },
               { opacity: 1, translate: "0 0", rotate: "0deg" },
             ]
           : kind === "blur"
             ? [
-                { opacity: 0, filter: "blur(3px)", translate: "0 10px" },
+                { opacity: 0, filter: "blur(4px)", translate: "0 13px" },
                 { opacity: 1, filter: "blur(0px)", translate: "0 0" },
               ]
-            : isPhoto
+            : kind === "paper"
+              ? [
+                  { opacity: 0, translate: "0 24px", scale: "0.975" },
+                  { opacity: 1, translate: "0 0", scale: "1" },
+                ]
+              : isPhoto
               ? [
                   { clipPath: fromClip, opacity: 0 },
                   { clipPath: "inset(0)", opacity: 1 },
                 ]
               : [
-                  { opacity: 0, translate: `0 ${hero ? 30 : 20}px` },
+                  { opacity: 0, translate: `0 ${hero ? 26 : 18}px` },
                   { opacity: 1, translate: "0 0" },
                 ];
       // O elemento já está invisível desde o layout effect via CSS. A animação
@@ -91,7 +108,11 @@ export function SiteMotion({
       let animation: Animation;
       try {
         animation = element.animate(frames, {
-          duration: isPhoto || hero ? 700 : 540,
+          duration: hero
+            ? MOTION_TIMING.heroDuration
+            : isPhoto
+              ? MOTION_TIMING.imageDuration
+              : MOTION_TIMING.scrollDuration,
           delay,
           easing: "cubic-bezier(.22,1,.36,1)",
           // Preserva o primeiro frame durante o delay, sem esconder após terminar.
@@ -116,7 +137,7 @@ export function SiteMotion({
               { translate: "0 -6px", rotate: "2deg", offset: 0.5 },
               { translate: "0 0", rotate: "0deg" },
             ],
-            { duration: 3600, iterations: 3, easing: "ease-in-out" },
+            { duration: 4400, iterations: 2, easing: "ease-in-out" },
           );
           animations.add(drift);
           drift.finished.then(() => animations.delete(drift)).catch(() => {});
@@ -184,12 +205,37 @@ export function SiteMotion({
 
       const heroParts = Array.from(
         container.querySelectorAll<HTMLElement>(
-          ".hero-line-ink, .hero-description, .hero-actions, .hero-facts, .hero-main-print, .hero-small-print, .hero-round-print, .hero-handnote",
+          ".hero-line-ink, .hero-description, .hero-actions, .hero-facts, .hero-main-print, .hero-small-print, .hero-round-print, .hero-handnote, .hero-star, .hero-blocks, .hero-little-flower, .hero-photo-trail",
         ),
       );
       const candidates = Array.from(
         container.querySelectorAll<HTMLElement>(
-          "[data-reveal], .pencil-line, .paper-edge, section:not(.opening-scene) h2, section:not(.opening-scene) h3, section:not(.opening-scene) p, section:not(.opening-scene) .site-text-link, section:not(.opening-scene) .site-button, section:not(.opening-scene) .peralta-flower, .footer-opening, .footer-main, .footer-word",
+          [
+            "[data-reveal]",
+            ".pencil-line",
+            ".paper-edge",
+            "section:not(.opening-scene) h2",
+            "section:not(.opening-scene) h3",
+            "section:not(.opening-scene) p",
+            "section:not(.opening-scene) .site-text-link",
+            "section:not(.opening-scene) .site-button",
+            "section:not(.opening-scene) .peralta-flower",
+            // Pontos antes estáticos, agrupados para evitar fades aninhados.
+            ".photo-caption",
+            ".story-seal",
+            ".learning-concepts article",
+            ".segment-text",
+            ".visit-note",
+            ".caderno-controls",
+            ".caderno-bottom",
+            ".gallery-controls",
+            ".life-progress",
+            ".instagram-invitation",
+            ".footer-opening",
+            ".footer-main",
+            ".footer-word",
+            ".footer-end",
+          ].join(", "),
         ),
       );
       // Não fade um texto duas vezes quando ele já está dentro de um bloco
@@ -211,8 +257,16 @@ export function SiteMotion({
       // de layout anterior ao primeiro paint do conteúdo do React.
       container.classList.add("motion-ready");
 
+      // A ordem do DOM preserva a sequência narrativa entre título, fotos,
+      // legenda e detalhes. Um limite impede atrasos exagerados.
       heroParts.forEach((element, index) =>
-        animate(element, Math.min(index * 60, 360), true),
+        animate(
+          element,
+          MOTION_TIMING.initialDelay +
+            Math.min(index, MOTION_TIMING.maxStagger) *
+              MOTION_TIMING.staggerDelay,
+          true,
+        ),
       );
 
       observer = new IntersectionObserver(
@@ -222,7 +276,12 @@ export function SiteMotion({
             if (!entry.isIntersecting) return;
             const element = entry.target as HTMLElement;
             observer?.unobserve(element);
-            animate(element, (sequence++ % 4) * 60);
+            animate(
+              element,
+              MOTION_TIMING.initialDelay +
+                Math.min(sequence++, MOTION_TIMING.maxStagger) *
+                  MOTION_TIMING.staggerDelay,
+            );
             element.classList.add("is-revealed");
           });
         },
