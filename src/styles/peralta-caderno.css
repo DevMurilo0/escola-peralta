@@ -218,10 +218,10 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .institutional .caderno-photo-page {
-    animation: caderno-photo-in 450ms var(--ease) both;
+    animation: caderno-photo-in 760ms 70ms var(--ease) both;
   }
   .institutional .caderno-content {
-    animation: caderno-copy-in 250ms var(--ease) both;
+    animation: caderno-copy-in 600ms 120ms var(--ease) both;
   }
   @keyframes caderno-photo-in {
     from {
