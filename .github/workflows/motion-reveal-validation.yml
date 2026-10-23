@@ -1,0 +1,24 @@
+name: Validar animações sem flash
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/institutional/site-motion.tsx'
+      - 'src/styles/institutional.css'
+      - 'tests/browser/reveal-no-flash.spec.ts'
+      - '.github/workflows/motion-reveal-validation.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install chromium --with-deps
+      - name: Testar estado inicial, entradas, pausa e acessibilidade
+        run: npm run test:browser -- tests/browser/reveal-no-flash.spec.ts
