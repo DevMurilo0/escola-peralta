@@ -19,6 +19,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: npx playwright install chromium --with-deps
+      - name: Conferir Google Chrome do runner
+        run: command -v google-chrome && google-chrome --version
       - name: Testar estado inicial, entradas, pausa e acessibilidade
         run: npm run test:browser -- tests/browser/reveal-no-flash.spec.ts
