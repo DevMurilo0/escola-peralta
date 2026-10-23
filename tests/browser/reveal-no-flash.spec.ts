@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+// Ubuntu do GitHub Actions já tem Chrome: evita reinstalar navegadores
+// desnecessariamente e valida o mesmo motor Chromium no CI.
+test.use({
+  launchOptions: process.env.CI
+    ? { executablePath: "/usr/bin/google-chrome" }
+    : {},
+});
+
 test("conteúdo fora da tela nasce invisível e só aparece durante o reveal", async ({
   page,
 }) => {
